@@ -1114,7 +1114,9 @@ global $langs, $db, $conf;
 		<tr class="liste_titre">
 			<td>Produit</td>
 			<td>Numéro de Série</td>
+<?php if(! empty($conf->asset->USE_LOT_IN_OF)) { ?>
 			<td>Numéro de Lot</td>
+<?php } ?>
 			<td><?php echo $langs->trans('Warehouse'); ?></td>
 			<?php if($conf->global->ASSET_SHOW_DLUO){ ?>
 				<td>DLUO</td>
@@ -1176,7 +1178,9 @@ global $langs, $db, $conf;
 						echo $form->hidden('TLine['.$k.'][commande_fournisseurdet_asset]', $line['commande_fournisseurdet_asset'], 30)
 					?>
 					</td>
+<?php if(! empty($conf->asset->USE_LOT_IN_OF)) { ?>
 					<td><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30);   ?></td>
+<?php } ?>
 					<td rel="entrepotChild" fk_product="<?php echo $prod->id ?>"><?php
 
 						$formproduct=new FormProduct($db);
@@ -1251,7 +1255,9 @@ global $langs, $db, $conf;
 			?><tr style="background-color: lightblue;">
 					<td><?php print $form->combo('', 'new_line_fk_product', $pListe, ''); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30); ?></td>
+<?php if(! empty($conf->asset->USE_LOT_IN_OF)) { ?>
 					<td><?php echo $form->texte('','TLine[-1][lot_number]', '', 30);   ?></td>
+<?php } ?>
 					<td><?php
 
 						$formproduct=new FormProduct($db);
