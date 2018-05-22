@@ -139,6 +139,14 @@
 	print ajax_constantonoff('DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_FROM_FIRST_INPUT');
 	print '</td></tr>';
 
+	$var=!$var;
+	print '<tr '.$bc[$var].'>';
+	print '<td>'.$langs->trans('DISPATCH_CAN_LINK_ASSET_TO_OBJECT_IN_ANY_STATUS').'</td>';
+	print '<td align="center" width="20">&nbsp;</td>';
+	print '<td align="center" width="300">';
+	print ajax_constantonoff('DISPATCH_CAN_LINK_ASSET_TO_OBJECT_IN_ANY_STATUS');
+	print '</td></tr>';
+
 	
 	print "</table>";
 
