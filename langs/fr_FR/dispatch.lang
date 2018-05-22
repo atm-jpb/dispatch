@@ -36,3 +36,5 @@ QtyToDispatchShort=Qté à ventiler
 
 DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_FROM_FIRST_INPUT=Permettre de créer les équipements avec numéro de série automatique lors d'une réception à partir du premier numéro de série saisi pour chaque produit
 CalculateFollowingSerialNumbers=Calculer les suivants
+
+DISPATCH_CAN_LINK_ASSET_TO_OBJECT_IN_ANY_STATUS=Permettre de lier/délier des équipements à des objets (commande, contrat, etc.) quel que soit leur statut

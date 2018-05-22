@@ -13,3 +13,5 @@ DISPATCH_CREATE_SUPPLIER_PRICE=Create supplier price at products reception to st
 
 DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_FROM_FIRST_INPUT=Enable asset creation with automatic serial numbers when dispatching, from the first input serial number for a product
 CalculateFollowingSerialNumbers=Calculate the others
+
+DISPATCH_CAN_LINK_ASSET_TO_OBJECT_IN_ANY_STATUS=Enable linking/unlinking assets to objects (order, contrat, etc.) regardless of their status

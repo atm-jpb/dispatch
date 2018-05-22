@@ -100,6 +100,8 @@ function _fiche(&$PDOdb,&$dispatch) {
 		</tr>
 		
 	<?php
+
+	$canLink = ! empty($conf->global->DISPATCH_CAN_LINK_ASSET_TO_OBJECT_IN_ANY_STATUS) || $type_object == 'contrat' || $object->statut == 0;
 	
 	foreach($dispatch->TDispatchAsset as $k=>&$da) {
 		
@@ -129,7 +131,7 @@ function _fiche(&$PDOdb,&$dispatch) {
 			?>
 			<td><?php
 			
-					if($object->statut == 0 || $type_object == 'contrat') echo '<a href="?action=delete-line&k='.$k.'&id='.$object->id.'&type_object='.$dispatch->type_object.'">'.img_delete().'</a>';
+				if($canLink) echo '<a href="?action=delete-line&k='.$k.'&id='.$object->id.'&type_object='.$dispatch->type_object.'">'.img_delete().'</a>';
 						
 			?></td>
 		</tr>
@@ -141,7 +143,7 @@ function _fiche(&$PDOdb,&$dispatch) {
 	
 	
 	$formproduct=new FormProduct($db);
-	if($object->statut == 0 || $type_object == 'contrat') {
+	if($canLink) {
 		$newAssetSerialNumber = ! empty($_REQUEST['new-asset']) ? GETPOST('new-asset') : '';
 		
 	?><tr style="background-color: lightblue;">
