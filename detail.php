@@ -159,7 +159,7 @@ function _loadDetail(&$PDOdb,&$expedition){
 
 	}
 function fiche(&$PDOdb,&$expedition, &$TImport) {
-global $langs, $db;
+	global $langs, $db, $conf;
 
 	llxHeader();
 
@@ -312,7 +312,7 @@ global $langs, $db;
 		echo '</select><br />';
 		
 		//echo $form->combo('Produit expédié', 'lineexpeditionid', $TProduct, '').'<br>';
-		echo $form->combo('Numéro de Lot', 'lot_number', $TLotNumber, '').'<br>';
+		if(! empty($conf->global->USE_LOT_IN_OF)) echo $form->combo('Numéro de Lot', 'lot_number', $TLotNumber, '').'<br>';
 		echo $form->combo('Numéro de série à ajouter','numserie',$TSerialNumber,'').'<br>';
 		echo $form->texte('Quantité','quantity','',10)." ".$DoliForm->load_measuring_units('quantity_unit" id="quantity_unit','weight');
 		echo $form->btsubmit('Ajouter', 'btaddasset');
@@ -328,7 +328,7 @@ global $langs, $db;
 }
 
 function tabImport(&$TImport,&$expedition) {
-global $langs, $db;		
+	global $langs, $db, $conf;
 	
 	$form=new TFormCore;
 	$formDoli =	new Form($db);
@@ -342,7 +342,9 @@ global $langs, $db;
 		<tr class="liste_titre">
 			<td>Produit</td>
 			<td>Numéro de série</td>
+<?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
 			<td>Numéro de Lot</td>
+<?php } ?>
 			<td>Quantité</td>
 			<td>&nbsp;</td>
 		</tr>
@@ -372,7 +374,9 @@ global $langs, $db;
 				?><tr>
 					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref) ?></td>
 					<td><a href="<?php echo dol_buildpath('/asset/fiche.php?id='.$asset->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30)   ?></a></td>
+<?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
 					<td><a href="<?php echo dol_buildpath('/asset/fiche_lot.php?id='.$assetLot->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30)   ?></a></td>
+<?php } ?>
 					<td><?php echo $line['quantity']." ".(($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($line['quantity_unit'],$asset->assetType->measuring_units)); ?></td>
 					<td>
 						<?php 
@@ -395,7 +399,7 @@ global $langs, $db;
 }
 
 function enteteexpedition(&$expedition) {
-global $langs, $db, $user, $hookmanager, $conf;
+	global $langs, $db, $user, $hookmanager, $conf;
 
 	$form =	new Form($db);
 	

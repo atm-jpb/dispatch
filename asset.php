@@ -84,9 +84,11 @@ function _fiche(&$PDOdb,&$dispatch) {
 			<td>Equipement</td>
 			<?php
 				if(!empty($conf->global->USE_LOT_IN_OF)) {
-				?><td>Numéro de Lot</td><?php
+				?>
+				<td>Numéro de Lot</td>
+				<td>DLUO</td>
+				<?php
 				}
-				print '<td>DLUO</td>';
 			?>
 			<?php
 			if($conf->global->clinomadic->enabled){
@@ -112,10 +114,12 @@ function _fiche(&$PDOdb,&$dispatch) {
 		?><tr class="<?php echo $class ?>">
 			<?php if(GETPOST('type_object') !== 'ticketsup') echo '<td>'.$pListe[$da->fk_object].'</td>'; ?>
 			<td><?php echo $da->asset->getNomUrl(1,0,1); ?></td>
-			<td><?php echo $da->asset->lot_number; ?></td>
 			<?php
 				if(!empty($conf->global->USE_LOT_IN_OF)) {
-					?><td><?php echo $da->asset->dluo ? dol_print_date($da->asset->dluo) : 'N/A'; ?></td><?php
+				?>
+				<td><?php echo $da->asset->lot_number; ?></td>
+				<td><?php echo $da->asset->dluo ? dol_print_date($da->asset->dluo) : 'N/A'; ?></td>
+				<?php
 				}
 			?>
 			
