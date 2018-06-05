@@ -363,6 +363,9 @@
 //				$asset->save($PDOdb, $user,$langs->trans("Asset").' '.$asset->serial_number.' '. $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $line['quantity'], false, $line['fk_product'], false,$fk_entrepot);
 				$asset->save($PDOdb, $user, '', 0, false, 0, true,$fk_entrepot);
 
+				$stock = new TAssetStock;
+				$stock->mouvement_stock($PDOdb, $user, $asset->rowid, $line['quantity'], $langs->trans('DispatchSupplierOrder', $commandefourn->ref), $asset->rowid);
+
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot]+=$line['quantity'];
 
 
