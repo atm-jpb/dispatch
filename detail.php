@@ -248,11 +248,16 @@ function fiche(&$PDOdb,&$expedition, &$TImport) {
 						
 						$.each(json_results, function(index) {
 							var obj = json_results[index];
-							
-							$('#lot_number').append($('<option>', {
-								value: obj.lot_number,
-								text: obj.label
-							}));
+							var lotNumberSelect = $('select#lot_number');
+
+							if(lotNumberSelect.length > 0) {
+								lotNumberSelect.append($('<option>', {
+									value: obj.lot_number,
+									text: obj.label
+								}));
+							} else {
+								$('#lot_number').trigger('change');
+							}
 						});
 					});
 				});
@@ -313,6 +318,7 @@ function fiche(&$PDOdb,&$expedition, &$TImport) {
 		
 		//echo $form->combo('Produit expédié', 'lineexpeditionid', $TProduct, '').'<br>';
 		if(! empty($conf->global->USE_LOT_IN_OF)) echo $form->combo('Numéro de Lot', 'lot_number', $TLotNumber, '').'<br>';
+		else echo $form->hidden('lot_number', '');
 		echo $form->combo('Numéro de série à ajouter','numserie',$TSerialNumber,'').'<br>';
 		echo $form->texte('Quantité','quantity','',10)." ".$DoliForm->load_measuring_units('quantity_unit" id="quantity_unit','weight');
 		echo $form->btsubmit('Ajouter', 'btaddasset');
