@@ -215,16 +215,18 @@ function fiche(&$PDOdb,&$expedition, &$TImport) {
 								text: obj.serial_number + ' - ' + obj.qty + ' ' +obj.unite_string
 							}));
 
-							$('#quantity').val(obj.qty);
-							if(obj.unite != 'unité(s)'){
-								$('#quantity_unit').show();
-								$('#units_lable').remove();
-								$('#quantity_unit option[value='+obj.unite+']').attr("selected","selected");
-							}
-							else{
-								$('#quantity_unit').hide();
-								$('#quantity_unit option[value=0]').attr("selected","selected");
-								$('#quantity').after('<span id="units_lable"> unité(s)</span>');
+							if(cpt == 1) { // A ne faire que pour le premier résultat
+								$('#quantity').val(obj.qty);
+								if(obj.unite != 'unité(s)'){
+									$('#quantity_unit').show();
+									$('#units_lable').remove();
+									$('#quantity_unit option[value='+obj.unite+']').attr("selected","selected");
+								}
+								else{
+									$('#quantity_unit').hide();
+									$('#quantity_unit option[value=0]').attr("selected","selected");
+									$('#quantity').after('<span id="units_lable"> unité(s)</span>');
+								}
 							}
 						});
 					});
@@ -232,6 +234,13 @@ function fiche(&$PDOdb,&$expedition, &$TImport) {
 				
 				$('#lineexpeditionid').change(function() {
 					var productid = $(this).find(':selected').attr('fk-product');
+					var lotNumberSelect = $('select#lot_number');
+
+					// Si ce n'est pas un select, c'est un hidden => gestion des lots désactivée => on charge directement les numéros de série
+					if(lotNumberSelect.length == 0) {
+						$('#lot_number').trigger('change');
+						return true;
+					}
 
 					$.ajax({
 						url: 'script/interface.php',
@@ -248,8 +257,8 @@ function fiche(&$PDOdb,&$expedition, &$TImport) {
 						
 						$.each(json_results, function(index) {
 							var obj = json_results[index];
-							
-							$('#lot_number').append($('<option>', {
+
+							lotNumberSelect.append($('<option>', {
 								value: obj.lot_number,
 								text: obj.label
 							}));
@@ -313,6 +322,7 @@ function fiche(&$PDOdb,&$expedition, &$TImport) {
 		
 		//echo $form->combo('Produit expédié', 'lineexpeditionid', $TProduct, '').'<br>';
 		if(! empty($conf->global->USE_LOT_IN_OF)) echo $form->combo('Numéro de Lot', 'lot_number', $TLotNumber, '').'<br>';
+		else echo $form->hidden('lot_number', '');
 		echo $form->combo('Numéro de série à ajouter','numserie',$TSerialNumber,'').'<br>';
 		echo $form->texte('Quantité','quantity','',10)." ".$DoliForm->load_measuring_units('quantity_unit" id="quantity_unit','weight');
 		echo $form->btsubmit('Ajouter', 'btaddasset');
