@@ -31,7 +31,7 @@ class ActionsDispatch
 					$TRes = $PDOdb->Get_All();
 					
 					if(count($TRes)>0){
-						$line->desc .= "<br>Lot(s) expédié(s) : ";
+						$line->desc .= "<br>Produit(s) expédié(s) : ";
 						foreach($TRes as $res){
 							$dispatchDetail = new TDispatchDetail;
 							$dispatchDetail->load($PDOdb, $res->rowid);
@@ -46,7 +46,7 @@ class ActionsDispatch
 							}else{
 								$desc = "<br>- ".$res->lot_number." x ".$dispatchDetail->weight_reel." ".$unite;
 							}
-							if(empty($conf->global->DISPATCH_HIDE_DLUO_PDF)) $desc.= ' (DLUO : '.$asset->get_date('dluo').')';
+							if(! empty($conf->global->ASSET_SHOW_DLUO) && empty($conf->global->DISPATCH_HIDE_DLUO_PDF)) $desc.= ' (DLUO : '.$asset->get_date('dluo').')';
 							
 							$line->desc.=$desc;
 							
