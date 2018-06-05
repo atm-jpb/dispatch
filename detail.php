@@ -215,16 +215,18 @@ function fiche(&$PDOdb,&$expedition, &$TImport) {
 								text: obj.serial_number + ' - ' + obj.qty + ' ' +obj.unite_string
 							}));
 
-							$('#quantity').val(obj.qty);
-							if(obj.unite != 'unité(s)'){
-								$('#quantity_unit').show();
-								$('#units_lable').remove();
-								$('#quantity_unit option[value='+obj.unite+']').attr("selected","selected");
-							}
-							else{
-								$('#quantity_unit').hide();
-								$('#quantity_unit option[value=0]').attr("selected","selected");
-								$('#quantity').after('<span id="units_lable"> unité(s)</span>');
+							if(cpt == 1) { // A ne faire que pour le premier résultat
+								$('#quantity').val(obj.qty);
+								if(obj.unite != 'unité(s)'){
+									$('#quantity_unit').show();
+									$('#units_lable').remove();
+									$('#quantity_unit option[value='+obj.unite+']').attr("selected","selected");
+								}
+								else{
+									$('#quantity_unit').hide();
+									$('#quantity_unit option[value=0]').attr("selected","selected");
+									$('#quantity').after('<span id="units_lable"> unité(s)</span>');
+								}
 							}
 						});
 					});
@@ -232,6 +234,13 @@ function fiche(&$PDOdb,&$expedition, &$TImport) {
 				
 				$('#lineexpeditionid').change(function() {
 					var productid = $(this).find(':selected').attr('fk-product');
+					var lotNumberSelect = $('select#lot_number');
+
+					// Si ce n'est pas un select, c'est un hidden => gestion des lots désactivée => on charge directement les numéros de série
+					if(lotNumberSelect.length == 0) {
+						$('#lot_number').trigger('change');
+						return true;
+					}
 
 					$.ajax({
 						url: 'script/interface.php',
@@ -248,16 +257,11 @@ function fiche(&$PDOdb,&$expedition, &$TImport) {
 						
 						$.each(json_results, function(index) {
 							var obj = json_results[index];
-							var lotNumberSelect = $('select#lot_number');
 
-							if(lotNumberSelect.length > 0) {
-								lotNumberSelect.append($('<option>', {
-									value: obj.lot_number,
-									text: obj.label
-								}));
-							} else {
-								$('#lot_number').trigger('change');
-							}
+							lotNumberSelect.append($('<option>', {
+								value: obj.lot_number,
+								text: obj.label
+							}));
 						});
 					});
 				});
