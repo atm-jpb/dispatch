@@ -8,7 +8,7 @@ class ActionsDispatch
       *  @return       void 
       */
 
-	function formObjectOptions($parameters, &$object, &$action, $hookmanager) {
+	function addMoreActionsButtons($parameters, &$object, &$action, $hookmanager) {
 
 		 if (in_array('ordersuppliercard',explode(':',$parameters['context']))) {
 			global $user,$conf;;
