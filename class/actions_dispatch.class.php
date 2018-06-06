@@ -7,6 +7,15 @@ class ActionsDispatch
       *  @param      action             current action (if set). Generally create or edit or null 
       *  @return       void 
       */
+
+	function formObjectOptions($parameters, &$object, &$action, $hookmanager) {
+
+		 if (in_array('ordersuppliercard',explode(':',$parameters['context']))) {
+			global $user,$conf;;
+			unset($conf->global->STOCK_CALCULATE_ON_SUPPLIER_DISPATCH_ORDER);
+			unset($user->rights->fournisseur->commande->receptionner); // suppression du bouton de réception de base
+		}
+	}
       
     function beforePDFCreation($parameters, &$object, &$action, $hookmanager) {
     	
