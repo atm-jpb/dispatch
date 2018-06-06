@@ -281,7 +281,7 @@
 				$product->fetch($line['fk_product']);
 				
 				$asset->fk_asset_type = $product->array_options['options_type_asset'];
-
+				
 				if($asset->fk_asset_type>0) {
 					$asset->load_asset_type($PDOdb);
 					$line['numserie'] = $asset->getNextValue($PDOdb);
@@ -1117,7 +1117,7 @@ global $langs, $db, $conf;
 		<tr class="liste_titre">
 			<td>Produit</td>
 			<td>Numéro de Série</td>
-<?php if(! empty($conf->asset->USE_LOT_IN_OF)) { ?>
+<?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
 			<td>Numéro de Lot</td>
 <?php } ?>
 			<td><?php echo $langs->trans('Warehouse'); ?></td>
@@ -1181,7 +1181,7 @@ global $langs, $db, $conf;
 						echo $form->hidden('TLine['.$k.'][commande_fournisseurdet_asset]', $line['commande_fournisseurdet_asset'], 30)
 					?>
 					</td>
-<?php if(! empty($conf->asset->USE_LOT_IN_OF)) { ?>
+<?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
 					<td><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30);   ?></td>
 <?php } ?>
 					<td rel="entrepotChild" fk_product="<?php echo $prod->id ?>"><?php
@@ -1258,7 +1258,7 @@ global $langs, $db, $conf;
 			?><tr style="background-color: lightblue;">
 					<td><?php print $form->combo('', 'new_line_fk_product', $pListe, ''); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30); ?></td>
-<?php if(! empty($conf->asset->USE_LOT_IN_OF)) { ?>
+<?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
 					<td><?php echo $form->texte('','TLine[-1][lot_number]', '', 30);   ?></td>
 <?php } ?>
 					<td><?php
