@@ -271,6 +271,8 @@
 		$TQtyDispatch=array();
 		$TQtyWished=array();
 //var_dump($TImport);
+		$commandefourn->fetch_thirdparty();
+		
 		foreach($TImport as $k=>&$line) {
 
 			$asset =new TAsset;
@@ -281,10 +283,9 @@
 				$product->fetch($line['fk_product']);
 				
 				$asset->fk_asset_type = $product->array_options['options_type_asset'];
-				
 				if($asset->fk_asset_type>0) {
 					$asset->load_asset_type($PDOdb);
-					$line['numserie'] = $asset->getNextValue($PDOdb);
+					$line['numserie'] = $asset->getNextValue($PDOdb,$commandefourn->thirdparty);
 					setEventMessage( $langs->trans('createNumSerieOnTheFly', $line['numserie']),"warning");	
 					
 					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : 1,$line['quantity_unit'],$line['dluo'], $k, $line['entrepot']);
