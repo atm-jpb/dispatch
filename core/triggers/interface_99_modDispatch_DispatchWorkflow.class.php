@@ -207,12 +207,14 @@ class InterfaceDispatchWorkflow
 
 		//$asset->contenancereel_value = $asset->contenancereel_value - $poids_destocke;
 		$asset->fk_societe_localisation = $fk_soc;
-		//Vas destocker l'équipement mais pas dolibarr
-    	$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref), -$poids_destocke, false, 0, true);
 
-    	/*$stock = new TAssetStock;
+		// Destockage Dolibarr déjà fait par à la validation de l'expédition, et impossible de ne destocker que l'équipement : on save sans rien déstocker
+		$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref), -$poids_destocke, false, 0, true);
+
+		// Destockage équipement
+		$stock = new TAssetStock;
 		$stock->mouvement_stock($PDOdb, $user, $asset->getId(), -$poids_destocke, $langs->trans("ShipmentValidatedInDolibarr",$numref), $linedetail->fk_expeditiondet);
-*/
+
 		return $poids_destocke;
 	}
 
