@@ -89,7 +89,10 @@ class moddispatch extends DolibarrModules
 		//							'workflow' => array('WORKFLOW_MODULE1_YOURACTIONTYPE_MODULE2'=>array('enabled'=>'! empty($conf->module1->enabled) && ! empty($conf->module2->enabled)', 'picto'=>'yourpicto@mymodule')) // Set here all workflow context managed by module
 		//	                       );
 		//$this->module_parts = array('hooks'=>array('ordersuppliercard','propalcard', 'ordercard', 'invoicecard'),'triggers' => 1);
-		$this->module_parts = array('triggers' => 1,'hooks'=>array('expeditioncard','ordersuppliercard'));
+		$this->module_parts = array(
+			'triggers' => 1
+			, 'hooks' => array('expeditioncard', 'ordersuppliercard')
+		);
 
 		// Data directories to create when module is enabled.
 		// Example: this->dirs = array("/mymodule/temp");

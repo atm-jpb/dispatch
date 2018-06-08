@@ -7,13 +7,21 @@ class ActionsDispatch
       *  @param      action             current action (if set). Generally create or edit or null 
       *  @return       void 
       */
+	function addMoreActionsButtons($parameters, &$object, &$action, $hookmanager)
+	{
+		if(in_array('ordersuppliercard', explode(':',$parameters['context'])))
+		{
+			$id = GETPOST('id');
+			$targetUrl = dol_buildpath('/dispatch/reception.php', 2).'?id='.$id
+			?>
+			<script>
+				$(document).ready(function() {
+					$('a[href*="fourn/commande/dispatch.php"]').attr('href', '<?php print dol_escape_js($targetUrl, 1); ?>');
+				});
+			</script>
+			<?php
 
-	function addMoreActionsButtons($parameters, &$object, &$action, $hookmanager) {
-
-		 if (in_array('ordersuppliercard',explode(':',$parameters['context']))) {
-			global $user,$conf;;
-			unset($conf->global->STOCK_CALCULATE_ON_SUPPLIER_DISPATCH_ORDER);
-			unset($user->rights->fournisseur->commande->receptionner); // suppression du bouton de réception de base
+			return 0;
 		}
 	}
       
