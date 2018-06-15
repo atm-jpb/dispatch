@@ -40,3 +40,4 @@ CalculateFollowingSerialNumbers=Calculer les suivants
 DISPATCH_CAN_LINK_ASSET_TO_OBJECT_IN_ANY_STATUS=Permettre de lier/délier des équipements à des objets (commande, contrat, etc.) quel que soit leur statut
 
 NoAssetCreated=Aucun équipement créé en base
+AssetAlreadyLinked=Equipement déjà lié à cette ventilation

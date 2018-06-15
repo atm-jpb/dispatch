@@ -1175,7 +1175,7 @@ global $langs, $db, $conf;
 							if($commande->statut >= 5 || $commande->statut<=2) {
 								echo $asset->getNomUrl(1);
 							} else {
-								echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('SerialNumberNeeded'), 'warning.png');
+								echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('AssetAlreadyLinked'), 'warning.png');
 							}
 						}
 						else {
