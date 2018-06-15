@@ -15,3 +15,6 @@ DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_FROM_FIRST_INPUT=Enable asset creation wit
 CalculateFollowingSerialNumbers=Calculate the others
 
 DISPATCH_CAN_LINK_ASSET_TO_OBJECT_IN_ANY_STATUS=Enable linking/unlinking assets to objects (order, contrat, etc.) regardless of their status
+
+NoAssetCreated=No asset created in database
+AssetAlreadyLinked=Equipement déjà lié à cet import=Asset already linked to this dispatch
