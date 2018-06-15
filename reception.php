@@ -1165,18 +1165,21 @@ global $langs, $db, $conf;
 				?><tr class="dispatchAssetLine" id="dispatchAssetLine<?php print $k; ?>" data-fk-product="<?php print $prod->id; ?>">
 					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref)." - ".$prod->label; ?></td>
 					<td><?php
-						echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30) ;
 						$asset=new TAsset;
 
 						if(empty($line['numserie'])) {
-							echo img_picto($langs->trans('SerialNumberNeeded'), 'warning.png');
+							echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('SerialNumberNeeded'), 'warning.png');
 							$warning_asset = true;
 						}
 						else if($asset->loadReference($PDOdb, $line['numserie'])) {
-							echo '<a href="'.dol_buildpath('/asset/fiche.php?id='.$asset->getId(),1).'">' .img_picto('Equipement lié à cet import', 'info.png'). '</a>';
+							if($commande->statut >= 5 || $commande->statut<=2) {
+								echo $asset->getNomUrl(1);
+							} else {
+								echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('SerialNumberNeeded'), 'warning.png');
+							}
 						}
 						else {
-							echo img_picto('Aucun équipement créé en Base', 'warning.png');
+							echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('NoAssetCreated'), 'info.png');
 							$warning_asset = true;
 						}
 						echo $form->hidden('TLine['.$k.'][commande_fournisseurdet_asset]', $line['commande_fournisseurdet_asset'], 30)
