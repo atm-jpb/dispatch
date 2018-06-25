@@ -56,7 +56,7 @@ class ActionsDispatch
 							$asset->load($PDOdb, $detail->fk_asset);
 							$asset->load_asset_type($PDOdb);
 
-							$this->_addAssetToLineDesc($line, $detail, $asset); continue;
+							$this->_addAssetToLineDesc($line, $detail, $asset);
 						}
 					}
 				}
@@ -78,7 +78,7 @@ class ActionsDispatch
 							$asset->loadBy($PDOdb, $detail->serial_number, 'serial_number');
 							$asset->load_asset_type($PDOdb);
 
-							$this->_addAssetToLineDesc($line, $detail, $asset); continue;
+							$this->_addAssetToLineDesc($line, $detail, $asset);
 						}
 					}
 				}
