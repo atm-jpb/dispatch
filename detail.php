@@ -296,7 +296,7 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 			LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet_asset as eda ON (eda.fk_expeditiondet = ed.rowid)
 			WHERE ed.fk_expedition = ".$expedition->id."
 			GROUP BY ed.rowid
-			HAVING SUM(eda.weight_reel) < ed.qty";
+			HAVING COALESCE(SUM(eda.weight_reel), 0) < ed.qty";
 
 	$PDOdb->Execute($sql);
 
