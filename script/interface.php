@@ -25,7 +25,7 @@ function _get(&$PDOdb, $get) {
 
 			break;
         case 'autocomplete_asset':
-            __out(_autocomplete_asset($PDOdb,GETPOST('lot_number'),GETPOST('productid')),'json');
+            __out(_autocomplete_asset($PDOdb,GETPOST('lot_number'),GETPOST('productid'),GETPOST('expeditionid')),'json');
             break;
 		case 'autocomplete_lot_number':
             __out(_autocomplete_lot_number($PDOdb,GETPOST('productid')),'json');
@@ -56,15 +56,21 @@ function _serial_number(&$PDOdb, $sn) {
 	return $Tab;
 }
 
-function _autocomplete_asset(&$PDOdb, $lot_number, $productid) {
+function _autocomplete_asset(&$PDOdb, $lot_number, $productid, $expeditionID) {
 	global $db, $conf, $langs;
 	$langs->load('other');
 	dol_include_once('/core/lib/product.lib.php');
 
-	$sql = "SELECT DISTINCT(rowid)
-			FROM ".MAIN_DB_PREFIX."asset
-			WHERE lot_number = '".$lot_number."'
-			AND fk_product = ".$productid;
+	$sql = "SELECT DISTINCT a.rowid
+			FROM ".MAIN_DB_PREFIX."asset a
+			LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet_asset eda ON (eda.fk_asset = a.rowid)
+			LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet ed ON (ed.rowid = eda.fk_expeditiondet)
+			LEFT JOIN ".MAIN_DB_PREFIX."expedition e ON (e.rowid = ed.fk_expedition)
+			WHERE a.lot_number = '".$lot_number."'
+			AND a.fk_product = ".$productid."
+			GROUP BY a.rowid
+			HAVING NOT(GROUP_CONCAT(e.rowid) IS NOT NULL AND ".$expeditionID." IN (GROUP_CONCAT(e.rowid)))";
+
 	$PDOdb->Execute($sql);
 	$TAssetIds = $PDOdb->Get_All();
 
@@ -77,10 +83,13 @@ function _autocomplete_asset(&$PDOdb, $lot_number, $productid) {
 
 		//pre($asset,true);
 
-		$Tres[$PDOdb->Get_field('serial_number')]['serial_number'] = $PDOdb->Get_field('serial_number');
-		$Tres[$PDOdb->Get_field('serial_number')]['qty'] = $PDOdb->Get_field('contenancereel_value');
-		$Tres[$PDOdb->Get_field('serial_number')]['unite_string'] = ($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($PDOdb->Get_field('contenancereel_units'),$asset->assetType->measuring_units);
-		$Tres[$PDOdb->Get_field('serial_number')]['unite'] = ($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : $PDOdb->Get_field('contenancereel_units');
+		if($PDOdb->Get_field('contenancereel_value') > 0) {
+
+			$Tres[$PDOdb->Get_field('serial_number')]['serial_number'] = $PDOdb->Get_field('serial_number');
+			$Tres[$PDOdb->Get_field('serial_number')]['qty'] = $PDOdb->Get_field('contenancereel_value');
+			$Tres[$PDOdb->Get_field('serial_number')]['unite_string'] = ($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($PDOdb->Get_field('contenancereel_units'),$asset->assetType->measuring_units);
+			$Tres[$PDOdb->Get_field('serial_number')]['unite'] = ($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : $PDOdb->Get_field('contenancereel_units');
+		}
 	}
 	return $Tres;
 }
