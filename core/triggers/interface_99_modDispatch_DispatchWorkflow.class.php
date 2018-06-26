@@ -116,6 +116,8 @@ class InterfaceDispatchWorkflow
 
 			$PDOdb = new TPDOdb();
 
+			$noDetailAlert = true;
+
 			// Pour chaque ligne de l'expédition
 			foreach($object->lines as $line) {
 				// Chargement de l'objet detail dispatch relié à la ligne d'expédition
@@ -126,6 +128,7 @@ class InterfaceDispatchWorkflow
 
 				//if(!empty($idExpeditionDet) && $dd->loadBy($PDOdb, $idExpeditionDet, 'fk_expeditiondet')) {
 				if(!empty($idExpeditionDet)) {
+
 					$dd->loadLines($PDOdb, $idExpeditionDet);
 
 					if($conf->asset->enabled){
@@ -133,7 +136,7 @@ class InterfaceDispatchWorkflow
 						foreach($dd->lines as $detail) {
 							// Création du mouvement de stock standard
 							$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref,(empty($object->fk_soc)?$object->socid:$object->fk_soc));
-
+							if($poids_destocke > 0) $noDetailAlert = false;
 							//$this->create_standard_stock_mouvement($line, $poids_destocke, $object->ref);
 
 							if($conf->clinomadic->enabled){
@@ -175,9 +178,15 @@ class InterfaceDispatchWorkflow
 						}
 					}
 					//exit;
-				}/* else { // Pas de détail, on déstocke la quantité comme Dolibarr standard
+				} // if(!empty($idExpeditionDet))
+				/* else { // Pas de détail, on déstocke la quantité comme Dolibarr standard
 					$this->create_standard_stock_mouvement($line, $line->qty, $object->ref);
 				}*/
+			}
+
+			if(! empty($conf->global->DISPATCH_SHIPPING_VALIDATE_ALERT_IF_NO_DETAIL) && $noDetailAlert) {
+				$langs->load('dispatch@dispatch');
+				setEventMessage('DispatchExpeditionNoDetail');
 			}
 
 			dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
