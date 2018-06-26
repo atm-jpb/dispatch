@@ -147,6 +147,14 @@
 	print ajax_constantonoff('DISPATCH_CAN_LINK_ASSET_TO_OBJECT_IN_ANY_STATUS');
 	print '</td></tr>';
 
+	$var=!$var;
+	print '<tr '.$bc[$var].'>';
+	print '<td>'.$langs->trans('DISPATCH_SHIPPING_VALIDATE_ALERT_IF_NO_DETAIL').'</td>';
+	print '<td align="center" width="20">&nbsp;</td>';
+	print '<td align="center" width="300">';
+	print ajax_constantonoff('DISPATCH_SHIPPING_VALIDATE_ALERT_IF_NO_DETAIL');
+	print '</td></tr>';
+
 	
 	print "</table>";
 
