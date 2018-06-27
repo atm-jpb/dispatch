@@ -18,3 +18,6 @@ DISPATCH_CAN_LINK_ASSET_TO_OBJECT_IN_ANY_STATUS=Enable linking/unlinking assets 
 
 NoAssetCreated=No asset created in database
 AssetAlreadyLinked=Equipement déjà lié à cet import=Asset already linked to this dispatch
+
+DISPATCH_SHIPPING_VALIDATE_ALERT_IF_NO_DETAIL=When validating an expedition, display an alert if no asset detail has been set
+DispatchExpeditionNoDetail=No asset detail has been set for this shipment

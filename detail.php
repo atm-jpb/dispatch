@@ -158,6 +158,8 @@ function _loadDetail(&$PDOdb,&$expedition){
 		return $TImport;
 
 	}
+
+
 function fiche(&$PDOdb,&$expedition, &$TImport) {
 	global $langs, $db, $conf;
 
@@ -170,184 +172,42 @@ function fiche(&$PDOdb,&$expedition, &$TImport) {
 	
 	enteteexpedition($expedition);
 	
-	echo '<br>';
-	
-	if($expedition->statut == 0){
+	if($expedition->statut == 0 && ! empty($conf->global->DISPATCH_USE_IMPORT_FILE)) {
 		//Form pour import de fichier
-		if($conf->global->DISPATCH_USE_IMPORT_FILE){
-			$form=new TFormCore('auto','formimport','post', true);
-			
-			echo $form->hidden('action', 'SAVE');
-			echo $form->hidden('id', $expedition->id);
-			
-			echo $form->fichier('Fichier à importer','file1','',80);
-			echo $form->btsubmit('Envoyer', 'btsend');
+		echo '<br>';
+
+		$form=new TFormCore('auto','formimport','post', true);
 		
-			$form->end();
-		}
-		
-		?>
-		<script>
-			$(document).ready(function() {
-
-				$('#lot_number').change(function() {
-					var lot_number = $(this).val();
-
-					$.ajax({
-						url: 'script/interface.php',
-						method: 'GET',
-						data: {
-							lot_number: lot_number,
-							productid: $('#lineexpeditionid').find(':selected').attr('fk-product'),
-							type:'get',
-							get:'autocomplete_asset'
-						}
-					}).done(function(results) {
-						var json_results = $.parseJSON(results);
-
-						$('#numserie option').remove();
-						cpt = 0;
-						$.each(json_results, function(index) {
-							var obj = json_results[index];
-							cpt ++;
-							$('#numserie').append($('<option>', {
-								value: obj.serial_number,
-								text: obj.serial_number + ' - ' + obj.qty + ' ' +obj.unite_string
-							}));
-
-							if(cpt == 1) { // A ne faire que pour le premier résultat
-								$('#quantity').val(obj.qty);
-								if(obj.unite != 'unité(s)'){
-									$('#quantity_unit').show();
-									$('#units_lable').remove();
-									$('#quantity_unit option[value='+obj.unite+']').attr("selected","selected");
-								}
-								else{
-									$('#quantity_unit').hide();
-									$('#quantity_unit option[value=0]').attr("selected","selected");
-									$('#quantity').after('<span id="units_lable"> unité(s)</span>');
-								}
-							}
-						});
-					});
-				});
-				
-				$('#lineexpeditionid').change(function() {
-					var productid = $(this).find(':selected').attr('fk-product');
-					var lotNumberSelect = $('select#lot_number');
-
-					// Si ce n'est pas un select, c'est un hidden => gestion des lots désactivée => on charge directement les numéros de série
-					if(lotNumberSelect.length == 0) {
-						$('#lot_number').trigger('change');
-						return true;
-					}
-
-					$.ajax({
-						url: 'script/interface.php',
-						method: 'GET',
-						data: {
-							productid: productid,
-							type:'get',
-							get:'autocomplete_lot_number'
-						}
-					}).done(function(results) {
-						var json_results = $.parseJSON(results);
-
-						$('#lot_number option').remove();
-						
-						$.each(json_results, function(index) {
-							var obj = json_results[index];
-
-							lotNumberSelect.append($('<option>', {
-								value: obj.lot_number,
-								text: obj.label
-							}));
-						});
-					});
-				});
-			});
-		</script>
-		<?php
-		
-		//Form pour ajouter un équipement directement
-		$DoliForm = new FormProduct($db);
-		$form=new TFormCore('auto', 'formaddasset','post', true);	
-		echo $form->hidden('action','edit');
-		echo $form->hidden('mode','addasset');
-		
+		echo $form->hidden('action', 'SAVE');
 		echo $form->hidden('id', $expedition->id);
 		
-		$TLotNumber = array(' -- aucun produit sélectionné -- ');
-		/*$sql = "SELECT DISTINCT(lot_number),rowid, SUM(contenancereel_value) as qty, contenancereel_units as unit FROM ".MAIN_DB_PREFIX."asset GROUP BY lot_number ORDER BY lot_number ASC";
+		echo $form->fichier('Fichier à importer','file1','',80);
+		echo $form->btsubmit('Envoyer', 'btsend');
 
-		$PDOdb->Execute($sql);
-		$Tres = $PDOdb->Get_All();
-		foreach($Tres as $res){
-			
-			$asset = new TAsset;
-			$asset->load($PDOdb, $res->rowid);
-			$asset->load_asset_type($PDOdb);
-			//pre($asset,true);exit;
-			$TLotNumber[$res->lot_number] = $res->lot_number." / ".$res->qty." ".(($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($res->unit,$asset->assetType->measuring_units));
-		}
-		*/
-		
-		$TSerialNumber = array(' -- aucun lot sélectionné -- ');
-		/*$sql = "SELECT DISTINCT(serial_number),contenancereel_value, contenancereel_units FROM ".MAIN_DB_PREFIX."asset ORDER BY serial_number ASC";
-		$PDOdb->Execute($sql);
-		while ($PDOdb->Get_line()) {
-			$TSerialNumber[$PDOdb->Get_field('serial_number')] = $PDOdb->Get_field('serial_number').' / '.$PDOdb->Get_field('contenancereel_value')." ".measuring_units_string($PDOdb->Get_field('contenancereel_units'),'weight');
-		}
-		*/
-		
-		echo 'Produit expédié<select id="lineexpeditionid" name="lineexpeditionid"><option value=""></option>';
-		
-		$TProduct = array('');
-		$sql = "SELECT DISTINCT(ed.rowid),p.rowid as fk_product,p.ref,p.label ,ed.qty
-				FROM ".MAIN_DB_PREFIX."product as p
-					LEFT JOIN ".MAIN_DB_PREFIX."commandedet as cd ON (cd.fk_product = p.rowid)
-					LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet as ed ON (ed.fk_origin_line = cd.rowid)
-				WHERE ed.fk_expedition = ".$expedition->id."";
-		
-		$PDOdb->Execute($sql);
-		while ($obj = $PDOdb->Get_line()) {
-			//$TProduct[$PDOdb->Get_field('rowid')] = $PDOdb->Get_field('ref').' - '.$PDOdb->Get_field('label');
-			
- 			echo '<option value="'.$obj->rowid.'" fk-product="'.$obj->fk_product.'">'.$obj->ref.' - '.$obj->label.' x '.$obj->qty.'</option>';
-			
-		}
-		
-		
-		echo '</select><br />';
-		
-		//echo $form->combo('Produit expédié', 'lineexpeditionid', $TProduct, '').'<br>';
-		if(! empty($conf->global->USE_LOT_IN_OF)) echo $form->combo('Numéro de Lot', 'lot_number', $TLotNumber, '').'<br>';
-		else echo $form->hidden('lot_number', '');
-		echo $form->combo('Numéro de série à ajouter','numserie',$TSerialNumber,'').'<br>';
-		echo $form->texte('Quantité','quantity','',10)." ".$DoliForm->load_measuring_units('quantity_unit" id="quantity_unit','weight');
-		echo $form->btsubmit('Ajouter', 'btaddasset');
-		
 		$form->end();
-		
-		echo '<br>';
 	}
-	
+
 	tabImport($TImport,$expedition);
-	
+
 	llxFooter();
 }
 
+
 function tabImport(&$TImport,&$expedition) {
 	global $langs, $db, $conf;
-	
-	$form=new TFormCore;
-	$formDoli =	new Form($db);
-	$formproduct=new FormProduct($db);
+
+	$form = new TFormCore('auto', 'formaddasset','post');
+	echo $form->hidden('action','edit');
+	echo $form->hidden('mode','addasset');
+	echo $form->hidden('id', $expedition->id);
+
 	$PDOdb=new TPDOdb;
 	
 	print count($TImport).' équipement(s) dans votre expédition';
 	
-	?>
+	$fullColspan = ! empty($conf->global->USE_LOT_IN_OF) ? 5 : 4;
+?>
+	<br>
 	<table width="100%" class="border">
 		<tr class="liste_titre">
 			<td>Produit</td>
@@ -383,10 +243,10 @@ function tabImport(&$TImport,&$expedition) {
 				
 				?><tr>
 					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref) ?></td>
-					<td><a href="<?php echo dol_buildpath('/asset/fiche.php?id='.$asset->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30)   ?></a></td>
 <?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
-					<td><a href="<?php echo dol_buildpath('/asset/fiche_lot.php?id='.$assetLot->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30)   ?></a></td>
+					<td><a href="<?php echo dol_buildpath('/asset/fiche_lot.php?id='.$assetLot->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30); ?></a></td>
 <?php } ?>
+					<td><a href="<?php echo dol_buildpath('/asset/fiche.php?id='.$asset->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30); ?></a></td>
 					<td><?php echo $line['quantity']." ".(($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($line['quantity_unit'],$asset->assetType->measuring_units)); ?></td>
 					<td>
 						<?php 
@@ -394,18 +254,173 @@ function tabImport(&$TImport,&$expedition) {
 						?>
 					</td>
 				</tr>
-				
+
 				<?php
-				
+			} // foreach($TImport)
+
+			if($expedition->statut == 0) {
+				tabImportAddLine($PDOdb, $expedition, $form, $fullColspan);
 			}
-		}	
-		?>
-			
+		} // if(is_array($TImport))
+?>
 		
 	</table>
-	<br>
 	<?php
-	
+
+	$form->end();
+
+	if($expedition->statut == 0) {
+		printJSTabImportAddLine();
+	}
+}
+
+
+function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
+{
+	$DoliFormProduct = new FormProduct($db);
+
+	$form->Set_typeaff('edit');
+?>
+				<tr class="liste_titre">
+					<td colspan="<?php echo $fullColspan; ?>">Nouvel équipement</td>
+				</tr>
+<?php
+	$TLotNumber = array(' -- aucun produit sélectionné -- ');
+
+	$TSerialNumber = array(' -- aucun lot sélectionné -- ');
+
+	$sql = "SELECT ed.rowid, p.rowid as fk_product,p.ref,p.label ,ed.qty
+			FROM ".MAIN_DB_PREFIX."product as p
+			LEFT JOIN ".MAIN_DB_PREFIX."commandedet as cd ON (cd.fk_product = p.rowid)
+			LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet as ed ON (ed.fk_origin_line = cd.rowid)
+			LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet_asset as eda ON (eda.fk_expeditiondet = ed.rowid)
+			WHERE ed.fk_expedition = ".$expedition->id."
+			GROUP BY ed.rowid
+			HAVING COALESCE(SUM(eda.weight_reel), 0) < ed.qty";
+
+	$PDOdb->Execute($sql);
+
+	if($PDOdb->Get_Recordcount() > 0) {
+
+		$productOptions = '<option value=""></option>';
+
+		while ($obj = $PDOdb->Get_line()) {
+			$productOptions.= '<option value="'.$obj->rowid.'" fk-product="'.$obj->fk_product.'">'.$obj->ref.' - '.$obj->label.' x '.$obj->qty.'</option>';
+		}
+?>
+				<tr>
+					<td>
+						<select id="lineexpeditionid" name="lineexpeditionid"><?php echo $productOptions; ?></select>
+<?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
+					</td>
+					<td>
+						<?php echo $form->combo('', 'lot_number', $TLotNumber, ''); ?>
+<?php } else { ?>
+						<?php echo $form->hidden('lot_number', ''); ?>
+<?php } ?>
+					</td>
+					<td><?php echo $form->combo('','numserie',$TSerialNumber,''); ?></td>
+					<td><?php echo $form->texte('','quantity','',10); ?> <?php echo $DoliFormProduct->load_measuring_units('quantity_unit" id="quantity_unit','weight'); ?></td>
+					<td><?php echo $form->btsubmit('Ajouter', 'btaddasset'); ?></td>
+				</tr>
+<?php
+	} // if($PDOdb->Get_Recordcount() > 0)
+	else {
+?>
+				<tr>
+					<td colspan="<?php echo $fullColspan; ?>" class="center">Tous les équipements de l'expédition ont été renseignés</td>
+				</tr>
+<?php
+	}
+}
+
+
+function printJSTabImportAddLine()
+{
+?>
+	<script>
+		$(document).ready(function() {
+
+			$('#lot_number').change(function() {
+				var lot_number = $(this).val();
+				var expeditionid = $('#id').val();
+
+				$.ajax({
+					url: 'script/interface.php',
+					method: 'GET',
+					data: {
+						expeditionid: expeditionid,
+						lot_number: lot_number,
+						productid: $('#lineexpeditionid').find(':selected').attr('fk-product'),
+						type:'get',
+						get:'autocomplete_asset'
+					}
+				}).done(function(results) {
+					var json_results = $.parseJSON(results);
+
+					$('#numserie option').remove();
+					cpt = 0;
+					$.each(json_results, function(index) {
+						var obj = json_results[index];
+						cpt ++;
+						$('#numserie').append($('<option>', {
+							value: obj.serial_number,
+							text: obj.serial_number + ' - ' + obj.qty + ' ' +obj.unite_string
+						}));
+
+						if(cpt == 1) { // A ne faire que pour le premier résultat
+							$('#quantity').val(obj.qty);
+							if(obj.unite != 'unité(s)'){
+								$('#quantity_unit').show();
+								$('#units_lable').remove();
+								$('#quantity_unit option[value='+obj.unite+']').attr("selected","selected");
+							}
+							else{
+								$('#quantity_unit').hide();
+								$('#quantity_unit option[value=0]').attr("selected","selected");
+								$('#quantity').after('<span id="units_lable"> unité(s)</span>');
+							}
+						}
+					});
+				});
+			});
+
+			$('#lineexpeditionid').change(function() {
+				var productid = $(this).find(':selected').attr('fk-product');
+				var lotNumberSelect = $('select#lot_number');
+
+				// Si ce n'est pas un select, c'est un hidden => gestion des lots désactivée => on charge directement les numéros de série
+				if(lotNumberSelect.length == 0) {
+					$('#lot_number').trigger('change');
+					return true;
+				}
+
+				$.ajax({
+					url: 'script/interface.php',
+					method: 'GET',
+					data: {
+						productid: productid,
+						type:'get',
+						get:'autocomplete_lot_number'
+					}
+				}).done(function(results) {
+					var json_results = $.parseJSON(results);
+
+					$('#lot_number option').remove();
+
+					$.each(json_results, function(index) {
+						var obj = json_results[index];
+
+						lotNumberSelect.append($('<option>', {
+							value: obj.lot_number,
+							text: obj.label
+						}));
+					});
+				});
+			});
+		});
+	</script>
+<?php
 }
 
 function enteteexpedition(&$expedition) {
