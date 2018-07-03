@@ -61,14 +61,25 @@ function _autocomplete_asset(&$PDOdb, $lot_number, $productid, $expeditionID, $e
 	$langs->load('other');
 	dol_include_once('/core/lib/product.lib.php');
 
+	$sql = "SELECT fk_entrepot FROM ".MAIN_DB_PREFIX."expeditiondet WHERE rowid = ".$expeditionDetID." LIMIT 1";
+
+	$TWarehouses = $PDOdb->ExecuteAsArray($sql);
+	$warehouseID = $TWarehouses[0]->fk_entrepot;
+
 	$sql = "SELECT DISTINCT a.rowid
 			FROM ".MAIN_DB_PREFIX."asset a
 			LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet_asset eda ON (eda.fk_asset = a.rowid)
 			LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet ed ON (ed.rowid = eda.fk_expeditiondet)
 			LEFT JOIN ".MAIN_DB_PREFIX."expedition e ON (e.rowid = ed.fk_expedition)
 			WHERE a.lot_number = '".$lot_number."'
-			AND a.fk_product = ".$productid."
-			AND a.fk_entrepot = (SELECT fk_entrepot FROM ".MAIN_DB_PREFIX."expeditiondet WHERE rowid = ".$expeditionDetID.")
+			AND a.fk_product = ".$productid;
+
+	if(! empty($warehouseID)) {
+		$sql.= "
+			AND a.fk_entrepot = ".$warehouseID;
+	}
+
+	$sql.= "
 			GROUP BY a.rowid
 			HAVING NOT(GROUP_CONCAT(e.rowid) IS NOT NULL AND ".$expeditionID." IN (GROUP_CONCAT(e.rowid)))";
 
