@@ -25,7 +25,7 @@ function _get(&$PDOdb, $get) {
 
 			break;
         case 'autocomplete_asset':
-            __out(_autocomplete_asset($PDOdb,GETPOST('lot_number'),GETPOST('productid'),GETPOST('expeditionid')),'json');
+        	__out(_autocomplete_asset($PDOdb,GETPOST('lot_number'),GETPOST('productid'),GETPOST('expeditionid'),GETPOST('expeditiondetid')),'json');
             break;
 		case 'autocomplete_lot_number':
             __out(_autocomplete_lot_number($PDOdb,GETPOST('productid')),'json');
@@ -56,7 +56,7 @@ function _serial_number(&$PDOdb, $sn) {
 	return $Tab;
 }
 
-function _autocomplete_asset(&$PDOdb, $lot_number, $productid, $expeditionID) {
+function _autocomplete_asset(&$PDOdb, $lot_number, $productid, $expeditionID, $expeditionDetID) {
 	global $db, $conf, $langs;
 	$langs->load('other');
 	dol_include_once('/core/lib/product.lib.php');
@@ -68,6 +68,7 @@ function _autocomplete_asset(&$PDOdb, $lot_number, $productid, $expeditionID) {
 			LEFT JOIN ".MAIN_DB_PREFIX."expedition e ON (e.rowid = ed.fk_expedition)
 			WHERE a.lot_number = '".$lot_number."'
 			AND a.fk_product = ".$productid."
+			AND a.fk_entrepot = (SELECT fk_entrepot FROM ".MAIN_DB_PREFIX."expeditiondet WHERE rowid = ".$expeditionDetID.")
 			GROUP BY a.rowid
 			HAVING NOT(GROUP_CONCAT(e.rowid) IS NOT NULL AND ".$expeditionID." IN (GROUP_CONCAT(e.rowid)))";
 

@@ -36,7 +36,7 @@
 		
 	}
 	else if($action=='DELETE_LINE') {
-		array_splice($TImport, (int) GETPOST('k'), 1); // Supprime le k-ième élément et décale les suivants
+		array_splice($TImport, (int) GETPOST('k'), 1); // Supprime le k-ième élément et décale les suivants dans le tableau
 
 		$rowid = GETPOST('rowid');
 		
@@ -348,6 +348,7 @@ function printJSTabImportAddLine()
 					method: 'GET',
 					data: {
 						expeditionid: expeditionid,
+						expeditiondetid: $('#lineexpeditionid').val(),
 						lot_number: lot_number,
 						productid: $('#lineexpeditionid').find(':selected').attr('fk-product'),
 						type:'get',
