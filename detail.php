@@ -36,8 +36,8 @@
 		
 	}
 	else if($action=='DELETE_LINE') {
-		unset($TImport[(int)GETPOST('k')]);
-		
+		array_splice($TImport, (int) GETPOST('k'), 1); // Supprime le k-ième élément et décale les suivants
+
 		$rowid = GETPOST('rowid');
 		
 		$dispatchdetail = new TDispatchDetail;
@@ -146,12 +146,11 @@ function _loadDetail(&$PDOdb,&$expedition){
 				'ref'=>$prodAsset->ref
 				,'numserie'=>$numserie
 				,'fk_product'=>$prodAsset->id
-				,'fk_expeditiondet'=>$expedition->id
+				,'fk_expeditiondet'=>$fk_line_expe
 				,'lot_number'=>$asset->lot_number
 				,'quantity'=> (GETPOST('quantity')) ? GETPOST('quantity') : $asset->contenancereel_value
 				,'quantity_unit'=> (GETPOST('quantity')) ? GETPOST('quantity') : $asset->contenancereel_units
 			);
-			
 
 		}
 		//pre($TImport,true);
@@ -240,7 +239,6 @@ function tabImport(&$TImport,&$expedition) {
 				$assetLot->loadBy($PDOdb,$line['lot_number'],'lot_number');
 				
 				$Trowid = TRequeteCore::get_id_from_what_you_want($PDOdb, MAIN_DB_PREFIX."expeditiondet_asset",array('fk_asset'=>$asset->rowid,'fk_expeditiondet'=>$line['fk_expeditiondet']));
-				
 				?><tr>
 					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref) ?></td>
 <?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
