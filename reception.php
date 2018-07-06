@@ -521,17 +521,17 @@
 			//Compare array
 			dol_syslog(__METHOD__.' $TQtyDispatched='.var_export($TQtyDispatched,true), LOG_DEBUG);
 			dol_syslog(__METHOD__.' $TQtyWished='.var_export($TQtyWished,true), LOG_DEBUG);
-			$diff_array=array_diff_assoc($TQtyWished,$TQtyDispatched);
-			$diff_array=array_merge($diff_array, array_diff_assoc($TQtyDispatched,$TQtyWished));
-			if (empty($diff_array)) {
-				//No diff => mean everythings is received
-				$status = 5;
-			} else {
-				//Diff => received partially
-				$status = 4;
+
+			$status = 5;
+
+			// Si on trouve au moins un produit dont la quantité ventilée est inférieure au commandé, la commande n'est reçue que partiellement
+			foreach($TQtyWished as $fk_product => $qty) {
+				if($TQtyDispatched[$fk_product] < $qty) {
+					$status = 4;
+					break;
+				}
 			}
-//var_dump($diff_array, $TQtyDispatched,$TQtyWished);
-//exit('la'.$status);
+
 			$commandefourn->setStatus($user, $status);
 			$commandefourn->statut = $status;
 			if(method_exists($commandefourn, 'log')) $commandefourn->log($user, $status, time()); // removed in 4.0
