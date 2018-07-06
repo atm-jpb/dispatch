@@ -38,15 +38,17 @@ class ActionsDispatch
 			dol_include_once('/core/lib/product.lib.php');
 			
 			global $conf;
-			
-			if(! empty($parameters['object']) && get_class($object) == 'Expedition') {
+			if(! empty($parameters['object']) && (get_class($object) == 'Expedition' || get_class($object) == 'Livraison')) {
 				
 				$PDOdb = new TPDOdb;
-				
+
 				foreach($object->lines as &$line){
 					
 					$details = new TDispatchDetail;
-					$TRecepDetail = $details->LoadAllBy($PDOdb, array('fk_expeditiondet' => $line->id));
+
+					$fkExpeditionLine = get_class($object) == 'Expedition' ? $line->id : $line->fk_origin_line;
+
+					$TRecepDetail = $details->LoadAllBy($PDOdb, array('fk_expeditiondet' => $fkExpeditionLine));
 
 					if(count($TRecepDetail) > 0) {
 						$line->desc .= "<br>Produit(s) expédié(s) : ";
