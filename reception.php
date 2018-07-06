@@ -1234,7 +1234,7 @@ global $langs, $db, $conf;
 					?>
 					<td>
 						<?php
-						if($commande->statut < 5){
+						if($commande->statut < 5 && $line['commande_fournisseurdet_asset'] > 0){
 							echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$commande->id.'&rowid='.$line['commande_fournisseurdet_asset'].'">'.img_delete().'</a>';
 						}
 						?>
