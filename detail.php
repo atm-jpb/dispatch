@@ -224,6 +224,8 @@ function tabImport(&$TImport,&$expedition) {
 		$form->Set_typeaff('view');
 		
 		if(is_array($TImport)){
+			$canEdit = $expedition->statut == 0 || (! empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT) && $expedition->statut == 1);
+
 			foreach ($TImport as $k=>$line) {
 							
 				if($prod->id==0 || $line['ref']!= $prod->ref) {
@@ -248,7 +250,7 @@ function tabImport(&$TImport,&$expedition) {
 					<td><?php echo $line['quantity']." ".(($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($line['quantity_unit'],$asset->assetType->measuring_units)); ?></td>
 					<td>
 						<?php 
-							if($expedition->statut != 1) echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$expedition->id.'&rowid='.$Trowid[0].'">'.img_delete().'</a>';
+							if($canEdit) echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$expedition->id.'&rowid='.$Trowid[0].'">'.img_delete().'</a>';
 						?>
 					</td>
 				</tr>
@@ -256,7 +258,7 @@ function tabImport(&$TImport,&$expedition) {
 				<?php
 			} // foreach($TImport)
 
-			if($expedition->statut == 0) {
+			if($canEdit) {
 				tabImportAddLine($PDOdb, $expedition, $form, $fullColspan);
 			}
 		} // if(is_array($TImport))
@@ -267,7 +269,7 @@ function tabImport(&$TImport,&$expedition) {
 
 	$form->end();
 
-	if($expedition->statut == 0) {
+	if($canEdit) {
 		printJSTabImportAddLine();
 	}
 }
