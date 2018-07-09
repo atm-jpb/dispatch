@@ -42,23 +42,40 @@ class ActionsDispatch
 				
 				$PDOdb = new TPDOdb;
 
+				$expedition = $object;
+				if(get_class($object) == 'Livraison') {
+					$expedition = new Expedition($object->db);
+					$expedition->fetch($object->origin_id);
+				}
+
 				foreach($object->lines as &$line){
 					
 					$details = new TDispatchDetail;
 
-					$fkExpeditionLine = get_class($object) == 'Expedition' ? $line->id : $line->fk_origin_line;
+					$fkExpeditionLine = $line->id;
 
-					$TRecepDetail = $details->LoadAllBy($PDOdb, array('fk_expeditiondet' => $fkExpeditionLine));
+					if(get_class($object) == 'Livraison') {
+						foreach($expedition->lines as $lineExpe) {
+							if($lineExpe->fk_origin_line == $line->fk_origin_line) {
+								$fkExpeditionLine = $lineExpe->id;
+								break;
+							}
+						}
+					}
 
-					if(count($TRecepDetail) > 0) {
-						$line->desc .= "<br>Produit(s) expédié(s) : ";
+					if(! empty($fkExpeditionLine)) {
+						$TRecepDetail = $details->LoadAllBy($PDOdb, array('fk_expeditiondet' => $fkExpeditionLine));
 
-						foreach($TRecepDetail as $detail) {
-							$asset = new TAsset;
-							$asset->load($PDOdb, $detail->fk_asset);
-							$asset->load_asset_type($PDOdb);
+						if(count($TRecepDetail) > 0) {
+							$line->desc .= "<br>Produit(s) expédié(s) : ";
 
-							$this->_addAssetToLineDesc($line, $detail, $asset);
+							foreach($TRecepDetail as $detail) {
+								$asset = new TAsset;
+								$asset->load($PDOdb, $detail->fk_asset);
+								$asset->load_asset_type($PDOdb);
+
+								$this->_addAssetToLineDesc($line, $detail, $asset);
+							}
 						}
 					}
 				}
