@@ -55,6 +55,8 @@ class ActionsDispatch
 					$fkExpeditionLine = $line->id;
 
 					if(get_class($object) == 'Livraison') {
+						$fkExpeditionLine = 0;
+
 						foreach($expedition->lines as $lineExpe) {
 							if($lineExpe->fk_origin_line == $line->fk_origin_line) { // La ligne d'origine de la livraison est la ligne de commande et non la ligne d'expédition
 								$fkExpeditionLine = $lineExpe->id;
