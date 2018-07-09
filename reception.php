@@ -172,40 +172,7 @@
 		setEventMessage('Ligne supprimée');
 
 	}
-	else if ($_POST['ToDispatch']) {
-		$ToDispatch = GETPOST('ToDispatch');
-		if(!empty($ToDispatch)) {
-			foreach($ToDispatch as $fk_product=>$tab) {
-
-				$product = new Product($db);
-				$product->fetch($fk_product);
-
-				foreach($tab as $idline=>$null) {
-					$qty = (int)$_POST['TOrderLine'][$idline]['qty'];
-					$fk_warehouse =(int) empty($_POST['TOrderLine'][$idline]['entrepot']) ? GETPOST('id_entrepot') : $_POST['TOrderLine'][$idline]['entrepot'];
-
-					for($ii = 0; $ii < $qty; $ii++) {
-						$TImport[] =array(
-							'ref'=>$product->ref
-							,'numserie'=>''
-							,'lot_number'=>''
-							,'quantity'=>1
-							,'quantity_unit'=>0
-							,'fk_product'=>$product->id
-							,'fk_warehouse'=>$fk_warehouse
-							,'imei'=>''
-							,'firmware'=>''
-							,'dluo'=>date('Y-m-d')
-							,'commande_fournisseurdet_asset'=>0
-						);
-					}
-
-				}
-			}
-		}
-
-	}
-	elseif(isset($_POST['bt_save'])) {
+	elseif(isset($_POST['bt_save']) || $_POST['ToDispatch']) {
 
 		foreach($_POST['TLine']  as $k=>$line) {
 			//unset($TImport[(int)$k]); //AA mais à quoi ça sert
@@ -252,8 +219,40 @@
 
 		}
 
-		if (!$error) {
+		if (is_array($_POST['TLine']) && count($_POST['TLine']) > 1 && !$error) { // $_POST['TLine'] jamais vide, $_POST['TLine'][-1] contient la nouvelle ligne
 			setEventMessage('Modifications enregistrées');
+		}
+
+		if ($_POST['ToDispatch']) {
+			$ToDispatch = GETPOST('ToDispatch');
+			if(!empty($ToDispatch)) {
+				foreach($ToDispatch as $fk_product=>$tab) {
+
+					$product = new Product($db);
+					$product->fetch($fk_product);
+
+					foreach($tab as $idline=>$null) {
+						$qty = (int)$_POST['TOrderLine'][$idline]['qty'];
+						$fk_warehouse =(int) empty($_POST['TOrderLine'][$idline]['entrepot']) ? GETPOST('id_entrepot') : $_POST['TOrderLine'][$idline]['entrepot'];
+
+						for($ii = 0; $ii < $qty; $ii++) {
+							$TImport[] =array(
+									'ref'=>$product->ref
+									,'numserie'=>''
+									,'lot_number'=>''
+									,'quantity'=>1
+									,'quantity_unit'=>0
+									,'fk_product'=>$product->id
+									,'fk_warehouse'=>$fk_warehouse
+									,'imei'=>''
+									,'firmware'=>''
+									,'dluo'=>date('Y-m-d')
+									,'commande_fournisseurdet_asset'=>0
+							);
+						}
+					}
+				}
+			}
 		}
 	}
 	elseif(isset($_POST['bt_create'])) {
