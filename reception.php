@@ -366,7 +366,8 @@
 				$stock = new TAssetStock;
 				$stock->mouvement_stock($PDOdb, $user, $asset->rowid, $line['quantity'], $langs->trans('DispatchSupplierOrder', $commandefourn->ref), $asset->rowid);
 
-@				$TAssetVentil[$line['fk_product']][$fk_entrepot]+=$line['quantity'];
+@				$TAssetVentil[$line['fk_product']][$fk_entrepot]['qty']+=$line['quantity'];
+@				$TAssetVentil[$line['fk_product']][$fk_entrepot]['price']+=$line['quantity']*$asset->prix_achat;
 
 
 /*				$TImport[$k]['numserie'] = $asset->serial_number;
@@ -389,8 +390,10 @@
 
 		if(!empty($TAssetVentil)) {
 			foreach($TAssetVentil as $fk_product=>$item) {
-				foreach($item as $fk_entrepot=>$qty) {
-                	$ret = $commandefourn->dispatchProduct($user,$fk_product, $qty, $fk_entrepot,null,$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
+				foreach($item as $fk_entrepot=>$TDispatchEntrepot) {
+					$qty = $TDispatchEntrepot['qty'];
+					$unitPrice = $TDispatchEntrepot['qty'] > 0 ? $TDispatchEntrepot['price'] / $TDispatchEntrepot['qty'] : 0;
+					$ret = $commandefourn->dispatchProduct($user,$fk_product, $qty, $fk_entrepot, $unitPrice, $langs->trans("DispatchSupplierOrder", $commandefourn->ref));
 
                 	//Build array with quantity serialze by product
                 	$TQtyDispatch[$fk_product]+=$qty;
