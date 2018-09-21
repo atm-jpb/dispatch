@@ -69,6 +69,7 @@ class ActionsDispatch
 						$TRecepDetail = $details->LoadAllBy($PDOdb, array('fk_expeditiondet' => $fkExpeditionLine));
 
 						if(count($TRecepDetail) > 0) {
+							if(!empty($line->description) && $line->description != $line->desc) $line->desc.=$line->description.'<br />'; // Sinon Dans certains cas desc écrase description
 							$line->desc .= "<br>Produit(s) expédié(s) : ";
 
 							foreach($TRecepDetail as $detail) {
