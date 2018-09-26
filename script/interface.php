@@ -5,9 +5,9 @@ set_time_limit(0);
 
 require('../config.php');
 
-//dol_include_once('/asset/config.php');
-dol_include_once('/asset/lib/asset.lib.php');
-dol_include_once('/asset/class/asset.class.php');
+//dol_include_once('/' . ATM_ASSET_NAME . '/config.php');
+dol_include_once('/' . ATM_ASSET_NAME . '/lib/asset.lib.php');
+dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
 
 //Interface qui renvoie les emprunts de ressources d'un utilisateur
 $PDOdb=new TPDOdb;
@@ -37,7 +37,7 @@ function _get(&$PDOdb, $get) {
 function _serial_number(&$PDOdb, $sn) {
 
 	$sql = "SELECT DISTINCT(rowid) as id, serial_number
-			FROM ".MAIN_DB_PREFIX."asset
+			FROM ".MAIN_DB_PREFIX.ATM_ASSET_NAME."
 			WHERE serial_number LIKE '".$sn."%'";
 	$PDOdb->Execute($sql);
 	$Tab=array();
@@ -67,7 +67,7 @@ function _autocomplete_asset(&$PDOdb, $lot_number, $productid, $expeditionID, $e
 	$warehouseID = $TWarehouses[0]->fk_entrepot;
 
 	$sql = "SELECT DISTINCT a.rowid
-			FROM ".MAIN_DB_PREFIX."asset a
+			FROM ".MAIN_DB_PREFIX.ATM_ASSET_NAME." a
 			LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet_asset eda ON (eda.fk_asset = a.rowid)
 			LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet ed ON (ed.rowid = eda.fk_expeditiondet)
 			LEFT JOIN ".MAIN_DB_PREFIX."expedition e ON (e.rowid = ed.fk_expedition)
@@ -112,7 +112,7 @@ function _autocomplete_lot_number(&$PDOdb, $productid) {
 	dol_include_once('/core/lib/product.lib.php');
 
 	$sql = "SELECT DISTINCT(lot_number),rowid, SUM(contenancereel_value) as qty, contenancereel_units as unit
-			FROM ".MAIN_DB_PREFIX."asset
+			FROM ".MAIN_DB_PREFIX.ATM_ASSET_NAME."
 			WHERE fk_product = ".$productid." GROUP BY lot_number,contenancereel_units,rowid";
 	$PDOdb->Execute($sql);
 

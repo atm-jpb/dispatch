@@ -122,13 +122,13 @@ class moddispatch extends DolibarrModules
         //                              'objecttype:-tabname':NU:conditiontoremove);                                                     						// To remove an existing tab identified by code tabname
         
         $this->tabs = array(
-        	'delivery:+dispatch:Détail expédition:dispatch@dispatch:$conf->asset->enabled:/custom/dispatch/detail.php?id=__ID__'
-        	,'contract:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset->enabled:/custom/dispatch/asset.php?id=__ID__&type_object=contrat'
-        	,'intervention:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset->enabled:/custom/dispatch/asset.php?id=__ID__&type_object=intervention'
-        	,'ticketsup:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset->enabled:/custom/dispatch/asset.php?id=__ID__&type_object=ticketsup'
-        	,'supplier_order:+recepasset:ReceptionTab:dispatch@dispatch:$conf->asset->enabled:/dispatch/reception.php?id=__ID__'
+        	'delivery:+dispatch:Détail expédition:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/detail.php?id=__ID__'
+        	,'contract:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=contrat'
+        	,'intervention:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=intervention'
+        	,'ticketsup:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=ticketsup'
+        	,'supplier_order:+recepasset:ReceptionTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/reception.php?id=__ID__'
         	,'supplier_order:-dispatch'
-        	,'order:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->asset->enabled:/custom/dispatch/asset.php?id=__ID__&type_object=commande'
+        	,'order:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=commande'
 		);
         
 		// where objecttype can be

@@ -9,7 +9,7 @@
 	dol_include_once('/product/stock/class/entrepot.class.php' );
 	dol_include_once('/core/lib/product.lib.php' );
 	dol_include_once('/core/lib/fourn.lib.php' );
-	dol_include_once('/asset/class/asset.class.php');
+	dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
 
 	$PDOdb = new TPDOdb;
 

@@ -8,7 +8,7 @@
 	dol_include_once('/core/lib/admin.lib.php' );
 	dol_include_once('/core/lib/sendings.lib.php' );
 	dol_include_once('/core/lib/product.lib.php');
-	dol_include_once('/asset/class/asset.class.php');
+	dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
 	
 	global $langs, $user,$db;
 	$langs->load('orders');
@@ -72,7 +72,7 @@ function _loadDetail(&$PDOdb,&$expedition){
 		
 			$sql = "SELECT a.rowid as id,a.serial_number,p.ref,p.rowid, ea.fk_expeditiondet, ea.lot_number, ea.weight_reel, ea.weight_reel_unit
 					FROM ".MAIN_DB_PREFIX."expeditiondet_asset as ea
-						LEFT JOIN ".MAIN_DB_PREFIX."asset as a ON ( a.rowid = ea.fk_asset)
+						LEFT JOIN ".MAIN_DB_PREFIX.ATM_ASSET_NAME." as a ON ( a.rowid = ea.fk_asset)
 						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = a.fk_product)
 					WHERE ea.fk_expeditiondet = ".$line->line_id."
 						ORDER BY ea.rang ASC";
@@ -244,9 +244,9 @@ function tabImport(&$TImport,&$expedition) {
 				?><tr>
 					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref) ?></td>
 <?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
-					<td><a href="<?php echo dol_buildpath('/asset/fiche_lot.php?id='.$assetLot->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30); ?></a></td>
+					<td><a href="<?php echo dol_buildpath('/' . ATM_ASSET_NAME . '/fiche_lot.php?id='.$assetLot->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30); ?></a></td>
 <?php } ?>
-					<td><a href="<?php echo dol_buildpath('/asset/fiche.php?id='.$asset->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30); ?></a></td>
+					<td><a href="<?php echo dol_buildpath('/' . ATM_ASSET_NAME . '/fiche.php?id='.$asset->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30); ?></a></td>
 					<td><?php echo $line['quantity']." ".(($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($line['quantity_unit'],$asset->assetType->measuring_units)); ?></td>
 					<td>
 						<?php 
