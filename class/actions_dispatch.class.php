@@ -32,7 +32,7 @@ class ActionsDispatch
 			
 			define('INC_FROM_DOLIBARR',true);
 			dol_include_once('/dispatch/config.php');
-			dol_include_once('/asset/class/asset.class.php');
+			dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
 			dol_include_once('/dispatch/class/dispatchdetail.class.php');
 			dol_include_once('/dispatch/class/dispatchasset.class.php');
 			dol_include_once('/core/lib/product.lib.php');

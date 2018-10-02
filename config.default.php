@@ -23,3 +23,6 @@
 	}
 
 	dol_include_once('/abricot/inc.core.php');
+
+	if(! defined('ATM_ASSET_NAME')) define('ATM_ASSET_NAME', (float) DOL_VERSION >= 8.0 || dol_is_dir(dol_buildpath('/assetatm')) ? 'assetatm' : 'asset');
+
