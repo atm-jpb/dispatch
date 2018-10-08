@@ -210,10 +210,10 @@ function tabImport(&$TImport,&$expedition) {
 	<table width="100%" class="border">
 		<tr class="liste_titre">
 			<td>Produit</td>
-			<td>Numéro de série</td>
 <?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
 			<td>Numéro de Lot</td>
 <?php } ?>
+                        <td>Numéro de série</td>
 			<td>Quantité</td>
 			<td>&nbsp;</td>
 		</tr>
@@ -277,6 +277,7 @@ function tabImport(&$TImport,&$expedition) {
 
 function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 {
+	global $conf;
 	$DoliFormProduct = new FormProduct($db);
 
 	$form->Set_typeaff('edit');
