@@ -306,7 +306,7 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 		$productOptions = '<option value=""></option>';
 
 		while ($obj = $PDOdb->Get_line()) {
-			$productOptions.= '<option value="'.$obj->rowid.'" fk-product="'.$obj->fk_product.'">'.$obj->ref.' - '.$obj->label.' x '.$obj->qty.'</option>';
+			$productOptions.= '<option value="'.$obj->rowid.'" fk-product="'.$obj->fk_product.'" qty="'.$obj->qty.'">'.$obj->ref.' - '.$obj->label.' x '.$obj->qty.'</option>';
 		}
 ?>
 				<tr>
@@ -371,7 +371,9 @@ function printJSTabImportAddLine()
 						}));
 
 						if(cpt == 1) { // A ne faire que pour le premier résultat
-							$('#quantity').val(obj.qty);
+							var qtyOrder = $('#lineexpeditionid option:selected').attr('qty');
+							var qtyAuto = Math.min(qtyOrder, obj.qty)
+							$('#quantity').val(qtyAuto);
 							if(obj.unite != 'unité(s)'){
 								$('#quantity_unit').show();
 								$('#units_lable').remove();
