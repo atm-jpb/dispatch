@@ -114,7 +114,7 @@ class ActionsDispatch
 
 		$unite = (($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($detail->weight_reel_unit, $asset->assetType->measuring_units));
 
-		if(empty($res->lot_number)) {
+		if(empty($asset->lot_number)) {
 			$desc = "<br>- N° série : ".$asset->serial_number;
 		} else {
 			$desc = "<br>- ".$asset->lot_number." x ".$detail->weight_reel." ".$unite;
