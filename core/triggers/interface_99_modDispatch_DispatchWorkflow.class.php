@@ -192,6 +192,25 @@ class InterfaceDispatchWorkflow
 			dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 		}
 
+		if($action == 'SHIPPING_DELETE')
+		{
+			dol_include_once('/dispatch/config.php');
+			dol_include_once('/dispatch/class/dispatchdetail.class.php');
+
+			$PDOdb = new TPDOdb;
+
+			foreach($object->lines as &$line)
+			{
+				$dispatchDetail = new TDispatchDetail;
+				$TDetail = $dispatchDetail->LoadAllBy($PDOdb, array('fk_expeditiondet' => $line->id));
+
+				foreach($TDetail as &$detail)
+				{
+					$detail->delete($PDOdb);
+				}
+			}
+		}
+
 		return 0;
 	}
 
