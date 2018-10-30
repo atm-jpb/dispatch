@@ -1,8 +1,8 @@
 <?php
-require("config.php");
-require(DOL_DOCUMENT_ROOT."/custom/asset/class/asset.class.php");
-require(DOL_DOCUMENT_ROOT."/expedition/class/expedition.class.php");
-include_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
+require('config.php');
+dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
+dol_include_once('/expedition/class/expedition.class.php');
+dol_include_once('/core/lib/admin.lib.php');
 global $db;
 
 function _unit($unite){
@@ -55,7 +55,7 @@ if(isset($_REQUEST['modele'])){
 		foreach($TidExepeditiondetAsset as $idExpeditiondetAsset){
 			$sql = "SELECT p.ref, p.label as nom, p.note as descritpion, eda.tare as tare, a.serial_number as code, a.lot_number as lot, eda.weight_reel as poids, eda.weight_reel_unit as poids_unit, eda.tare_unit as tare_unit
 					FROM ".MAIN_DB_PREFIX."expeditiondet_asset as eda
-						LEFT JOIN ".MAIN_DB_PREFIX."asset as a ON (a.rowid = eda.fk_asset)
+						LEFT JOIN ".MAIN_DB_PREFIX.ATM_ASSET_NAME." as a ON (a.rowid = eda.fk_asset)
 						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = a.fk_product)
 					WHERE eda.rowid = ".$idExpeditiondetAsset;
 			

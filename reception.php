@@ -9,7 +9,7 @@
 	dol_include_once('/product/stock/class/entrepot.class.php' );
 	dol_include_once('/core/lib/product.lib.php' );
 	dol_include_once('/core/lib/fourn.lib.php' );
-	dol_include_once('/asset/class/asset.class.php');
+	dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
 
 	$PDOdb = new TPDOdb;
 
@@ -29,6 +29,7 @@
 	$commandefourn->fetch($id);
 
 	$action = GETPOST('action');
+	$comment = GETPOST('comment');
 	$TImport = _loadDetail($PDOdb,$commandefourn);
 	
 	$parameters=array();
@@ -68,7 +69,7 @@
 		return $TImport;
 	}
 
-	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null){
+	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null,$comment=''){
 		global $db, $conf, $user;
 //var_dump($_POST['TLine']);exit;
 		//Charge le produit associé à l'équipement
@@ -152,7 +153,7 @@
 		foreach($f1 as $line) {
 			if(!(ctype_space($line))) {
 				list($ref, $numserie, $imei, $firmware, $lot_number)=str_getcsv($line,';','"');
-				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$ref,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo);
+				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$ref,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo,null,null,$comment);
 			}
 		}
 
@@ -208,7 +209,7 @@
 						setEventMessage('Référence produit ('.$fk_product.') introuvable', 'errors');
 					}
 					else {
-						$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : 1,$line['quantity_unit'],$line['dluo'], $k, $line['entrepot']);
+						$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : 1,$line['quantity_unit'],$line['dluo'], $k, $line['entrepot'], $comment);
 					}
 				}
 			}
@@ -287,7 +288,7 @@
 					$line['numserie'] = $asset->getNextValue($PDOdb,$commandefourn->thirdparty);
 					setEventMessage( $langs->trans('createNumSerieOnTheFly', $line['numserie']),"warning");	
 					
-					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : 1,$line['quantity_unit'],$line['dluo'], $k, $line['entrepot']);
+					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : 1,$line['quantity_unit'],$line['dluo'], $k, $line['entrepot'], $comment);
 				}
 				
 			
@@ -301,7 +302,7 @@
 				//Seulement si nouvelle ligne
 
 				if($k == -1){
-					_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware'],$line['lot_number'],$line['quantity'],$line['quantity_unit'],null,null,$line['fk_warehouse']);
+					_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware'],$line['lot_number'],$line['quantity'],$line['quantity_unit'],null,null,$line['fk_warehouse'], $comment);
 				}
 
 				$prod = new Product($db);
@@ -334,7 +335,7 @@
 
 				foreach($commandefourn->lines as $l){
 					if($l->fk_product == $asset->fk_product){
-						$asset->prix_achat  = number_format($l->subprice,2);
+						$asset->prix_achat  = price2num($l->subprice, 'MU');
 
 						$extension_garantie = 0;
 						$PDOdb->Execute('SELECT extension_garantie FROM '.MAIN_DB_PREFIX.'commande_fournisseurdet WHERE rowid = '.$l->id);
@@ -364,7 +365,7 @@
 				$asset->save($PDOdb, $user, '', 0, false, 0, true,$fk_entrepot);
 
 				$stock = new TAssetStock;
-				$stock->mouvement_stock($PDOdb, $user, $asset->rowid, $line['quantity'], $langs->trans('DispatchSupplierOrder', $commandefourn->ref), $asset->rowid);
+				$stock->mouvement_stock($PDOdb, $user, $asset->rowid, $line['quantity'], $comment, $asset->rowid);
 
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot]['qty']+=$line['quantity'];
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot]['price']+=$line['quantity']*$asset->prix_achat;
@@ -393,7 +394,7 @@
 				foreach($item as $fk_entrepot=>$TDispatchEntrepot) {
 					$qty = $TDispatchEntrepot['qty'];
 					$unitPrice = $TDispatchEntrepot['qty'] > 0 ? $TDispatchEntrepot['price'] / $TDispatchEntrepot['qty'] : 0;
-					$ret = $commandefourn->dispatchProduct($user,$fk_product, $qty, $fk_entrepot, $unitPrice, $langs->trans("DispatchSupplierOrder", $commandefourn->ref));
+					$ret = $commandefourn->dispatchProduct($user,$fk_product, $qty, $fk_entrepot, $unitPrice, $comment);
 
                 	//Build array with quantity serialze by product
                 	$TQtyDispatch[$fk_product]+=$qty;
@@ -494,7 +495,7 @@
 				}
 				// END NEW CODE
 				dol_syslog(__METHOD__.' dispatchProduct idprod='.$id_prod.' qty='.$item['qty'], LOG_DEBUG);
-				$ret = $commandefourn->dispatchProduct($user, $id_prod, $item['qty'], empty( $item['entrepot']) ? GETPOST('id_entrepot') : $item['entrepot'],null,$langs->trans("DispatchSupplierOrder",$commandefourn->ref));
+				$ret = $commandefourn->dispatchProduct($user, $id_prod, $item['qty'], empty( $item['entrepot']) ? GETPOST('id_entrepot') : $item['entrepot'],null,$comment);
 			}
 
 			if($commandefourn->statut == 0){
@@ -544,7 +545,7 @@
 
 	//if(is_array($TImport)) usort($TImport,'_by_ref');
 
-	fiche($commandefourn, $TImport);
+	fiche($commandefourn, $TImport, $comment);
 
 
 function searchProductInCommandeLine($array, $idprod)
@@ -568,7 +569,7 @@ function _by_ref(&$a, &$b) {
 	return 0;
 
 }
-function fiche(&$commande, &$TImport) {
+function fiche(&$commande, &$TImport, $comment) {
 global $langs, $db, $conf;
 
 	llxHeader();
@@ -589,7 +590,7 @@ global $langs, $db, $conf;
 		echo $form->btsubmit('Envoyer', 'btsend');
 	}
 
-	tabImport($TImport,$commande);
+	tabImport($TImport,$commande,$comment);
 
 	$form->end();
 	_list_already_dispatched($commande);
@@ -1088,7 +1089,7 @@ function _list_already_dispatched(&$commande) {
 		}
 }
 
-function tabImport(&$TImport,&$commande) {
+function tabImport(&$TImport,&$commande,$comment) {
 global $langs, $db, $conf;
 
 	$PDOdb=new TPDOdb;
@@ -1331,7 +1332,7 @@ global $langs, $db, $conf;
 		echo '<div id="actionVentilation">';
 		echo 'Date de réception : '.$form->calendrier('', 'date_recep', time());
 
-		echo ' - '.$langs->trans("Comment").' : '.$form->texte('', 'comment', $_POST["comment"]?GETPOST("comment"):$langs->trans("DispatchSupplierOrder",$commande->ref), 60,128);
+		echo ' - '.$langs->trans("Comment").' : '.$form->texte('', 'comment', !empty($comment)?$comment:$langs->trans("DispatchSupplierOrder",$commande->ref), 60,128);
 
 		echo ' '.$form->btsubmit($langs->trans('AssetVentil'), 'bt_create');
 		echo '</div>';

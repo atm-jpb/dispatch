@@ -32,7 +32,7 @@ class ActionsDispatch
 			
 			define('INC_FROM_DOLIBARR',true);
 			dol_include_once('/dispatch/config.php');
-			dol_include_once('/asset/class/asset.class.php');
+			dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
 			dol_include_once('/dispatch/class/dispatchdetail.class.php');
 			dol_include_once('/dispatch/class/dispatchasset.class.php');
 			dol_include_once('/core/lib/product.lib.php');
@@ -69,6 +69,7 @@ class ActionsDispatch
 						$TRecepDetail = $details->LoadAllBy($PDOdb, array('fk_expeditiondet' => $fkExpeditionLine));
 
 						if(count($TRecepDetail) > 0) {
+							if(!empty($line->description) && $line->description != $line->desc) $line->desc.=$line->description.'<br />'; // Sinon Dans certains cas desc écrase description
 							$line->desc .= "<br>Produit(s) expédié(s) : ";
 
 							foreach($TRecepDetail as $detail) {
@@ -113,7 +114,7 @@ class ActionsDispatch
 
 		$unite = (($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($detail->weight_reel_unit, $asset->assetType->measuring_units));
 
-		if(empty($res->lot_number)) {
+		if(empty($asset->lot_number)) {
 			$desc = "<br>- N° série : ".$asset->serial_number;
 		} else {
 			$desc = "<br>- ".$asset->lot_number." x ".$detail->weight_reel." ".$unite;

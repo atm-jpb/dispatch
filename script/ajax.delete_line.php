@@ -1,6 +1,6 @@
 <?php
 require("../config.php");
-require(DOL_DOCUMENT_ROOT."/custom/asset/class/asset.class.php");
+dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
 
 if(isset($_POST['id_detail'])){
 	$id_detail = $_POST['id_detail'];

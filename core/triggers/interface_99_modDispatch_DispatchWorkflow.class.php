@@ -131,7 +131,7 @@ class InterfaceDispatchWorkflow
 
 					$dd->loadLines($PDOdb, $idExpeditionDet);
 
-					if($conf->asset->enabled){
+					if($conf->{ ATM_ASSET_NAME }->enabled){
 						// Création des mouvements de stock de flacon
 						foreach($dd->lines as $detail) {
 							// Création du mouvement de stock standard
@@ -192,12 +192,31 @@ class InterfaceDispatchWorkflow
 			dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 		}
 
+		if($action == 'SHIPPING_DELETE')
+		{
+			dol_include_once('/dispatch/config.php');
+			dol_include_once('/dispatch/class/dispatchdetail.class.php');
+
+			$PDOdb = new TPDOdb;
+
+			foreach($object->lines as &$line)
+			{
+				$dispatchDetail = new TDispatchDetail;
+				$TDetail = $dispatchDetail->LoadAllBy($PDOdb, array('fk_expeditiondet' => $line->id));
+
+				foreach($TDetail as &$detail)
+				{
+					$detail->delete($PDOdb);
+				}
+			}
+		}
+
 		return 0;
 	}
 
 	private function create_flacon_stock_mouvement(&$PDOdb, &$linedetail, $numref,$fk_soc = 0) {
 		global $user, $langs, $conf;
-		dol_include_once('/asset/class/asset.class.php');
+		dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
 		dol_include_once('/product/class/product.class.php');
 		dol_include_once('/expedition/class/expedition.class.php');
 
@@ -242,7 +261,7 @@ class InterfaceDispatchWorkflow
 
 		$sql = "SELECT p.weight, p.weight_units
 				FROM ".MAIN_DB_PREFIX."product as p
-					LEFT JOIN ".MAIN_DB_PREFIX."asset as a ON (a.fk_product = p.rowid)
+					LEFT JOIN ".MAIN_DB_PREFIX.ATM_ASSET_NAME." as a ON (a.fk_product = p.rowid)
 					LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet_asset as eda ON (eda.fk_asset = a.rowid)
 					LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet as ed ON (ed.rowid = eda.fk_expeditiondet)
 				WHERE ed.rowid = ".$linedetail->fk_expeditiondet;
