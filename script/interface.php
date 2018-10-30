@@ -59,9 +59,14 @@ function _serial_number(&$PDOdb, $sn) {
 function _autocomplete_asset(&$PDOdb, $lot_number, $productid, $expeditionID, $expeditionDetID) {
 	global $db, $conf, $langs;
 	$langs->load('other');
+
 	dol_include_once('/core/lib/product.lib.php');
+	dol_include_once('/societe/class/societe.class.php');
 
 	$sql = "SELECT fk_entrepot FROM ".MAIN_DB_PREFIX."expeditiondet WHERE rowid = ".$expeditionDetID." LIMIT 1";
+
+	$societe = new Societe($db);
+	$societe->fetch('', $conf->global->MAIN_INFO_SOCIETE_NOM);
 
 	$TWarehouses = $PDOdb->ExecuteAsArray($sql);
 	$warehouseID = $TWarehouses[0]->fk_entrepot;
@@ -73,6 +78,16 @@ function _autocomplete_asset(&$PDOdb, $lot_number, $productid, $expeditionID, $e
 			LEFT JOIN ".MAIN_DB_PREFIX."expedition e ON (e.rowid = ed.fk_expedition)
 			WHERE a.lot_number = '".$lot_number."'
 			AND a.fk_product = ".$productid;
+
+	if(! empty($societe->id))
+	{
+		// Par défaut, dispatch associe un équipement réceptionné par commande fournisseur à une société qui porte le même nom que $mysoc
+		$sql.= "
+			AND (COALESCE(a.fk_societe_localisation, 0) IN (0, ".$societe->id."))";
+	} else {
+		$sql.= "
+			AND COALESCE(a.fk_societe_localisation, 0) = 0";
+	}
 
 	if(! empty($warehouseID)) {
 		$sql.= "
