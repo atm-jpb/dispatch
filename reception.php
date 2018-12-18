@@ -227,30 +227,29 @@
 		if ($_POST['ToDispatch']) {
 			$ToDispatch = GETPOST('ToDispatch');
 			if(!empty($ToDispatch)) {
-				foreach($ToDispatch as $fk_product=>$tab) {
+				foreach($ToDispatch as $fk_product=>$dummy) {
 
 					$product = new Product($db);
 					$product->fetch($fk_product);
 
-					foreach($tab as $idline=>$null) {
-						$qty = (int)$_POST['TOrderLine'][$idline]['qty'];
-						$fk_warehouse =(int) empty($_POST['TOrderLine'][$idline]['entrepot']) ? GETPOST('id_entrepot') : $_POST['TOrderLine'][$idline]['entrepot'];
 
-						for($ii = 0; $ii < $qty; $ii++) {
-							$TImport[] =array(
-									'ref'=>$product->ref
-									,'numserie'=>''
-									,'lot_number'=>''
-									,'quantity'=>1
-									,'quantity_unit'=>0
-									,'fk_product'=>$product->id
-									,'fk_warehouse'=>$fk_warehouse
-									,'imei'=>''
-									,'firmware'=>''
-									,'dluo'=>date('Y-m-d')
-									,'commande_fournisseurdet_asset'=>0
-							);
-						}
+					$qty = (int)$_POST['TOrderLine'][$fk_product]['qty'];
+					$fk_warehouse =(int) empty($_POST['TOrderLine'][$fk_product]['entrepot']) ? GETPOST('id_entrepot') : $_POST['TOrderLine'][$fk_product]['entrepot'];
+
+					for($ii = 0; $ii < $qty; $ii++) {
+						$TImport[] =array(
+								'ref'=>$product->ref
+								,'numserie'=>''
+								,'lot_number'=>''
+								,'quantity'=>1
+								,'quantity_unit'=>0
+								,'fk_product'=>$product->id
+								,'fk_warehouse'=>$fk_warehouse
+								,'imei'=>''
+								,'firmware'=>''
+								,'dluo'=>date('Y-m-d')
+								,'commande_fournisseurdet_asset'=>0
+						);
 					}
 				}
 			}
@@ -644,7 +643,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 				$db->free($resql);
 			}
 
-			$sql = "SELECT l.rowid, l.fk_product, l.subprice, l.remise_percent, SUM(l.qty) as qty,";
+			$sql = "SELECT l.fk_product, SUM(l.qty * l.subprice) / SUM(l.qty) AS subprice, SUM(l.qty * l.remise_percent) / SUM(l.qty) AS remise_percent, SUM(l.qty) as qty,";
 			$sql.= " p.ref, p.label";
 
 			if(DOL_VERSION>=3.8) {
@@ -655,10 +654,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 			$sql.= " FROM ".MAIN_DB_PREFIX."commande_fournisseurdet as l";
 			$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."product as p ON l.fk_product=p.rowid";
 			$sql.= " WHERE l.fk_commande = ".$commande->id;
-			$sql.= " GROUP BY l.rowid, l.fk_product, l.subprice, l.remise_percent,p.ref, p.label";	// Calculation of amount dispatched is done per fk_product so we must group by fk_product
-			if(DOL_VERSION>=3.8) {
-				$sql.=", p.tobatch";
-			}
+			$sql.= " GROUP BY l.fk_product";	// Calculation of amount dispatched is done per fk_product so we must group by fk_product
 			$sql.= " ORDER BY p.ref, p.label";
 
 			$resql = $db->query($sql);
@@ -718,6 +714,8 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 				$nbfreeproduct=0;
 				$nbproduct=0;
 
+				$TOrderLine = GETPOST('TOrderLine');
+
 				$var=true;
 				while ($i < $num)
 				{
@@ -731,14 +729,12 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 					else
 					{
 
-						$TOrderLine = GETPOST('TOrderLine');
-
 						if (!empty($TProductCount[$objp->fk_product])) {
 								$serializedProduct = 1;
 						}
 						
-						if(isset($TOrderLine[$objp->rowid]['qty']) && !isset($_POST['bt_create'])) {
-							$remaintodispatch = $TOrderLine[$objp->rowid]['qty'];
+						if(isset($TOrderLine[$objp->fk_product]['qty']) && !isset($_POST['bt_create'])) {
+							$remaintodispatch = $TOrderLine[$objp->fk_product]['qty'];
 						} else {
 							$remaintodispatch=price2num($objp->qty - ((float) $products_dispatched[$objp->fk_product]), 5);	// Calculation of dispatched
 						}
@@ -780,19 +776,19 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 						if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE)
 						{
 							print '<td align="right">';
-							print '<input type="text" id="TOrderLine['.$objp->rowid.'][supplier_qty]" name="TOrderLine['.$objp->rowid.'][supplier_qty]" size="8" value="'.$objp->qty.'">';
+							print '<input type="text" id="TOrderLine['.$objp->fk_product.'][supplier_qty]" name="TOrderLine['.$objp->fk_product.'][supplier_qty]" size="8" value="'.$objp->qty.'">';
 							print '</td>';
 						}
 						if($conf->global->DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION)
 						{
 							print '<td align="right">';
-							print '<input type="text" id="TOrderLine['.$objp->rowid.'][supplier_price]" name="TOrderLine['.$objp->rowid.'][supplier_price]" size="8" value="'.$exprice.'">';
+							print '<input type="text" id="TOrderLine['.$objp->fk_product.'][supplier_price]" name="TOrderLine['.$objp->fk_product.'][supplier_price]" size="8" value="'.$exprice.'">';
 							print '</td>';
 						}
 						if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE)
 						{
 							print '<td align="right">';
-							print '<input type="checkbox" id="TOrderLine['.$objp->rowid.'][generate_supplier_tarif]" name="TOrderLine['.$objp->rowid.'][generate_supplier_tarif]">';
+							print '<input type="checkbox" id="TOrderLine['.$objp->fk_product.'][generate_supplier_tarif]" name="TOrderLine['.$objp->fk_product.'][generate_supplier_tarif]">';
 							print '</td>';
 						}
 
@@ -806,10 +802,10 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 						print '<td align="right">';
 
 						if($remaintodispatch==0) {
-							echo $form->texteRO('', 'TOrderLine['.$objp->rowid.'][qty]', $remaintodispatch, 5,30);
+							echo $form->texteRO('', 'TOrderLine['.$objp->fk_product.'][qty]', $remaintodispatch, 5,30);
 						}
 						else {
-							echo $form->texte('', 'TOrderLine['.$objp->rowid.'][qty]', $remaintodispatch, 5,30);
+							echo $form->texte('', 'TOrderLine['.$objp->fk_product.'][qty]', $remaintodispatch, 5,30);
 						}
 
 						print '</td>';
@@ -822,11 +818,11 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 						if (count($formproduct->cache_warehouses)>1)
 						{
-							print $formproduct->selectWarehouses(($TOrderLine[$objp->rowid]) ? $TOrderLine[$objp->rowid]['entrepot'] : '', 'TOrderLine['.$objp->rowid.'][entrepot]','',1,0,$objp->fk_product,'',0,1);
+							print $formproduct->selectWarehouses(($TOrderLine[$objp->fk_product]) ? $TOrderLine[$objp->fk_product]['entrepot'] : '', 'TOrderLine['.$objp->fk_product.'][entrepot]','',1,0,$objp->fk_product,'',0,1);
 						}
 						elseif  (count($formproduct->cache_warehouses)==1)
 						{
-							print $formproduct->selectWarehouses(($TOrderLine[$objp->rowid]) ? $TOrderLine[$objp->rowid]['entrepot'] : '', 'TOrderLine['.$objp->rowid.'][entrepot]','',0,0,$objp->fk_product,'',0,1);
+							print $formproduct->selectWarehouses(($TOrderLine[$objp->fk_product]) ? $TOrderLine[$objp->fk_product]['entrepot'] : '', 'TOrderLine['.$objp->fk_product.'][entrepot]','',0,0,$objp->fk_product,'',0,1);
 						}
 						else
 						{
@@ -836,18 +832,18 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 
 						print '<td align="right">';
-						/*print $form->checkbox1('', 'TOrderLine['.$objp->rowid.'][serialized]', 1, $serializedProduct); */
+						/*print $form->checkbox1('', 'TOrderLine['.$objp->fk_product.'][serialized]', 1, $serializedProduct); */
 
 						if($remaintodispatch==0) {
 							print $langs->trans('Yes').img_info('SerializedProductInfo');
 						} else {
-							print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']['.$objp->rowid.']').img_info($langs->trans('SerializeThisProductInfo'));
+							print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']').img_info($langs->trans('SerializeThisProductInfo'));
 						}
 
 						print '</td>';
 
-						print $form->hidden('TOrderLine['.$objp->rowid.'][fk_product]', $objp->fk_product);
-						print $form->hidden('TOrderLine['.$objp->rowid.'][serialized]', $serializedProduct);
+						print $form->hidden('TOrderLine['.$objp->fk_product.'][fk_product]', $objp->fk_product);
+						print $form->hidden('TOrderLine['.$objp->fk_product.'][serialized]', $serializedProduct);
 						print "</tr>\n";
 
 					}
