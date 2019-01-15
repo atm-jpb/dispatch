@@ -35,117 +35,6 @@
 	$parameters=array();
 	$hookmanager->executeHooks('doAction',$parameters, $commandefourn, $action);
 //var_dump($TImport);exit;
-	function _loadDetail(&$PDOdb,&$commandefourn){
-
-		$TImport = array();
-
-		foreach($commandefourn->lines as $line){
-
-			$sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.fk_warehouse, ca.imei, ca.firmware,ca.lot_number,ca.weight_reel,ca.weight_reel_unit, ca.dluo
-					FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset as ca
-						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = ca.fk_product)
-					WHERE ca.fk_commandedet = ".$line->id."
-						ORDER BY ca.rang ASC";
-
-			$PDOdb->Execute($sql);
-
-			while ($PDOdb->Get_line()) {
-				$TImport[] =array(
-					'ref'=>$PDOdb->Get_field('ref')
-					,'numserie'=>$PDOdb->Get_field('serial_number')
-					,'lot_number'=>$PDOdb->Get_field('lot_number')
-					,'quantity'=>$PDOdb->Get_field('weight_reel')
-					,'quantity_unit'=>$PDOdb->Get_field('weight_reel_unit')
-					,'imei'=>$PDOdb->Get_field('imei')
-					,'firmware'=>$PDOdb->Get_field('firmware')
-					,'fk_product'=>$PDOdb->Get_field('rowid')
-					,'fk_warehouse'=>$PDOdb->Get_field('fk_warehouse')
-					,'dluo'=>$PDOdb->Get_field('dluo')
-					,'commande_fournisseurdet_asset'=>$PDOdb->Get_field('idline')
-				);
-			}
-		}
-
-		return $TImport;
-	}
-
-	function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null,$comment=''){
-		global $db, $conf, $user;
-//var_dump($_POST['TLine']);exit;
-		//Charge le produit associé à l'équipement
-		$prodAsset = new Product($db);
-		$prodAsset->fetch('',$refproduit);
-		
-		//TODO incompréhensible - Cette notion est dispo depuis la 3.9 mettre à jour
-		//Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
-		foreach($commandefourn->lines as $commandeline){
-			if($commandeline->fk_product == $prodAsset->id){
-				$fk_line = $commandeline->id;
-			}
-		}
-
-		if (!empty($_POST['TLine'][$k])) {
-			if ($numserie != $_POST['TLine'][$k]['numserie']) {
-				$line_update = true;
-			}
-		}
-		//Sauvegarde (ajout/MAJ) des lignes de détail d'expédition
-		$recepdetail = new TRecepDetail;
-
-		//pre($TImport,true);
-
-		$fk_line_receipt = !empty($_POST['TLine'][$k]['commande_fournisseurdet_asset']) ? (int)$_POST['TLine'][$k]['commande_fournisseurdet_asset'] : 0;
-		if($fk_line_receipt>0){
-			$recepdetail->load($PDOdb, $fk_line_receipt);
-			$lineFound = true;
-		}
-		else {
-			$lineFound = false;
-		}
-
-		$keys = array_keys($TImport);
-		$rang = $keys[count($keys)-1];
-
-		$recepdetail->fk_commandedet = $fk_line;
-		$recepdetail->fk_product = $prodAsset->id;
-		$recepdetail->rang = $rang + 1;
-		$recepdetail->set_date('dluo', ($dluo) ? $dluo : date('Y-m-d H:i:s'));
-		$recepdetail->lot_number = $lot_number;
-		$recepdetail->weight_reel = $quantity;
-		$recepdetail->weight = $quantity;
-		$recepdetail->weight_unit = $quantity_unit;
-		$recepdetail->weight_reel_unit = $quantity_unit;
-		$recepdetail->serial_number = $numserie;
-		$recepdetail->imei = $imei;
-		$recepdetail->firmware = $firmware;
-		$recepdetail->fk_warehouse = $entrepot;
-		/*$recepdetail->weight = 1;
-		$recepdetail->weight_reel = 1;
-		$recepdetail->weight_unit = 0;
-		$recepdetail->weight_reel_unit = 0;*/
-
-		$recepdetail->save($PDOdb);
-
-		$currentLine = array(
-				'ref'=>$prodAsset->ref
-				,'numserie'=>$numserie
-				,'lot_number'=>$lot_number
-				,'quantity'=>$quantity
-				,'quantity_unit'=>$quantity_unit
-				,'fk_product'=>$prodAsset->id
-				,'fk_warehouse'=>$entrepot
-				,'imei'=>$imei
-				,'firmware'=>$firmware
-				,'dluo'=>$recepdetail->get_date('dluo','Y-m-d H:i:s')
-				,'commande_fournisseurdet_asset'=>$recepdetail->getId()
-		);
-
-		//Rempli le tableau utilisé pour l'affichage des lignes
-		($lineFound) ? $TImport[$k] = $currentLine : $TImport[] =$currentLine ;
-		
-		return $TImport;
-
-	}
 
 	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
 		$f1  =file($_FILES['file1']['tmp_name']);
@@ -409,6 +298,7 @@
 			foreach($TOrderLine as &$line) {
 
 				if(!isset($TProdVentil[$line['fk_product']])) $TProdVentil[$line['fk_product']]['qty'] = 0;
+				$TProdVentil[$line['fk_product']]['price'] = $line['subprice'];
 				// Si serialisé on ne prend pas la quantité déjà calculé plus haut.
 				if(empty($line['serialized'] )) $TProdVentil[$line['fk_product']]['qty']+=$line['qty'];
 
@@ -494,7 +384,7 @@
 				}
 				// END NEW CODE
 				dol_syslog(__METHOD__.' dispatchProduct idprod='.$id_prod.' qty='.$item['qty'], LOG_DEBUG);
-				$ret = $commandefourn->dispatchProduct($user, $id_prod, $item['qty'], empty( $item['entrepot']) ? GETPOST('id_entrepot') : $item['entrepot'],null,$comment);
+				$ret = $commandefourn->dispatchProduct($user, $id_prod, $item['qty'], empty( $item['entrepot']) ? GETPOST('id_entrepot') : $item['entrepot'],$item['price'],$comment);
 			}
 
 			if($commandefourn->statut == 0){
@@ -546,6 +436,117 @@
 
 	fiche($commandefourn, $TImport, $comment);
 
+function _loadDetail(&$PDOdb,&$commandefourn){
+    
+    $TImport = array();
+    
+    foreach($commandefourn->lines as $line){
+        
+        $sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.fk_warehouse, ca.imei, ca.firmware,ca.lot_number,ca.weight_reel,ca.weight_reel_unit, ca.dluo
+			FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset as ca
+				LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = ca.fk_product)
+			WHERE ca.fk_commandedet = ".$line->id."
+				ORDER BY ca.rang ASC";
+        
+        $PDOdb->Execute($sql);
+        
+        while ($PDOdb->Get_line()) {
+            $TImport[] =array(
+                'ref'=>$PDOdb->Get_field('ref')
+                ,'numserie'=>$PDOdb->Get_field('serial_number')
+                ,'lot_number'=>$PDOdb->Get_field('lot_number')
+                ,'quantity'=>$PDOdb->Get_field('weight_reel')
+                ,'quantity_unit'=>$PDOdb->Get_field('weight_reel_unit')
+                ,'imei'=>$PDOdb->Get_field('imei')
+                ,'firmware'=>$PDOdb->Get_field('firmware')
+                ,'fk_product'=>$PDOdb->Get_field('rowid')
+                ,'fk_warehouse'=>$PDOdb->Get_field('fk_warehouse')
+                ,'dluo'=>$PDOdb->Get_field('dluo')
+                ,'commande_fournisseurdet_asset'=>$PDOdb->Get_field('idline')
+            );
+        }
+    }
+    
+    return $TImport;
+}
+
+function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null,$comment=''){
+    global $db, $conf, $user;
+    //var_dump($_POST['TLine']);exit;
+    //Charge le produit associé à l'équipement
+    $prodAsset = new Product($db);
+    $prodAsset->fetch('',$refproduit);
+    
+    //TODO incompréhensible - Cette notion est dispo depuis la 3.9 mettre à jour
+    //Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
+    foreach($commandefourn->lines as $commandeline){
+        if($commandeline->fk_product == $prodAsset->id){
+            $fk_line = $commandeline->id;
+        }
+    }
+    
+    if (!empty($_POST['TLine'][$k])) {
+        if ($numserie != $_POST['TLine'][$k]['numserie']) {
+            $line_update = true;
+        }
+    }
+    //Sauvegarde (ajout/MAJ) des lignes de détail d'expédition
+    $recepdetail = new TRecepDetail;
+    
+    //pre($TImport,true);
+    
+    $fk_line_receipt = !empty($_POST['TLine'][$k]['commande_fournisseurdet_asset']) ? (int)$_POST['TLine'][$k]['commande_fournisseurdet_asset'] : 0;
+    if($fk_line_receipt>0){
+        $recepdetail->load($PDOdb, $fk_line_receipt);
+        $lineFound = true;
+    }
+    else {
+        $lineFound = false;
+    }
+    
+    $keys = array_keys($TImport);
+    $rang = $keys[count($keys)-1];
+    
+    $recepdetail->fk_commandedet = $fk_line;
+    $recepdetail->fk_product = $prodAsset->id;
+    $recepdetail->rang = $rang + 1;
+    $recepdetail->set_date('dluo', ($dluo) ? $dluo : date('Y-m-d H:i:s'));
+    $recepdetail->lot_number = $lot_number;
+    $recepdetail->weight_reel = $quantity;
+    $recepdetail->weight = $quantity;
+    $recepdetail->weight_unit = $quantity_unit;
+    $recepdetail->weight_reel_unit = $quantity_unit;
+    $recepdetail->serial_number = $numserie;
+    $recepdetail->imei = $imei;
+    $recepdetail->firmware = $firmware;
+    $recepdetail->fk_warehouse = $entrepot;
+    /*$recepdetail->weight = 1;
+     $recepdetail->weight_reel = 1;
+     $recepdetail->weight_unit = 0;
+     $recepdetail->weight_reel_unit = 0;*/
+    
+    $recepdetail->save($PDOdb);
+    
+    $currentLine = array(
+        'ref'=>$prodAsset->ref
+        ,'numserie'=>$numserie
+        ,'lot_number'=>$lot_number
+        ,'quantity'=>$quantity
+        ,'quantity_unit'=>$quantity_unit
+        ,'fk_product'=>$prodAsset->id
+        ,'fk_warehouse'=>$entrepot
+        ,'imei'=>$imei
+        ,'firmware'=>$firmware
+        ,'dluo'=>$recepdetail->get_date('dluo','Y-m-d H:i:s')
+        ,'commande_fournisseurdet_asset'=>$recepdetail->getId()
+    );
+    
+    //Rempli le tableau utilisé pour l'affichage des lignes
+    ($lineFound) ? $TImport[$k] = $currentLine : $TImport[] =$currentLine ;
+    
+    return $TImport;
+    
+}
 
 function searchProductInCommandeLine($array, $idprod)
 {
@@ -844,6 +845,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 						print $form->hidden('TOrderLine['.$objp->fk_product.'][fk_product]', $objp->fk_product);
 						print $form->hidden('TOrderLine['.$objp->fk_product.'][serialized]', $serializedProduct);
+						print $form->hidden('TOrderLine['.$objp->fk_product.'][subprice]', $objp->subprice);
 						print "</tr>\n";
 
 					}
