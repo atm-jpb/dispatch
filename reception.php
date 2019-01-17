@@ -154,7 +154,8 @@
 		$TProdVentil = array();
 
 		$TAssetVentil=array();
-
+        $TAssetCreated = array();
+        
 		//Use to calculated corrected order status at the end of dispatch/serialize process
 		$TQtyDispatch=array();
 		$TQtyWished=array();
@@ -250,7 +251,7 @@
 				//pre($asset,true);exit;
 				// Le destockage dans Dolibarr est fait par la fonction de ventilation plus loin, donc désactivation du mouvement créé par l'équipement.
 //				$asset->save($PDOdb, $user,$langs->trans("Asset").' '.$asset->serial_number.' '. $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $line['quantity'], false, $line['fk_product'], false,$fk_entrepot);
-				$asset->save($PDOdb, $user, '', 0, false, 0, true,$fk_entrepot);
+				$TAssetCreated[$asset->fk_product][] = $asset->save($PDOdb, $user, '', 0, false, 0, true,$fk_entrepot);
 
 				$stock = new TAssetStock;
 				$stock->mouvement_stock($PDOdb, $user, $asset->rowid, $line['quantity'], $comment, $asset->rowid);
@@ -284,6 +285,35 @@
 					$unitPrice = $TDispatchEntrepot['qty'] > 0 ? $TDispatchEntrepot['price'] / $TDispatchEntrepot['qty'] : 0;
 					$ret = $commandefourn->dispatchProduct($user,$fk_product, $qty, $fk_entrepot, $unitPrice, $comment);
 
+					if ($ret > 0 && ! empty($conf->stock->enabled) 
+					    && ! empty($conf->global->STOCK_CALCULATE_ON_SUPPLIER_DISPATCH_ORDER)
+					    && ! empty($conf->global->DISPATCH_LINK_ASSET_TO_STOCK_MOVEMENT)) // conf cachée
+					{
+					    // lier les asset créés au mouvement de stock pour en récupérer le prix
+					    if (!empty($TAssetCreated[$fk_product]))
+					    {
+					        foreach ($TAssetCreated[$fk_product] as $asset_id)
+					        {
+					            $sql = "SELECT MAX(rowid) as id FROM ".MAIN_DB_PREFIX."stock_mouvement";
+					            $sql.= " WHERE origintype = 'order_supplier'";
+					            $sql.= " AND fk_origin = " . $commandefourn->id;
+					            $sql.= " AND fk_product = ". $fk_product;
+					            $sql.= " AND fk_entrepot = " . $fk_entrepot;
+					            $res = $db->query($sql);
+					            if ($res)
+					            {
+					                $obj = $db->fetch_object($res);
+					                
+					                $lastStockMouvement = $obj->id;
+					            
+    					            TAsset::set_element_element($asset_id, 'TAssetOFLine', $lastStockMouvement, 'DolStockMouv');
+					            }
+					            
+					            
+					        }
+					    }
+					}
+					
                 	//Build array with quantity serialze by product
                 	$TQtyDispatch[$fk_product]+=$qty;
 				}
