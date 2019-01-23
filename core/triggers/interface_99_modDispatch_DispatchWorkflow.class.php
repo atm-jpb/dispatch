@@ -211,6 +211,22 @@ class InterfaceDispatchWorkflow
 			}
 		}
 
+
+		if($action == 'SHIPPING_CLOSED' && ! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED))
+		{
+			if(! defined('INC_FROM_DOLIBARR')) define('INC_FROM_DOLIBARR', true);
+			dol_include_once('/dispatch/config.php');
+			dol_include_once('/dispatch/lib/dispatch.lib.php');
+
+			$canBeClosed = dispatch_shipment_can_be_closed($object);
+
+			if(empty($canBeClosed))
+			{
+				setEventMessage('ShipmentCannotBeClosedAssetsNotPrepared', 'errors');
+				return -1;
+			}
+		}
+
 		return 0;
 	}
 

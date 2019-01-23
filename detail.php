@@ -64,13 +64,13 @@
 
 	fiche($PDOdb,$expedition, $TImport);
 
-function _loadDetail(&$PDOdb,&$expedition){
+	function _loadDetail(&$PDOdb, &$expedition){
 		
 		$TImport = array();
 
 		foreach($expedition->lines as $line){
 		
-			$sql = "SELECT a.rowid as id,a.serial_number,p.ref,p.rowid, ea.fk_expeditiondet, ea.lot_number, ea.weight_reel, ea.weight_reel_unit
+			$sql = "SELECT a.rowid as id,a.serial_number,p.ref,p.rowid, ea.fk_expeditiondet, ea.lot_number, ea.weight_reel, ea.weight_reel_unit, ea.is_prepared
 					FROM ".MAIN_DB_PREFIX."expeditiondet_asset as ea
 						LEFT JOIN ".MAIN_DB_PREFIX.ATM_ASSET_NAME." as a ON ( a.rowid = ea.fk_asset)
 						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = a.fk_product)
@@ -90,6 +90,7 @@ function _loadDetail(&$PDOdb,&$expedition){
 					,'lot_number'=>$res->lot_number
 					,'quantity'=>$res->weight_reel
 					,'quantity_unit'=>$res->weight_reel_unit
+					,'is_prepared'=>$res->is_prepared
 				);
 			}
 		}
@@ -138,6 +139,7 @@ function _loadDetail(&$PDOdb,&$expedition){
 			$dispatchdetail->weight_reel = (GETPOST('quantity')) ? GETPOST('quantity') : $asset->contenancereel_value;
 			$dispatchdetail->weight_unit = $asset->contenancereel_units;
 			$dispatchdetail->weight_reel_unit = $asset->contenancereel_units;
+			$dispatchdetail->is_prepared = 0;
 
 			$dispatchdetail->save($PDOdb);
 			
@@ -150,6 +152,7 @@ function _loadDetail(&$PDOdb,&$expedition){
 				,'lot_number'=>$asset->lot_number
 				,'quantity'=> (GETPOST('quantity')) ? GETPOST('quantity') : $asset->contenancereel_value
 				,'quantity_unit'=> (GETPOST('quantity')) ? GETPOST('quantity') : $asset->contenancereel_units
+				,'is_prepared' => 0
 			);
 
 		}
@@ -167,9 +170,11 @@ function fiche(&$PDOdb,&$expedition, &$TImport) {
 	$head = shipping_prepare_head($expedition);
 	
 	$title=$langs->trans("Shipment");
-	dol_fiche_head($head, 'dispatch', $title, 0, 'dispatch');
+	dol_fiche_head($head, 'dispatch', $title, 0, 'sending');
 	
 	enteteexpedition($expedition);
+
+	dol_fiche_end();
 	
 	if($expedition->statut == 0 && ! empty($conf->global->DISPATCH_USE_IMPORT_FILE)) {
 		//Form pour import de fichier
@@ -203,18 +208,23 @@ function tabImport(&$TImport,&$expedition) {
 	$PDOdb=new TPDOdb;
 	
 	print count($TImport).' équipement(s) dans votre expédition';
-	
-	$fullColspan = ! empty($conf->global->USE_LOT_IN_OF) ? 5 : 4;
+
+	$fullColspan = 4;
+	if(! empty($conf->global->USE_LOT_IN_OF)) $fullColspan++;
+	if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) $fullColspan++;
 ?>
 	<br>
-	<table width="100%" class="border">
+	<table width="100%" class="noborder">
 		<tr class="liste_titre">
 			<td>Produit</td>
 <?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
 			<td>Numéro de Lot</td>
 <?php } ?>
-                        <td>Numéro de série</td>
+			<td>Numéro de série</td>
 			<td>Quantité</td>
+<?php if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
+			<td>Préparé</td>
+<?php } ?>
 			<td>&nbsp;</td>
 		</tr>
 		
@@ -222,9 +232,10 @@ function tabImport(&$TImport,&$expedition) {
 		$prod = new Product($db);
 		
 		$form->Set_typeaff('view');
-		
-		if(is_array($TImport)){
-			$canEdit = $expedition->statut == 0 || (! empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT) && $expedition->statut == 1);
+
+		$canEdit = $expedition->statut == 0 || (! empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT) && $expedition->statut == 1);
+
+		if(! empty($TImport)){
 
 			foreach ($TImport as $k=>$line) {
 							
@@ -241,13 +252,25 @@ function tabImport(&$TImport,&$expedition) {
 				$assetLot->loadBy($PDOdb,$line['lot_number'],'lot_number');
 				
 				$Trowid = TRequeteCore::get_id_from_what_you_want($PDOdb, MAIN_DB_PREFIX."expeditiondet_asset",array('fk_asset'=>$asset->rowid,'fk_expeditiondet'=>$line['fk_expeditiondet']));
-				?><tr>
-					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref) ?></td>
+				?><tr class="oddeven">
+					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref).$form->hidden('TLine['.$k.'][fk_expeditiondet]', $line['fk_expeditiondet']) ?></td>
 <?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
 					<td><a href="<?php echo dol_buildpath('/' . ATM_ASSET_NAME . '/fiche_lot.php?id='.$assetLot->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30); ?></a></td>
 <?php } ?>
 					<td><a href="<?php echo dol_buildpath('/' . ATM_ASSET_NAME . '/fiche.php?id='.$asset->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30); ?></a></td>
-					<td><?php echo $line['quantity']." ".(($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($line['quantity_unit'],$asset->assetType->measuring_units)); ?></td>
+					<td><?php echo $line['quantity'] . ' ' . (($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($line['quantity_unit'],$asset->assetType->measuring_units)); ?></td>
+<?php
+		if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED))
+		{
+			if($canEdit) $form->Set_typeaff('edit');
+?>
+					<td>
+						<?php echo $form->checkbox1('', 'TLine[' . $k . '][is_prepared]', 1, ! empty($line['is_prepared']), '', 'isPreparedCheckbox'); ?>
+					</td>
+<?php
+			if($canEdit) $form->Set_typeaff('view');
+		}
+?>
 					<td>
 						<?php 
 							if($canEdit) echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$expedition->id.'&rowid='.$Trowid[0].'">'.img_delete().'</a>';
@@ -257,13 +280,18 @@ function tabImport(&$TImport,&$expedition) {
 
 				<?php
 			} // foreach($TImport)
-
-			if($canEdit) {
-				tabImportAddLine($PDOdb, $expedition, $form, $fullColspan);
-			}
 		} // if(is_array($TImport))
+		else
+		{
 ?>
-		
+				<tr><td colspan="<?php echo $fullColspan; ?>" class="center"><?php echo $langs->trans('NoShipmentAssetDetail'); ?></td></tr>
+<?php
+		}
+
+		if($canEdit) {
+			tabImportAddLine($PDOdb, $expedition, $form, $fullColspan);
+		}
+?>
 	</table>
 	<?php
 
@@ -322,6 +350,9 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 					</td>
 					<td><?php echo $form->combo('','numserie',$TSerialNumber,''); ?></td>
 					<td><?php echo $form->texte('','quantity','',10); ?> <?php echo $DoliFormProduct->load_measuring_units('quantity_unit" id="quantity_unit','weight'); ?></td>
+<?php if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
+					<td>&nbsp;</td>
+<?php } ?>
 					<td><?php echo $form->btsubmit('Ajouter', 'btaddasset'); ?></td>
 				</tr>
 <?php
@@ -338,6 +369,8 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 
 function printJSTabImportAddLine()
 {
+	global $conf;
+
 ?>
 	<script>
 		$(document).ready(function() {
@@ -357,8 +390,7 @@ function printJSTabImportAddLine()
 						type:'get',
 						get:'autocomplete_asset'
 					}
-				}).done(function(results) {
-					var json_results = $.parseJSON(results);
+				}).done(function(json_results) {
 
 					$('#numserie option').remove();
 					cpt = 0;
@@ -376,13 +408,14 @@ function printJSTabImportAddLine()
 							$('#quantity').val(qtyAuto);
 							if(obj.unite != 'unité(s)'){
 								$('#quantity_unit').show();
-								$('#units_lable').remove();
+								$('#units_label').remove();
 								$('#quantity_unit option[value='+obj.unite+']').attr("selected","selected");
 							}
-							else{
+							else if(! $('#quantity_unit').is(':hidden'))
+							{
 								$('#quantity_unit').hide();
 								$('#quantity_unit option[value=0]').attr("selected","selected");
-								$('#quantity').after('<span id="units_lable"> unité(s)</span>');
+								$('#quantity').after('<span id="units_label"> unité(s)</span>');
 							}
 						}
 					});
@@ -407,8 +440,7 @@ function printJSTabImportAddLine()
 						type:'get',
 						get:'autocomplete_lot_number'
 					}
-				}).done(function(results) {
-					var json_results = $.parseJSON(results);
+				}).done(function(json_results) {
 
 					$('#lot_number option').remove();
 
@@ -422,6 +454,41 @@ function printJSTabImportAddLine()
 					});
 				});
 			});
+
+<?php if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
+			$('.isPreparedCheckbox').change(function()
+			{
+				var checkbox = $(this);
+				var shipmentID = $('form#formaddasset input#id').val();
+				var rank = parseInt(checkbox.prop('name').replace('TLine[', '').replace('][is_prepared]', ''));
+				var fk_expeditiondet = $('input[name=TLine\\[' + rank + '\\]\\[fk_expeditiondet\\]]').val();
+				var is_prepared = checkbox.is(':checked') ? 1 : 0;
+
+				$.ajax(
+				{
+					url: '<?php echo dol_escape_js(dol_buildpath('/dispatch/script/interface.php', 1)); ?>'
+					, method: 'POST'
+					, data:
+					{
+						put: 'set_line_is_prepared'
+						, fk_expeditiondet: fk_expeditiondet
+						, is_prepared: is_prepared
+						, dataType: 'json'
+					}
+					, success: function(response)
+					{
+						var preset = response.success ? 'ok' : 'error';
+						var persist = ! response.success;
+
+						$.jnotify(response.message, preset, persist);
+					}
+					, error: function(xhr, textStatus, errorThrown)
+					{
+						$.jnotify(textStatus + ' : ' + errorThrown, 'error', true);
+					}
+				})
+			});
+<?php } ?>
 		});
 	</script>
 <?php

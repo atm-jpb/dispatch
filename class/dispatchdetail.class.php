@@ -1,12 +1,27 @@
 <?php
 
 class TDispatchDetail extends TObjetStd {
+
+	var $fk_expeditiondet;
+	var $fk_asset;
+	var $rang;
+	var $is_prepared;
+	var $lot_number;
+	var $carton;
+	var $numerosuivi;
+	var $weight;
+	var $weight_reel;
+	var $tare;
+	var $weight_unit;
+	var $weight_unit_reel;
+	var $tare_unit;
+
 	function __construct() {
 		global $langs;
 		
 		parent::set_table(MAIN_DB_PREFIX.'expeditiondet_asset');
 		parent::add_champs('fk_expeditiondet,fk_asset','type=entier;index;');
-		parent::add_champs('rang','type=entier;');
+		parent::add_champs('rang,is_prepared','type=entier;');
 		parent::add_champs('lot_number,carton,numerosuivi','type=chaine;');
 		parent::add_champs('weight, weight_reel, tare','type=float;');
 		parent::add_champs('weight_unit, weight_reel_unit, tare_unit','type=entier;');
