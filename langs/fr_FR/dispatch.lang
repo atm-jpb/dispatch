@@ -44,3 +44,9 @@ AssetAlreadyLinked=Equipement déjà lié à cette ventilation
 
 DISPATCH_SHIPPING_VALIDATE_ALERT_IF_NO_DETAIL=Lors de la validation d'une expédition, afficher une alerte si aucun détail des équipements n'a été renseigné
 DispatchExpeditionNoDetail=Le détail des équipements n'a pas été renseigné
+
+DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED=Bloquer la clôture d'une expédition si des équipements sont marqués comme non préparés
+AssetMarkedAsPrepared=Ligne marquée 'Préparée'
+AssetMarkedAsNotPrepared=Ligne marquée 'Non préparée'
+NoShipmentAssetDetail=Pas d'équipements dans cette expédition
+ShipmentCannotBeClosedAssetsNotPrepared=L'expédition ne peut être close : tous les équipements n'ont pas été préparés

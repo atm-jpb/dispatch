@@ -13,8 +13,13 @@ dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
 $PDOdb=new TPDOdb;
 global $langs;
 
+header('Content-Type: application/json');
+
 $get = GETPOST('get');
 _get($PDOdb, $get);
+
+$put = GETPOST('put');
+_put($PDOdb, $put);
 
 function _get(&$PDOdb, $get) {
 
@@ -32,6 +37,17 @@ function _get(&$PDOdb, $get) {
             break;
 	}
 
+}
+
+
+function _put(TPDOdb &$PDOdb, $put)
+{
+	switch($put)
+	{
+		case 'set_line_is_prepared':
+			__out(_set_line_is_prepared($PDOdb, GETPOST('fk_expeditiondet', 'int'), GETPOST('is_prepared', 'int')), 'json');
+			break;
+	}
 }
 
 function _serial_number(&$PDOdb, $sn) {
@@ -145,3 +161,44 @@ function _autocomplete_lot_number(&$PDOdb, $productid) {
 	}
 	return $TLotNumber;
 }
+
+
+/**
+ * Mark a shipment asset detail line as prepared
+ *
+ * @param	TPDOdb	$PDOdb				Database connection
+ * @param	int		$fk_expditiondet	ID of expedition line
+ * @param	int		$is_prepared		0/1, whether the asset has been prepared or not
+ *
+ * @return	array		Response array with success and message fields, to be JSON-encoded
+ */
+function _set_line_is_prepared(TPDOdb &$PDOdb, $fk_expeditiondet, $is_prepared)
+{
+	global $langs;
+
+	dol_include_once('/dispatch/class/dispatchdetail.class.php');
+
+	$langs->load('dispatch@dispatch');
+
+	$dispatchDetail = new TDispatchDetail;
+	$dispatchLoaded = $dispatchDetail->loadBy($PDOdb, $fk_expeditiondet, 'fk_expeditiondet');
+
+	if(empty($dispatchLoaded))
+	{
+		return array('success' => false, 'message' => $langs->trans('CouldNotLoadAssetDetail'));
+	}
+
+	$dispatchDetail->is_prepared = $is_prepared;
+
+	$dispatchID = $dispatchDetail->save($PDOdb);
+
+	if(empty($dispatchID))
+	{
+		return array('success' => false, 'message' => $langs->trans('CouldNotSaveAssetDetail'));
+	}
+
+	$message = $langs->trans(empty($is_prepared) ? 'AssetMarkedAsNotPrepared' : 'AssetMarkedAsPrepared');
+
+	return array('success' => true, 'message' => $message);
+}
+

@@ -9,10 +9,14 @@ class ActionsDispatch
       */
 	function addMoreActionsButtons($parameters, &$object, &$action, $hookmanager)
 	{
-		if(in_array('ordersuppliercard', explode(':',$parameters['context'])))
+		global $conf;
+
+		$TContexts = explode(':', $parameters['context']);
+
+		if(in_array('ordersuppliercard', $TContexts))
 		{
 			$id = GETPOST('id');
-			$targetUrl = dol_buildpath('/dispatch/reception.php', 2).'?id='.$id
+			$targetUrl = dol_buildpath('/dispatch/reception.php', 2).'?id='.$id;
 			?>
 			<script>
 				$(document).ready(function() {
@@ -20,9 +24,35 @@ class ActionsDispatch
 				});
 			</script>
 			<?php
-
-			return 0;
 		}
+
+		if(in_array('expeditioncard', $TContexts) && $object->statut == Expedition::STATUS_VALIDATED && ! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED))
+		{
+			if(! defined('INC_FROM_DOLIBARR')) define('INC_FROM_DOLIBARR', true);
+			dol_include_once('/dispatch/config.php');
+			dol_include_once('/dispatch/lib/dispatch.lib.php');
+
+			$canBeClosed = dispatch_shipment_can_be_closed($object);
+
+			if(empty($canBeClosed))
+			{
+				global $langs;
+
+				$langs->load('dispatch@dispatch');
+
+				$message = dol_escape_js($langs->transnoentities('ShipmentCannotBeClosedAssetsNotPrepared'), 1);
+?>
+				<script>
+					$(document).ready(function()
+					{
+						$('a.butAction[href*=action\\=classifyclosed]').removeClass('butAction').addClass('butActionRefused').prop('href', '#').prop('title', '<?php echo $message; ?>');
+					});
+				</script>
+<?php
+			}
+		}
+
+		return 0;
 	}
 
 	function beforePDFCreation($parameters, &$object, &$action, $hookmanager) {

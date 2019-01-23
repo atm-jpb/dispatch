@@ -155,6 +155,14 @@
 	print ajax_constantonoff('DISPATCH_SHIPPING_VALIDATE_ALERT_IF_NO_DETAIL');
 	print '</td></tr>';
 
+	$var=!$var;
+	print '<tr '.$bc[$var].'>';
+	print '<td>'.$langs->trans('DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED').'</td>';
+	print '<td align="center" width="20">&nbsp;</td>';
+	print '<td align="center" width="300">';
+	print ajax_constantonoff('DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED');
+	print '</td></tr>';
+
 	
 	print "</table>";
 
