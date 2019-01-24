@@ -120,7 +120,7 @@ function _loadDetail(&$PDOdb,&$expedition){
 			
 			//Sauvegarde (ajout/MAJ) des lignes de détail d'expédition
 			$dispatchdetail = new TDispatchDetail;
-			
+
 			//Si déjà existant => MAj
 			$PDOdb->Execute("SELECT rowid FROM ".MAIN_DB_PREFIX."expeditiondet_asset WHERE fk_asset = ".$asset->rowid." AND fk_expeditiondet = ".$fk_line_expe." ");
 			if($PDOdb->Get_line()){
