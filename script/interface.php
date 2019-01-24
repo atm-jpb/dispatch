@@ -112,28 +112,27 @@ function _autocomplete_asset(&$PDOdb, $lot_number, $productid, $expeditionID, $e
 
 	$sql.= "
 			GROUP BY a.rowid
-			HAVING NOT(GROUP_CONCAT(e.rowid) IS NOT NULL AND ".$expeditionID." IN (GROUP_CONCAT(e.rowid)))";
+			HAVING NOT(GROUP_CONCAT(e.rowid) IS NOT NULL AND GROUP_CONCAT(e.rowid, ',') REGEXP '(^|\,)" . $expeditionID .  "(\,|$)')";
 
 	$PDOdb->Execute($sql);
 	$TAssetIds = $PDOdb->Get_All();
 
 	$Tres = array();
-	foreach ($TAssetIds as $res) {
-
+	foreach ($TAssetIds as $res)
+	{
 		$asset = new TAsset;
 		$asset->load($PDOdb, $res->rowid);
 		$asset->load_asset_type($PDOdb);
 
-		//pre($asset,true);
-
-		if($PDOdb->Get_field('contenancereel_value') > 0) {
-
-			$Tres[$PDOdb->Get_field('serial_number')]['serial_number'] = $PDOdb->Get_field('serial_number');
-			$Tres[$PDOdb->Get_field('serial_number')]['qty'] = $PDOdb->Get_field('contenancereel_value');
-			$Tres[$PDOdb->Get_field('serial_number')]['unite_string'] = ($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($PDOdb->Get_field('contenancereel_units'),$asset->assetType->measuring_units);
-			$Tres[$PDOdb->Get_field('serial_number')]['unite'] = ($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : $PDOdb->Get_field('contenancereel_units');
+		if($asset->contenancereel_value > 0)
+		{
+			$Tres[$asset->serial_number]['serial_number'] = $asset->serial_number;
+			$Tres[$asset->serial_number]['qty'] = $asset->contenancereel_value;
+			$Tres[$asset->serial_number]['unite_string'] = ($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($asset->contenancereel_units, $asset->assetType->measuring_units);
+			$Tres[$asset->serial_number]['unite'] = ($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : $asset->contenancereel_units;
 		}
 	}
+
 	return $Tres;
 }
 
