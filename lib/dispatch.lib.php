@@ -41,6 +41,5 @@ function dispatch_shipment_can_be_closed(Expedition &$shipment)
 
 	$PDOdb->close();
 
-	// return $canBeClosed;
-	return false;
+	return $canBeClosed;
 }
