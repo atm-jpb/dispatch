@@ -70,7 +70,7 @@
 
 		foreach($expedition->lines as $line){
 		
-			$sql = "SELECT a.rowid as id,a.serial_number,p.ref,p.rowid, ea.fk_expeditiondet, ea.lot_number, ea.weight_reel, ea.weight_reel_unit, ea.is_prepared
+			$sql = "SELECT ea.rowid as fk_expeditiondet_asset, a.rowid as id,a.serial_number,p.ref,p.rowid, ea.fk_expeditiondet, ea.lot_number, ea.weight_reel, ea.weight_reel_unit, ea.is_prepared
 					FROM ".MAIN_DB_PREFIX."expeditiondet_asset as ea
 						LEFT JOIN ".MAIN_DB_PREFIX.ATM_ASSET_NAME." as a ON ( a.rowid = ea.fk_asset)
 						LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = a.fk_product)
@@ -83,7 +83,8 @@
 			foreach ($Tres as $res) {
 				
 				$TImport[] =array(
-					'ref'=>$res->ref
+					'fk_expeditiondet_asset'=>$res->fk_expeditiondet_asset
+					,'ref'=>$res->ref
 					,'numserie'=>$res->serial_number
 					,'fk_product'=>$res->rowid
 					,'fk_expeditiondet'=>$res->fk_expeditiondet
@@ -141,20 +142,23 @@
 			$dispatchdetail->weight_reel_unit = $asset->contenancereel_units;
 			$dispatchdetail->is_prepared = 0;
 
-			$dispatchdetail->save($PDOdb);
-			
-			//Rempli le tableau utilisé pour l'affichage des lignes
-			$TImport[] =array(
-				'ref'=>$prodAsset->ref
-				,'numserie'=>$numserie
-				,'fk_product'=>$prodAsset->id
-				,'fk_expeditiondet'=>$fk_line_expe
-				,'lot_number'=>$asset->lot_number
-				,'quantity'=> (GETPOST('quantity')) ? GETPOST('quantity') : $asset->contenancereel_value
-				,'quantity_unit'=> (GETPOST('quantity')) ? GETPOST('quantity') : $asset->contenancereel_units
-				,'is_prepared' => 0
-			);
+			$fk_expeditiondet_asset = $dispatchdetail->save($PDOdb);
 
+			if($fk_expeditiondet_asset > 0)
+			{
+				// Remplit le tableau utilisé pour l'affichage des lignes
+				$TImport[] =array(
+					'fk_expeditiondet_asset'=>$fk_expeditiondet_asset
+					,'ref'=>$prodAsset->ref
+					,'numserie'=>$numserie
+					,'fk_product'=>$prodAsset->id
+					,'fk_expeditiondet'=>$fk_line_expe
+					,'lot_number'=>$asset->lot_number
+					,'quantity'=> (GETPOST('quantity')) ? GETPOST('quantity') : $asset->contenancereel_value
+					,'quantity_unit'=> (GETPOST('quantity')) ? GETPOST('quantity') : $asset->contenancereel_units
+					,'is_prepared' => 0
+				);
+			}
 		}
 		//pre($TImport,true);
 		return $TImport;
@@ -253,7 +257,7 @@ function tabImport(&$TImport,&$expedition) {
 				
 				$Trowid = TRequeteCore::get_id_from_what_you_want($PDOdb, MAIN_DB_PREFIX."expeditiondet_asset",array('fk_asset'=>$asset->rowid,'fk_expeditiondet'=>$line['fk_expeditiondet']));
 				?><tr class="oddeven">
-					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref).$form->hidden('TLine['.$k.'][fk_expeditiondet]', $line['fk_expeditiondet']) ?></td>
+					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_expeditiondet_asset]', $line['fk_expeditiondet_asset']).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref).$form->hidden('TLine['.$k.'][fk_expeditiondet]', $line['fk_expeditiondet']) ?></td>
 <?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
 					<td><a href="<?php echo dol_buildpath('/' . ATM_ASSET_NAME . '/fiche_lot.php?id='.$assetLot->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30); ?></a></td>
 <?php } ?>
@@ -459,9 +463,8 @@ function printJSTabImportAddLine()
 			$('.isPreparedCheckbox').change(function()
 			{
 				var checkbox = $(this);
-				var shipmentID = $('form#formaddasset input#id').val();
 				var rank = parseInt(checkbox.prop('name').replace('TLine[', '').replace('][is_prepared]', ''));
-				var fk_expeditiondet = $('input[name=TLine\\[' + rank + '\\]\\[fk_expeditiondet\\]]').val();
+				var fk_expeditiondet_asset = $('input[name=TLine\\[' + rank + '\\]\\[fk_expeditiondet_asset\\]]').val();
 				var is_prepared = checkbox.is(':checked') ? 1 : 0;
 
 				$.ajax(
@@ -471,7 +474,7 @@ function printJSTabImportAddLine()
 					, data:
 					{
 						put: 'set_line_is_prepared'
-						, fk_expeditiondet: fk_expeditiondet
+						, fk_expeditiondet_asset: fk_expeditiondet_asset
 						, is_prepared: is_prepared
 						, dataType: 'json'
 					}

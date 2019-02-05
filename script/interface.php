@@ -45,7 +45,7 @@ function _put(TPDOdb &$PDOdb, $put)
 	switch($put)
 	{
 		case 'set_line_is_prepared':
-			__out(_set_line_is_prepared($PDOdb, GETPOST('fk_expeditiondet', 'int'), GETPOST('is_prepared', 'int')), 'json');
+			__out(_set_line_is_prepared($PDOdb, GETPOST('fk_expeditiondet_asset', 'int'), GETPOST('is_prepared', 'int')), 'json');
 			break;
 	}
 }
@@ -165,13 +165,13 @@ function _autocomplete_lot_number(&$PDOdb, $productid) {
 /**
  * Mark a shipment asset detail line as prepared
  *
- * @param	TPDOdb	$PDOdb				Database connection
- * @param	int		$fk_expditiondet	ID of expedition line
- * @param	int		$is_prepared		0/1, whether the asset has been prepared or not
+ * @param	TPDOdb	$PDOdb					Database connection
+ * @param	int		$fk_expditiondet_asset	ID of expeditiondet_asset line
+ * @param	int		$is_prepared			0/1, whether the asset has been prepared or not
  *
  * @return	array		Response array with success and message fields, to be JSON-encoded
  */
-function _set_line_is_prepared(TPDOdb &$PDOdb, $fk_expeditiondet, $is_prepared)
+function _set_line_is_prepared(TPDOdb &$PDOdb, $fk_expeditiondet_asset, $is_prepared)
 {
 	global $langs;
 
@@ -180,7 +180,7 @@ function _set_line_is_prepared(TPDOdb &$PDOdb, $fk_expeditiondet, $is_prepared)
 	$langs->load('dispatch@dispatch');
 
 	$dispatchDetail = new TDispatchDetail;
-	$dispatchLoaded = $dispatchDetail->loadBy($PDOdb, $fk_expeditiondet, 'fk_expeditiondet');
+	$dispatchLoaded = $dispatchDetail->load($PDOdb, $fk_expeditiondet_asset);
 
 	if(empty($dispatchLoaded))
 	{
