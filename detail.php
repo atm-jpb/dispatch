@@ -353,7 +353,7 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 <?php } ?>
 					</td>
 					<td><?php echo $form->combo('','numserie',$TSerialNumber,''); ?></td>
-					<td><?php echo $form->texte('','quantity','',10); ?> <?php echo $DoliFormProduct->load_measuring_units('quantity_unit" id="quantity_unit','weight'); ?></td>
+					<td><input type="number" name="quantity" id="quantity" class="text" min="0" /> <?php echo $DoliFormProduct->load_measuring_units('quantity_unit" id="quantity_unit','weight'); ?></td>
 <?php if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
 					<td>&nbsp;</td>
 <?php } ?>
@@ -409,7 +409,7 @@ function printJSTabImportAddLine()
 						if(cpt == 1) { // A ne faire que pour le premier résultat
 							var qtyOrder = $('#lineexpeditionid option:selected').attr('qty');
 							var qtyAuto = Math.min(qtyOrder, obj.qty)
-							$('#quantity').val(qtyAuto);
+							$('#quantity').val(qtyAuto).prop('max', qtyAuto);
 							if(obj.unite != 'unité(s)'){
 								$('#quantity_unit').show();
 								$('#units_label').remove();
