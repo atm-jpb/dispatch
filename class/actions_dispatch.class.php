@@ -120,7 +120,7 @@ class ActionsDispatch
 			$desc = "<br>- ".$asset->lot_number." x ".$detail->weight_reel." ".$unite;
 		}
 
-		if(! empty($conf->global->ASSET_SHOW_DLUO) && empty($conf->global->DISPATCH_HIDE_DLUO_PDF)) $desc.= ' (DLUO : '.$asset->get_date('dluo').')';
+		if(! empty($conf->global->ASSET_SHOW_DLUO) && empty($conf->global->DISPATCH_HIDE_DLUO_PDF) && ! empty($asset->date_dluo)) $desc.= ' (DLUO : '.$asset->get_date('dluo').')';
 
 		$line->desc.= $desc;
 	}
