@@ -266,13 +266,13 @@ function tabImport(&$TImport,&$expedition) {
 <?php
 		if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED))
 		{
-			if($canEdit) $form->Set_typeaff('edit');
+			if($expedition->statut < Expedition::STATUS_CLOSED) $form->Set_typeaff('edit');
 ?>
 					<td>
 						<?php echo $form->checkbox1('', 'TLine[' . $k . '][is_prepared]', 1, ! empty($line['is_prepared']), '', 'isPreparedCheckbox'); ?>
 					</td>
 <?php
-			if($canEdit) $form->Set_typeaff('view');
+			if($expedition->statut < Expedition::STATUS_CLOSED) $form->Set_typeaff('view');
 		}
 ?>
 					<td>
@@ -301,7 +301,7 @@ function tabImport(&$TImport,&$expedition) {
 
 	$form->end();
 
-	if($canEdit) {
+	if($canEdit || $expedition->statut < Expedition::STATUS_CLOSED) {
 		printJSTabImportAddLine();
 	}
 }

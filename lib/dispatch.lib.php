@@ -19,27 +19,29 @@ function dispatch_shipment_can_be_closed(Expedition &$shipment)
 		$shipment->fetch_lines();
 	}
 
-	$canBeClosed = true;
-
 	foreach($shipment->lines as $line)
 	{
-		$dispatchDetail = new TDispatchDetail;
-		$detailLoaded = $dispatchDetail->loadBy($PDOdb, $line->id, 'fk_expeditiondet');
+		$dispatchDetailStatic = new TDispatchDetail;
+		$TDetail = $dispatchDetailStatic->LoadAllBy($PDOdb, array('fk_expeditiondet' => $line->id));
 
 		// Pas d'équipement associé => ligne suivante
-		if(empty($detailLoaded))
+		if(empty($TDetail))
 		{
 			continue;
 		}
 
-		if(empty($dispatchDetail->is_prepared))
+		foreach($TDetail as $dispatchDetail)
 		{
-			$canBeClosed = false;
-			break;
+			if(empty($dispatchDetail->is_prepared))
+			{
+				$PDOdb->close();
+
+				return false;
+			}
 		}
 	}
 
 	$PDOdb->close();
 
-	return $canBeClosed;
+	return true;
 }
