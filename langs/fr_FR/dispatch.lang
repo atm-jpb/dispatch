@@ -40,7 +40,7 @@ CalculateFollowingSerialNumbers=Calculer les suivants
 DISPATCH_CAN_LINK_ASSET_TO_OBJECT_IN_ANY_STATUS=Permettre de lier/délier des équipements à des objets (commande, contrat, etc.) quel que soit leur statut
 
 NoAssetCreated=Aucun équipement créé en base
-AssetAlreadyLinked=Equipement déjà lié à cette ventilation
+AssetAlreadyLinked=Numéro de série déjà réceptionné
 
 DISPATCH_SHIPPING_VALIDATE_ALERT_IF_NO_DETAIL=Lors de la validation d'une expédition, afficher une alerte si aucun détail des équipements n'a été renseigné
 DispatchExpeditionNoDetail=Le détail des équipements n'a pas été renseigné

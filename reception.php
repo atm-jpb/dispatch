@@ -19,6 +19,7 @@
 	$langs->load('bills');
 	$langs->load('orders');
 	$langs->load('commercial');
+	$langs->load('stocks');
 	$langs->load('dispatch@dispatch');
 
 	$id = GETPOST('id');
@@ -275,6 +276,10 @@
 				//Compteur pour chaque produit : 1 équipement = 1 quantité de produit ventilé
 			//	$TProdVentil[$asset->fk_product]['qty'] += ($line['quantity']) ? $line['quantity'] : 1;
 			}
+			else
+			{
+				setEventMessage($langs->trans('AssetAlreadyLinked') . ' : ' . $line['numserie'], 'errors');
+			}
 
 		}
 
@@ -355,6 +360,11 @@
 			}
 
 		}
+
+		$TProdVentil = array_filter($TProdVentil, function($line)
+		{
+			return $line['qty'] > 0;
+		});
 
 
 		dol_syslog(__METHOD__.' $TProdVentil='.var_export($TProdVentil,true), LOG_DEBUG);
@@ -607,9 +617,12 @@ global $langs, $db, $conf;
 	$head = ordersupplier_prepare_head($commande);
 
 	$title=$langs->trans("SupplierOrder");
-	dol_fiche_head($head, 'recepasset', $title, 0, 'order');
+	$notab=0;
+	dol_fiche_head($head, 'recepasset', $title, $notab, 'order');
 
 	entetecmd($commande);
+
+	dol_fiche_end($notab);
 
 	$form=new TFormCore('auto','formrecept','post', true);
 	echo $form->hidden('action', 'SAVE');
@@ -1368,25 +1381,65 @@ global $langs, $db, $conf;
 
 }
 
-function entetecmd(&$commande) {
-global $langs, $db;
+function entetecmd(&$commande)
+{
+	global $langs, $db, $form, $user, $conf;
+
+	if(empty($commande->thirdparty) && method_exists($commande, 'fetch_thirdparty'))
+	{
+		$commande->fetch_thirdparty();
+	}
+
+	if(! is_object($form))
+	{
+		$form = new Form($db);
+	}
+
+	$author = new User($db);
+	$author->fetch($commande->user_author_id);
+
+	if(function_exists('dol_banner_tab'))
+	{
+		dol_include_once('/projet/class/project.class.php');
+
+		$linkback = '<a href="'.DOL_URL_ROOT.'/fourn/commande/list.php?restore_lastsearch_values=1">'.$langs->trans("BackToList").'</a>';
+
+		$morehtmlref='<div class="refidno">';
+		// Ref supplier
+		$morehtmlref.= $langs->trans('RefSupplier') . ' : ' . $commande->ref_supplier;
+		// Thirdparty
+		$morehtmlref.='<br>'.$langs->trans('ThirdParty') . ' : ' . $commande->thirdparty->getNomUrl(1);
+		if (empty($conf->global->MAIN_DISABLE_OTHER_LINK) && $commande->thirdparty->id > 0) $morehtmlref.=' (<a href="'.DOL_URL_ROOT.'/fourn/commande/list.php?socid='.$commande->thirdparty->id.'&search_company='.urlencode($commande->thirdparty->name).'">'.$langs->trans("OtherOrders").'</a>)';
+		// Project
+		if (! empty($conf->projet->enabled))
+		{
+			$langs->load("projects");
+			$morehtmlref.='<br>'.$langs->trans('Project') . ' : ';
+
+			if (! empty($commande->fk_project)) {
+				$proj = new Project($db);
+				$proj->fetch($commande->fk_project);
+				$morehtmlref.='<a href="'.DOL_URL_ROOT.'/projet/card.php?id=' . $commande->fk_project . '" title="' . $langs->trans('ShowProject') . '">';
+				$morehtmlref.=$proj->ref;
+				$morehtmlref.='</a>';
+				if(! empty($proj->title)) $morehtmlref.=' - '.$proj->title;
+			}
+		}
+		$morehtmlref.='</div>';
+
+		dol_banner_tab($commande, 'ref', $linkback, 1, 'ref', 'ref', $morehtmlref);
+	}
 
 
-		$form =	new Form($db);
+	/*
+	 *	Commande
+	 */
+	print '<table class="noborder" width="100%">';
 
-		$soc = new Societe($db);
-		$soc->fetch($commande->socid);
-
-		$author = new User($db);
-		$author->fetch($commande->user_author_id);
-
-		/*
-		 *	Commande
-		 */
-		print '<table class="border" width="100%">';
-
+	if(! function_exists('dol_banner_tab'))
+	{
 		// Ref
-		print '<tr><td width="20%">'.$langs->trans("Ref").'</td>';
+		print '<tr><td>'.$langs->trans("Ref").'</td>';
 		print '<td colspan="2">';
 		print $form->showrefnav($commande,'ref','',1,'ref','ref');
 		print '</td>';
@@ -1394,7 +1447,7 @@ global $langs, $db;
 
 		// Fournisseur
 		print '<tr><td>'.$langs->trans("Supplier")."</td>";
-		print '<td colspan="2">'.$soc->getNomUrl(1,'supplier').'</td>';
+		print '<td colspan="2">' . $commande->thirdparty->getNomUrl(1, 'supplier') . '</td>';
 		print '</tr>';
 
 		// Statut
@@ -1403,32 +1456,30 @@ global $langs, $db;
 		print '<td colspan="2">';
 		print $commande->getLibStatut(4);
 		print "</td></tr>";
+	}
 
-		// Date
-		if ($commande->methode_commande_id > 0)
-		{
-			print '<tr><td>'.$langs->trans("Date").'</td><td colspan="2">';
-			if ($commande->date_commande)
-			{
-				print dol_print_date($commande->date_commande,"dayhourtext")."\n";
-			}
-			print "</td></tr>";
-
-			if ($commande->methode_commande)
-			{
-				print '<tr><td>'.$langs->trans("Method").'</td><td colspan="2">'.$commande->methode_commande.'</td></tr>';
-			}
+	// Date
+	if ($commande->methode_commande_id > 0)
+	{
+		print '<tr><td class="titlefield">' . $langs->trans("Date") . '</td><td colspan="2">';
+		if ($commande->date_commande) {
+			print dol_print_date($commande->date_commande, "dayhourtext") . "\n";
 		}
+		print "</td></tr>";
 
-		// Auteur
-		print '<tr><td>'.$langs->trans("AuthorRequest").'</td>';
-		print '<td colspan="2">'.$author->getNomUrl(1).'</td>';
-		print '</tr>';
+		if ($commande->methode_commande)
+		{
+			print '<tr><td>' . $langs->trans("Method") . '</td><td colspan="2">' . $commande->methode_commande . '</td></tr>';
+		}
+	}
 
-		print "</table>";
+	// Auteur
+	print '<tr><td>' . $langs->trans("AuthorRequest") . '</td>';
+	print '<td colspan="2">' . $author->getNomUrl(1) . '</td>';
+	print '</tr>';
 
-		//if ($mesg) print $mesg;
-		print '<br>';
+	print "</table>";
 
-
+	//if ($mesg) print $mesg;
+	print '<br>';
 }
