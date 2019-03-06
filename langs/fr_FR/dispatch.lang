@@ -50,3 +50,5 @@ AssetMarkedAsPrepared=Ligne marquée 'Préparée'
 AssetMarkedAsNotPrepared=Ligne marquée 'Non préparée'
 NoShipmentAssetDetail=Pas d'équipements dans cette expédition
 ShipmentCannotBeClosedAssetsNotPrepared=L'expédition ne peut être close : tous les équipements n'ont pas été préparés
+
+NoBDRAssetDetail=Pas d'équipements dans ce bon de retour
