@@ -35,7 +35,6 @@ function _get(&$PDOdb, $get) {
 		case 'autocomplete_lot_number':
             __out(_autocomplete_lot_number($PDOdb,GETPOST('productid')),'json');
             break;
-
 	}
 
 }

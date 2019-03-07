@@ -4,7 +4,6 @@
 
 	dol_include_once('/expedition/class/expedition.class.php' );
 	dol_include_once('/dispatch/class/dispatchdetail.class.php' );
-	dol_include_once('/dispatch/class/objectdetail.class.php' );
 	dol_include_once('/product/class/html.formproduct.class.php' );
 	dol_include_once('/core/lib/admin.lib.php' );
 	dol_include_once('/core/lib/sendings.lib.php' );
@@ -15,29 +14,13 @@
 	$langs->load('orders');
 	$PDOdb=new TPDOdb;
 
-	$type_object = GETPOST('type_object');
 	$id = GETPOST('id');
-	$ref= GETPOST('ref');
 
-	if ($type_object == 'bonderetour')
-	{
-		dol_include_once('/bonderetour/class/bonderetour.class.php');
-		dol_include_once('/bonderetour/lib/bonderetour.lib.php');
-
-		$object = new Bonderetour($db);
-		$object->fetch($id, $ref);
-		$detailClassName = 'TObjectDetail';
-		$langs->load('bonderetour@bonderetour');
-	}
-	else
-	{
-		$object = new Expedition($db);
-		$object->fetch($id, $ref);
-		$detailClassName = 'TDispatchDetail';
-	}
-
+	$expedition = new Expedition($db);
+	$expedition->fetch($id);
+	
 	$action = GETPOST('action');
-	$TImport = _loadDetail($PDOdb, $object);
+	$TImport = _loadDetail($PDOdb, $expedition);
 	
 	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
 		$f1  =file($_FILES['file1']['tmp_name']);
@@ -48,7 +31,7 @@
 
 			list($ref, $numserie, $imei, $firmware)=str_getcsv($line,';','"');
 
-			$TImport = _addObjectdetLine($PDOdb,$TImport,$object,$numserie);
+			$TImport = _addExpeditiondetLine($PDOdb,$TImport,$expedition,$numserie);
 		}
 		
 	}
@@ -70,7 +53,7 @@
 		$asset = new TAsset;
 		if($asset->loadBy($PDOdb, $numserie, 'serial_number')){
 				
-			_addObjectdetLine($PDOdb,$TImport,$object,$numserie);
+			_addExpeditiondetLine($PDOdb,$TImport,$expedition,$numserie);
 
 			setEventMessage('Numéro de série enregistré');
 		}
@@ -79,13 +62,13 @@
 		}		
 	}
 
-	fiche($PDOdb,$object, $TImport);
+	fiche($PDOdb,$expedition, $TImport);
 
-	function _loadDetail(&$PDOdb, &$object){
+	function _loadDetail(&$PDOdb, &$expedition){
 		
 		$TImport = array();
 
-		foreach($object->lines as $line){
+		foreach($expedition->lines as $line){
 		
 			$sql = "SELECT ea.rowid as fk_expeditiondet_asset, a.rowid as id,a.serial_number,p.ref,p.rowid, ea.fk_expeditiondet, ea.lot_number, ea.weight_reel, ea.weight_reel_unit, ea.is_prepared
 					FROM ".MAIN_DB_PREFIX."expeditiondet_asset as ea
@@ -116,7 +99,7 @@
 		return $TImport;
 	}
 
-	function _addObjectdetLine(&$PDOdb,&$TImport,&$object,$numserie){
+	function _addExpeditiondetLine(&$PDOdb,&$TImport,&$expedition,$numserie){
 		global $db;
 		
 		//Charge l'asset lié au numéro de série dans le fichier
@@ -130,7 +113,7 @@
 			$fk_line_expe = (int)GETPOST('lineexpeditionid');
 			if( empty($fk_line_expe) ) { 
 				//Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
-				foreach($object->lines as $expeline){
+				foreach($expedition->lines as $expeline){
 					if($expeline->fk_product == $prodAsset->id){
 						$fk_line_expe = $expeline->line_id;
 					}
@@ -183,37 +166,28 @@
 	}
 
 
-function fiche(&$PDOdb,&$object, &$TImport) {
+function fiche(&$PDOdb,&$expedition, &$TImport) {
 	global $langs, $db, $conf;
 
 	llxHeader();
 
-	if (get_class($object) == 'Bonderetour')
-	{
-		$head = bonderetour_prepare_head($object);
-		$title = $langs->trans('bonderetour');
-
-	}
-	else
-	{
-		$head = shipping_prepare_head($object);
-		$title=$langs->trans("Shipment");
-	}
-
+	$head = shipping_prepare_head($expedition);
+	
+	$title=$langs->trans("Shipment");
 	dol_fiche_head($head, 'dispatch', $title, 0, 'sending');
 	
-	entete($object);
+	enteteexpedition($expedition);
 
 	dol_fiche_end();
 	
-	if($object->statut == 0 && ! empty($conf->global->DISPATCH_USE_IMPORT_FILE)) {
+	if($expedition->statut == 0 && ! empty($conf->global->DISPATCH_USE_IMPORT_FILE)) {
 		//Form pour import de fichier
 		echo '<br>';
 
 		$form=new TFormCore('auto','formimport','post', true);
 		
 		echo $form->hidden('action', 'SAVE');
-		echo $form->hidden('id', $object->id);
+		echo $form->hidden('id', $expedition->id);
 		
 		echo $form->fichier('Fichier à importer','file1','',80);
 		echo $form->btsubmit('Envoyer', 'btsend');
@@ -221,19 +195,19 @@ function fiche(&$PDOdb,&$object, &$TImport) {
 		$form->end();
 	}
 
-	tabImport($TImport,$object);
+	tabImport($TImport,$expedition);
 
 	llxFooter();
 }
 
 
-function tabImport(&$TImport,&$object) {
+function tabImport(&$TImport,&$expedition) {
 	global $langs, $db, $conf;
 
 	$form = new TFormCore('auto', 'formaddasset','post');
 	echo $form->hidden('action','edit');
 	echo $form->hidden('mode','addasset');
-	echo $form->hidden('id', $object->id);
+	echo $form->hidden('id', $expedition->id);
 
 	$PDOdb=new TPDOdb;
 	
@@ -241,7 +215,7 @@ function tabImport(&$TImport,&$object) {
 
 	$fullColspan = 4;
 	if(! empty($conf->global->USE_LOT_IN_OF)) $fullColspan++;
-	if(get_class($object) == 'Expedition' && ! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) $fullColspan++;
+	if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) $fullColspan++;
 ?>
 	<br>
 	<table width="100%" class="noborder">
@@ -252,7 +226,7 @@ function tabImport(&$TImport,&$object) {
 <?php } ?>
 			<td>Numéro de série</td>
 			<td>Quantité</td>
-<?php if(get_class($object) == 'Expedition' && ! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
+<?php if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
 			<td>Préparé</td>
 <?php } ?>
 			<td>&nbsp;</td>
@@ -263,18 +237,7 @@ function tabImport(&$TImport,&$object) {
 		
 		$form->Set_typeaff('view');
 
-		if (get_class($object) == 'Bonderetour')
-		{
-			$canEdit = $object->statut == 0 || (!empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE) && $object->statut == 1);
-			$noAsset = $langs->trans('NoBDRAssetDetail');
-			$statutClosed = Bonderetour::STATUS_CLOSED;
-		}
-		else
-		{
-			$canEdit = $object->statut == 0 || (! empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT) && $object->statut == 1);
-			$noAsset = $langs->trans('NoShipmentAssetDetail');
-			$statutClosed = Expedition::STATUS_CLOSED;
-		}
+		$canEdit = $expedition->statut == 0 || (! empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT) && $expedition->statut == 1);
 
 		if(! empty($TImport)){
 
@@ -303,18 +266,18 @@ function tabImport(&$TImport,&$object) {
 <?php
 		if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED))
 		{
-			if($object->statut < $statutClosed) $form->Set_typeaff('edit');
+			if($expedition->statut < Expedition::STATUS_CLOSED) $form->Set_typeaff('edit');
 ?>
 					<td>
 						<?php echo $form->checkbox1('', 'TLine[' . $k . '][is_prepared]', 1, ! empty($line['is_prepared']), '', 'isPreparedCheckbox'); ?>
 					</td>
 <?php
-			if($object->statut < $statutClosed) $form->Set_typeaff('view');
+			if($expedition->statut < Expedition::STATUS_CLOSED) $form->Set_typeaff('view');
 		}
 ?>
 					<td>
 						<?php 
-							if($canEdit) echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$object->id.'&rowid='.$Trowid[0].'">'.img_delete().'</a>';
+							if($canEdit) echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$expedition->id.'&rowid='.$Trowid[0].'">'.img_delete().'</a>';
 						?>
 					</td>
 				</tr>
@@ -325,12 +288,12 @@ function tabImport(&$TImport,&$object) {
 		else
 		{
 ?>
-				<tr><td colspan="<?php echo $fullColspan; ?>" class="center"><?php echo $noAsset; ?></td></tr>
+				<tr><td colspan="<?php echo $fullColspan; ?>" class="center"><?php echo $langs->trans('NoShipmentAssetDetail'); ?></td></tr>
 <?php
 		}
 
 		if($canEdit) {
-			tabImportAddLine($PDOdb, $object, $form, $fullColspan);
+			tabImportAddLine($PDOdb, $expedition, $form, $fullColspan);
 		}
 ?>
 	</table>
@@ -338,13 +301,13 @@ function tabImport(&$TImport,&$object) {
 
 	$form->end();
 
-	if($canEdit || $object->statut < $statutClosed) {
+	if($canEdit || $expedition->statut < Expedition::STATUS_CLOSED) {
 		printJSTabImportAddLine();
 	}
 }
 
 
-function tabImportAddLine(&$PDOdb, &$object, $form, $fullColspan)
+function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 {
 	global $conf;
 	$DoliFormProduct = new FormProduct($db);
@@ -359,34 +322,18 @@ function tabImportAddLine(&$PDOdb, &$object, $form, $fullColspan)
 
 	$TSerialNumber = array(' -- aucun lot sélectionné -- ');
 
-	if (get_class($object) == 'Bonderetour')
-	{
-		$sql = "SELECT bd.rowid, p.rowid as fk_product,p.ref,p.label ,bd.qty
-			FROM ".MAIN_DB_PREFIX."product as p
-			LEFT JOIN ".MAIN_DB_PREFIX."bonderetourdet as bd ON (bd.fk_product = p.rowid)
-			WHERE bd.fk_bonderetour = ".$object->id."
-			GROUP BY bd.rowid";
-			//HAVING COALESCE(SUM(oa.weight_reel), 0) < bd.qty";
-
-		$allAssetsDone = 'Tous les équipements du bon de retour ont été renseignés';
-	}
-	else
-	{
-		$sql = "SELECT ed.rowid, p.rowid as fk_product,p.ref,p.label ,ed.qty
+	$sql = "SELECT ed.rowid, p.rowid as fk_product,p.ref,p.label ,ed.qty
 			FROM ".MAIN_DB_PREFIX."product as p
 			LEFT JOIN ".MAIN_DB_PREFIX."commandedet as cd ON (cd.fk_product = p.rowid)
 			LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet as ed ON (ed.fk_origin_line = cd.rowid)
 			LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet_asset as eda ON (eda.fk_expeditiondet = ed.rowid)
-			WHERE ed.fk_expedition = ".$object->id."
+			WHERE ed.fk_expedition = ".$expedition->id."
 			GROUP BY ed.rowid
 			HAVING COALESCE(SUM(eda.weight_reel), 0) < ed.qty";
 
-		$allAssetsDone = 'Tous les équipements de l\'expédition ont été renseignés';
-	}
-
 	$PDOdb->Execute($sql);
 
-	if($PDOdb->Get_Recordcount() >= 0) {
+	if($PDOdb->Get_Recordcount() > 0) {
 
 		$productOptions = '<option value=""></option>';
 
@@ -407,7 +354,7 @@ function tabImportAddLine(&$PDOdb, &$object, $form, $fullColspan)
 					</td>
 					<td><?php echo $form->combo('','numserie',$TSerialNumber,''); ?></td>
 					<td><input type="number" name="quantity" id="quantity" class="text" min="0" /> <?php echo $DoliFormProduct->load_measuring_units('quantity_unit" id="quantity_unit','weight'); ?></td>
-<?php if(get_class($object) == 'Expedition' && ! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
+<?php if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
 					<td>&nbsp;</td>
 <?php } ?>
 					<td><?php echo $form->btsubmit('Ajouter', 'btaddasset'); ?></td>
@@ -417,7 +364,7 @@ function tabImportAddLine(&$PDOdb, &$object, $form, $fullColspan)
 	else {
 ?>
 				<tr>
-					<td colspan="<?php echo $fullColspan; ?>" class="center"><?php echo $allAssetsDone; ?></td>
+					<td colspan="<?php echo $fullColspan; ?>" class="center">Tous les équipements de l'expédition ont été renseignés</td>
 				</tr>
 <?php
 	}
@@ -426,7 +373,7 @@ function tabImportAddLine(&$PDOdb, &$object, $form, $fullColspan)
 
 function printJSTabImportAddLine()
 {
-	global $conf, $object;
+	global $conf;
 
 ?>
 	<script>
@@ -550,36 +497,29 @@ function printJSTabImportAddLine()
 <?php
 }
 
-function entete(&$object) {
+function enteteexpedition(&$expedition) {
 	global $langs, $db, $user, $hookmanager, $conf;
 
 	$form =	new Form($db);
 	
 	$soc = new Societe($db);
-	$soc->fetch($object->socid);
+	$soc->fetch($expedition->socid);
 	
-	if (!empty($object->origin))
+	if (!empty($expedition->origin))
 	{
-		$typeobject = $object->origin;
-		$origin = $object->origin;
-		$object->fetch_origin();
+		$typeobject = $expedition->origin;
+		$origin = $expedition->origin;
+		$expedition->fetch_origin();
 	}
 	
     print '<table class="border" width="100%">';
 
-	if(get_class($object) == 'Bonderetour')
-	{
-		$linkback = '<a href="'.dol_buildpath('/bonderetour/list.php', 2).'">'.$langs->trans("BackToList").'</a>';
-		$addref = "type_object=bonderetour&";
-	}
-	else
-		$linkback = '<a href="'.DOL_URL_ROOT.'/expedition/liste.php">'.$langs->trans("BackToList").'</a>';
+    $linkback = '<a href="'.DOL_URL_ROOT.'/expedition/liste.php">'.$langs->trans("BackToList").'</a>';
 
-
-	// Ref
+    // Ref
     print '<tr><td width="20%">'.$langs->trans("Ref").'</td>';
     print '<td colspan="3">';
-    print $form->showrefnav($object, $addref.'ref', $linkback, 1, 'ref', 'ref');
+    print $form->showrefnav($expedition, 'ref', $linkback, 1, 'ref', 'ref');
     print '</td></tr>';
 
     // Customer
@@ -588,22 +528,22 @@ function entete(&$object) {
     print "</tr>";
 
     // Linked documents
-    if ($typeobject == 'commande' && $object->$typeobject->id && ! empty($conf->commande->enabled))
+    if ($typeobject == 'commande' && $expedition->$typeobject->id && ! empty($conf->commande->enabled))
     {
         print '<tr><td>';
         $objectsrc=new Commande($db);
-        $objectsrc->fetch($object->$typeobject->id);
+        $objectsrc->fetch($expedition->$typeobject->id);
         print $langs->trans("RefOrder").'</td>';
         print '<td colspan="3">';
         print $objectsrc->getNomUrl(1,'commande');
         print "</td>\n";
         print '</tr>';
     }
-    if ($typeobject == 'propal' && $object->$typeobject->id && ! empty($conf->propal->enabled))
+    if ($typeobject == 'propal' && $expedition->$typeobject->id && ! empty($conf->propal->enabled))
     {
         print '<tr><td>';
         $objectsrc=new Propal($db);
-        $objectsrc->fetch($object->$typeobject->id);
+        $objectsrc->fetch($expedition->$typeobject->id);
         print $langs->trans("RefProposal").'</td>';
         print '<td colspan="3">';
         print $objectsrc->getNomUrl(1,'expedition');
@@ -613,12 +553,12 @@ function entete(&$object) {
 
     // Ref customer
     print '<tr><td>'.$langs->trans("RefCustomer").'</td>';
-    print '<td colspan="3">'.$object->ref_customer."</a></td>\n";
+    print '<td colspan="3">'.$expedition->ref_customer."</a></td>\n";
     print '</tr>';
 
     // Date creation
     print '<tr><td>'.$langs->trans("DateCreation").'</td>';
-    print '<td colspan="3">'.dol_print_date($object->date_creation,"day")."</td>\n";
+    print '<td colspan="3">'.dol_print_date($expedition->date_creation,"day")."</td>\n";
     print '</tr>';
 
     // Delivery date planed
@@ -629,13 +569,13 @@ function entete(&$object) {
 	
     print '</tr></table>';
     print '</td><td colspan="2">';
-	print $object->date_delivery ? dol_print_date($object->date_delivery,'dayhourtext') : '&nbsp;';
+	print $expedition->date_delivery ? dol_print_date($expedition->date_delivery,'dayhourtext') : '&nbsp;';
     print '</td>';
     print '</tr>';
 
     // Status
     print '<tr><td>'.$langs->trans("Status").'</td>';
-    print '<td colspan="3">'.$object->getLibStatut(4)."</td>\n";
+    print '<td colspan="3">'.$expedition->getLibStatut(4)."</td>\n";
     print '</tr>';
 
     // Sending method
@@ -646,10 +586,10 @@ function entete(&$object) {
 
     print '</tr></table>';
     print '</td><td colspan="2">';
-    if ($object->shipping_method_id > 0)
+    if ($expedition->shipping_method_id > 0)
     {
         // Get code using getLabelFromKey
-        $code=$langs->getLabelFromKey($db,$object->shipping_method_id,'c_shipment_mode','rowid','code');
+        $code=$langs->getLabelFromKey($db,$expedition->shipping_method_id,'c_shipment_mode','rowid','code');
         print $langs->trans("SendingMethod".strtoupper($code));
     }
     print '</td>';

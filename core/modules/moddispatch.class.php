@@ -91,7 +91,7 @@ class moddispatch extends DolibarrModules
 		//$this->module_parts = array('hooks'=>array('ordersuppliercard','propalcard', 'ordercard', 'invoicecard'),'triggers' => 1);
 		$this->module_parts = array(
 			'triggers' => 1
-			, 'hooks' => array('expeditioncard', 'ordersuppliercard', 'pdfgeneration')
+			, 'hooks' => array('expeditioncard', 'ordersuppliercard', 'pdfgeneration', 'bonderetourcard')
 		);
 
 		// Data directories to create when module is enabled.
@@ -129,7 +129,7 @@ class moddispatch extends DolibarrModules
 
         $this->tabs = array(
         	'delivery:+dispatch:Détail expédition:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/detail.php?id=__ID__'
-        	,'bonderetour:+dispatch:Détail équipement:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/detail.php?id=__ID__&type_object=bonderetour'
+        	,'bonderetour:+recepasset:Réception manuelle:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/receptionbdr.php?id=__ID__'
         	,'contract:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=contrat'
         	,'intervention:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=intervention'
         	,'ticketsup:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=ticketsup'

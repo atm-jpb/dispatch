@@ -17,7 +17,6 @@
 	dol_include_once('/dispatch/class/dispatchdetail.class.php');
 	dol_include_once('/dispatch/class/dispatchasset.class.php');
 	dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
-	dol_include_once('/dispatch/class/objectdetail.class.php');
  
 	$o=new TDispatchDetail;
 	$o->init_db_by_vars($PDOdb);
@@ -25,12 +24,14 @@
 	$o=new TRecepDetail;
 	$o->init_db_by_vars($PDOdb);
 
+	$o=new TRecepBDRDetail;
+	$o->init_db_by_vars($PDOdb);
+
+	$o=new TRecepBDRDispatch;
+	$o->init_db_by_vars($PDOdb);
 
 	$o=new TDispatch;
 	$o->init_db_by_vars($PDOdb);
 
 	$o=new TDispatchAsset;
-	$o->init_db_by_vars($PDOdb);
-
-	$o = new TObjectDetail;
 	$o->init_db_by_vars($PDOdb);
