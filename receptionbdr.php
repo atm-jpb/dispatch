@@ -21,11 +21,13 @@
 	$langs->load('bills');
 	$langs->load('orders');
 	$langs->load('commercial');
+	$langs->load('stocks');
 	$langs->load('dispatch@dispatch');
+	$langs->load('bonderetour@bonderetour');
 
 	$id = GETPOST('id');
 
-	$hookmanager->initHooks(array('receptionstockcard'));
+	$hookmanager->initHooks(array('receptionstockbdrcard'));
 
 	$bdr = new Bonderetour($db);
 	$bdr->fetch($id);
@@ -162,7 +164,9 @@
 		$TQtyWished=array();
 //var_dump($TImport);
 		$bdr->fetch_thirdparty();
-		
+
+//		$PDOdb->beginTransaction(); $db->begin();
+
 		foreach($TImport as $k=>&$line) {
 
 			$asset =new TAsset;
@@ -277,6 +281,61 @@
 				//Compteur pour chaque produit : 1 équipement = 1 quantité de produit ventilé
 			//	$TProdVentil[$asset->fk_product]['qty'] += ($line['quantity']) ? $line['quantity'] : 1;
 			}
+			else
+			{
+				// si on a trouvé l'équipement
+
+				$fk_entrepot = (!empty($line['fk_warehouse']) && $line['fk_warehouse']>0) ? $line['fk_warehouse'] : GETPOST('id_entrepot');
+
+				if ($asset->fk_product == $line['fk_product']) // si l'asset correspond bien au produit demandé
+				{
+					$old_entrepot = $asset->fk_entrepot;
+
+					$societe = new Societe($db);
+					$societe->fetch('', $conf->global->MAIN_INFO_SOCIETE_NOM);
+
+					$product = new Product($db);
+					$product->fetch($asset->fk_product);
+
+					$asset->fk_societe_localisation = $societe->id;
+
+					if (!empty($fk_entrepot) && $fk_entrepot > 0 && $asset->fk_entrepot !== $fk_entrepot)
+					{
+						// crée un mouv négatif sur l'ancien entrepot
+						// je commente car l'expédition à déjà déstocké l'asset normalement
+
+						/*$asset->addStockMouvementDolibarr(
+							$asset->fk_product
+							, -$line['quantity']
+							, $langs->trans('StockMovementAssetStockTransfered', $asset->serial_number, $bdr->ref)
+							, false
+							, 0
+							, $asset->fk_entrepot
+							, $product->pmp);
+
+						$asset->fk_entrepot = $fk_entrepot;*/
+
+						// crée le mouvement positif sur le nouveau
+						$asset->addStockMouvementDolibarr(
+							$asset->fk_product
+							, $line['quantity']
+							, $langs->trans('StockMovementAssetStockTransfered', $asset->serial_number, $bdr->ref)
+							, false
+							, 0
+							, $asset->fk_entrepot
+							, $product->pmp);
+
+					}
+
+					$asset->save($PDOdb);
+
+				}
+				else
+				{
+					setEventMessage('Le numero de série '.$line['numserie'].' ne correspond pas au produit renseigné', 'errors');
+				}
+
+			}
 
 		}
 
@@ -361,14 +420,17 @@
 			$status = $bdr->statut;
 
 			foreach($TProdVentil as $id_prod => $item){
-
-				dol_syslog(__METHOD__.' dispatchProduct idprod='.$id_prod.' qty='.$item['qty'], LOG_DEBUG);
-				$ret = dispatchProduct($user, $id_prod, $item['qty'], empty( $item['entrepot']) ? GETPOST('id_entrepot') : $item['entrepot'], $comment, $item['bonderetourdet']);
+				if (!empty($item['qty']))
+				{
+					dol_syslog(__METHOD__.' dispatchProduct idprod='.$id_prod.' qty='.$item['qty'], LOG_DEBUG);
+					$ret = dispatchProduct($user, $id_prod, $item['qty'], empty( $item['entrepot']) ? GETPOST('id_entrepot') : $item['entrepot'], $comment, $item['bonderetourdet']);
+					var_dump($ret);
+				}
 			}
 
-			if($bdr->statut == 0){
-				$bdr->valid($user);
-			}
+//			if($bdr->statut == 0){
+//				$bdr->valid($user);
+//			}
 
 			foreach($bdr->lines as $l){
 				if (!empty($l->fk_product) && !empty( $l->qty ) ) {
@@ -408,6 +470,7 @@
 
 			setEventMessage('Equipements créés / produits ventilés');
 		}
+//		$PDOdb->rollBack(); $db->rollback();
 	}
 
 	//if(is_array($TImport)) usort($TImport,'_by_ref');
@@ -986,7 +1049,7 @@ function _list_already_dispatched(&$bdr) {
 			{
 				print "<br/>\n";
 
-				print load_fiche_titre($langs->trans("ReceivingForSameOrder"));
+				print load_fiche_titre($langs->trans("ReceivingForSameBDR"));
 
 				print '<table class="noborder" width="100%">';
 
@@ -1141,9 +1204,7 @@ global $langs, $db, $conf;
 							$warning_asset = true;
 						}
 						else if($asset->loadReference($PDOdb, $line['numserie'])) {
-							if($bdr->statut >= 5 || $bdr->statut<=2) {
-								echo $asset->getNomUrl(1);
-							} else {
+							if($bdr->statut >0) {
 								echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('AssetAlreadyLinked'), 'warning.png');
 							}
 						}
@@ -1185,7 +1246,7 @@ global $langs, $db, $conf;
 						<td><?php echo $form->texte('','TLine['.$k.'][quantity]', $line['quantity'], 10);   ?></td><?php
 
 						if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) {
-							echo '<td>'. ($bdr->statut < 5) ? $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']) : measuring_units_string($line['quantity_unit'],'weight').'</td>';
+							echo '<td>'. ($bdr->statut > 0) ? $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']) : measuring_units_string($line['quantity_unit'],'weight').'</td>';
 						}
 					}
 					else{
@@ -1203,7 +1264,7 @@ global $langs, $db, $conf;
 					?>
 					<td>
 						<?php
-						if($bdr->statut < 5 && $line['bonderetourdet_asset'] > 0){
+						if($bdr->statut > 0 && $line['bonderetourdet_asset'] > 0){
 							echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$bdr->id.'&rowid='.$line['bonderetourdet_asset'].'">'.img_delete().'</a>';
 						}
 						?>
@@ -1314,7 +1375,6 @@ global $langs, $db, $conf;
 function entetecmd(&$bdr) {
 global $langs, $db;
 
-
 		$form =	new Form($db);
 
 		$soc = new Societe($db);
@@ -1337,7 +1397,7 @@ global $langs, $db;
 
 		// Client
 		print '<tr><td>'.$langs->trans("Customer")."</td>";
-		print '<td colspan="2">'.$soc->getNomUrl(1,'supplier').'</td>';
+		print '<td colspan="2">'.$soc->getNomUrl(1,'customer').'</td>';
 		print '</tr>';
 
 		// Statut
@@ -1378,7 +1438,7 @@ global $langs, $db;
 
 function dispatchProduct($user, $product, $qty, $entrepot, $comment='', $fk_bonderetourdet=0, $eatby='', $sellby='', $batch='')
 {
-	global $PDOdb, $db, $bdr;
+	global $PDOdb, $db, $bdr, $conf;
 
 	$error = 0;
 
@@ -1416,6 +1476,7 @@ function dispatchProduct($user, $product, $qty, $entrepot, $comment='', $fk_bond
 		$mouv->origin = &$bdr;
 		$res = $mouv->reception($user, $product, $entrepot, $qty, $unit_price, $comment, $eatby, $sellby, $batch);
 		if ($res < 0) $error++;
+
 	}
 
 	if (!$error) return 1;

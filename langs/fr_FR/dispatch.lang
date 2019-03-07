@@ -53,3 +53,5 @@ ShipmentCannotBeClosedAssetsNotPrepared=L'expédition ne peut être close : tous
 
 NoBDRAssetDetail=Pas d'équipements dans ce bon de retour
 DispatchBonderetour=Réception du bon de retour %s
+ReceivingForSameBDR=Réceptions pour ce bon de retour
+StockMovementAssetStockTransfered=Retour de l'équipement  %s sur bon de retour %s
