@@ -427,7 +427,7 @@
     				{
     					dol_syslog(__METHOD__.' dispatchProduct idprod='.$id_prod.' qty='.$item['qty'], LOG_DEBUG);
     					$ret = dispatchProduct($user, $id_prod, $item['qty'], empty( $item['entrepot']) ? GETPOST('id_entrepot') : $item['entrepot'], $comment, $item['bonderetourdet']);
-    					var_dump($ret);
+//     					var_dump($ret);
     				}
     			}
     
