@@ -174,11 +174,9 @@ function fiche(&$PDOdb,&$expedition, &$TImport) {
 	$head = shipping_prepare_head($expedition);
 	
 	$title=$langs->trans("Shipment");
-	dol_fiche_head($head, 'dispatch', $title, 0, 'sending');
+	dol_fiche_head($head, 'dispatch', $title, -1, 'sending');
 	
 	enteteexpedition($expedition);
-
-	dol_fiche_end();
 	
 	if($expedition->statut == 0 && ! empty($conf->global->DISPATCH_USE_IMPORT_FILE)) {
 		//Form pour import de fichier
@@ -196,6 +194,8 @@ function fiche(&$PDOdb,&$expedition, &$TImport) {
 	}
 
 	tabImport($TImport,$expedition);
+
+	dol_fiche_end();
 
 	llxFooter();
 }
@@ -504,28 +504,78 @@ function enteteexpedition(&$expedition) {
 	
 	$soc = new Societe($db);
 	$soc->fetch($expedition->socid);
-	
-	if (!empty($expedition->origin))
+
+	if (!empty($expedition->origin) && $expedition->origin_id > 0)
 	{
 		$typeobject = $expedition->origin;
 		$origin = $expedition->origin;
-		$expedition->fetch_origin();
+		$origin_id = $expedition->origin_id;
+		$expedition->fetch_origin();         // Load property $object->commande, $object->propal, ...
+
+		if ($typeobject == 'commande' && $expedition->$typeobject->id && ! empty($conf->commande->enabled))
+		{
+			$objectsrc=new Commande($db);
+			$objectsrc->fetch($expedition->$typeobject->id);
+		}
+
+		if ($typeobject == 'propal' && $expedition->$typeobject->id && ! empty($conf->propal->enabled))
+		{
+			$objectsrc=new Propal($db);
+			$objectsrc->fetch($expedition->$typeobject->id);
+		}
+	}
+
+	if(empty($expedition->thirdparty) && method_exists($expedition, 'fetch_thirdparty'))
+	{
+		$expedition->fetch_thirdparty();
+	}
+
+	$hasDolBannerTab = function_exists('dol_banner_tab');
+
+	$linkback = '<a href="'.DOL_URL_ROOT.'/expedition/list.php?restore_lastsearch_values=1">'.$langs->trans("BackToList").'</a>';
+
+	if($hasDolBannerTab)
+	{
+		$morehtmlref='<div class="refidno">' . $langs->trans('RefCustomer') . ' : ' . $expedition->ref_customer;
+		// Thirdparty
+		$morehtmlref.='<br>'.$langs->trans('ThirdParty') . ' : ' . $expedition->thirdparty->getNomUrl(1);
+		// Project
+		if (! empty($conf->projet->enabled)) {
+			$langs->load("projects");
+			$morehtmlref .= '<br>' . $langs->trans('Project') . ' ';
+
+			// We don't have project on shipment, so we will use the project or source object instead
+			// TODO Add project on shipment
+			$morehtmlref .= ' : ';
+			if (! empty($objectsrc->fk_project)) {
+				$proj = new Project($db);
+				$proj->fetch($objectsrc->fk_project);
+				$morehtmlref .= '<a href="' . DOL_URL_ROOT . '/projet/card.php?id=' . $objectsrc->fk_project . '" title="' . $langs->trans('ShowProject') . '">';
+				$morehtmlref .= $proj->ref;
+				$morehtmlref .= '</a>';
+			}
+		}
+		$morehtmlref.='</div>';
+
+
+		dol_banner_tab($expedition, 'ref', $linkback, 1, 'ref', 'ref', $morehtmlref);
 	}
 	
-    print '<table class="border" width="100%">';
+    print '<table class="noborder" width="100%">';
 
-    $linkback = '<a href="'.DOL_URL_ROOT.'/expedition/liste.php">'.$langs->trans("BackToList").'</a>';
+    if(! $hasDolBannerTab)
+    {
+		// Ref
+		print '<tr><td>' . $langs->trans("Ref") . '</td>';
+		print '<td colspan="3">';
+		print $form->showrefnav($expedition, 'ref', $linkback, 1, 'ref', 'ref');
+		print '</td></tr>';
 
-    // Ref
-    print '<tr><td width="20%">'.$langs->trans("Ref").'</td>';
-    print '<td colspan="3">';
-    print $form->showrefnav($expedition, 'ref', $linkback, 1, 'ref', 'ref');
-    print '</td></tr>';
-
-    // Customer
-    print '<tr><td width="20%">'.$langs->trans("Customer").'</td>';
-    print '<td colspan="3">'.$soc->getNomUrl(1).'</td>';
-    print "</tr>";
+		// Customer
+		print '<tr><td>' . $langs->trans("Customer") . '</td>';
+		print '<td colspan="3">' . $soc->getNomUrl(1) . '</td>';
+		print "</tr>";
+	}
 
     // Linked documents
     if ($typeobject == 'commande' && $expedition->$typeobject->id && ! empty($conf->commande->enabled))
@@ -551,14 +601,17 @@ function enteteexpedition(&$expedition) {
         print '</tr>';
     }
 
-    // Ref customer
-    print '<tr><td>'.$langs->trans("RefCustomer").'</td>';
-    print '<td colspan="3">'.$expedition->ref_customer."</a></td>\n";
-    print '</tr>';
+	if(! $hasDolBannerTab)
+	{
+		// Ref customer
+		print '<tr><td>' . $langs->trans("RefCustomer") . '</td>';
+		print '<td colspan="3">' . $expedition->ref_customer . "</a></td>\n";
+		print '</tr>';
+	}
 
     // Date creation
-    print '<tr><td>'.$langs->trans("DateCreation").'</td>';
-    print '<td colspan="3">'.dol_print_date($expedition->date_creation,"day")."</td>\n";
+    print '<tr><td style="width:20%">'.$langs->trans("DateCreation").'</td>';
+    print '<td colspan="3">'.dol_print_date($expedition->date_creation,"dayhour")."</td>\n";
     print '</tr>';
 
     // Delivery date planed
@@ -573,10 +626,13 @@ function enteteexpedition(&$expedition) {
     print '</td>';
     print '</tr>';
 
-    // Status
-    print '<tr><td>'.$langs->trans("Status").'</td>';
-    print '<td colspan="3">'.$expedition->getLibStatut(4)."</td>\n";
-    print '</tr>';
+    if(! $hasDolBannerTab)
+    {
+		// Status
+		print '<tr><td>' . $langs->trans("Status") . '</td>';
+		print '<td colspan="3">' . $expedition->getLibStatut(4) . "</td>\n";
+		print '</tr>';
+	}
 
     // Sending method
     print '<tr><td height="10">';
