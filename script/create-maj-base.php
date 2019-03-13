@@ -24,6 +24,11 @@
 	$o=new TRecepDetail;
 	$o->init_db_by_vars($PDOdb);
 
+	$o=new TRecepBDRDetail;
+	$o->init_db_by_vars($PDOdb);
+
+	$o=new TRecepBDRDispatch;
+	$o->init_db_by_vars($PDOdb);
 
 	$o=new TDispatch;
 	$o->init_db_by_vars($PDOdb);
