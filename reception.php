@@ -1291,9 +1291,9 @@ global $langs, $db, $conf;
 
 		if($commande->statut < 5 && $commande->statut>2){
 
-			$pListe[0] = "Sélectionnez un produit";
+			$TProducts = array('Sélectionnez un produit');
 			foreach($commande->lines as $line){
-				if($line->fk_product) $pListe[$line->fk_product] = $line->product_ref." - ".$line->product_label;
+				if($line->fk_product) $TProducts[$line->fk_product] = $line->product_ref." - ".$line->product_label;
 			}
 
 			$defaultDLUO = '';
@@ -1304,7 +1304,7 @@ global $langs, $db, $conf;
 			echo $defaultDLUO;
 
 			?><tr style="background-color: lightblue;">
-					<td><?php print $form->combo('', 'new_line_fk_product', $pListe, ''); ?></td>
+					<td><?php print $form->combo('', 'new_line_fk_product', $TProducts, ''); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30); ?></td>
 <?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
 					<td><?php echo $form->texte('','TLine[-1][lot_number]', '', 30);   ?></td>

@@ -103,7 +103,7 @@ function _fiche(&$PDOdb,&$dispatch) {
 		
 	<?php
 
-	$canLink = ! empty($conf->global->DISPATCH_CAN_LINK_ASSET_TO_OBJECT_IN_ANY_STATUS) || $type_object == 'contrat' || $object->statut == 0;
+	$canLink = ! empty($conf->global->DISPATCH_CAN_LINK_ASSET_TO_OBJECT_IN_ANY_STATUS) || $dispatch->type_object == 'contrat' || $object->statut == 0;
 	
 	foreach($dispatch->TDispatchAsset as $k=>&$da) {
 		
