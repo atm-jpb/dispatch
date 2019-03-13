@@ -377,12 +377,12 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 <?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
 					</td>
 					<td>
-						<?php echo $form->combo('', 'lot_number', $TLotNumber, ''); ?>
+						<?php echo $form->combo_sexy('', 'lot_number', $TLotNumber, ''); ?>
 <?php } else { ?>
 						<?php echo $form->hidden('lot_number', ''); ?>
 <?php } ?>
 					</td>
-					<td><?php echo $form->combo('','numserie',$TSerialNumber,''); ?></td>
+					<td><?php echo $form->combo_sexy('','numserie',$TSerialNumber,''); ?></td>
 					<td><input type="number" name="quantity" id="quantity" class="text" min="0" /> <?php echo $DoliFormProduct->load_measuring_units('quantity_unit" id="quantity_unit','weight'); ?></td>
 <?php if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
 					<td>&nbsp;</td>
