@@ -9,8 +9,8 @@
 	dol_include_once('/core/lib/sendings.lib.php' );
 	dol_include_once('/core/lib/product.lib.php');
 	dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
-	
-	global $langs, $user,$db;
+
+
 	$langs->load('orders');
 	$PDOdb=new TPDOdb;
 
@@ -21,55 +21,72 @@
 	
 	$action = GETPOST('action');
 	$TImport = _loadDetail($PDOdb, $expedition);
-	
-	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
-		$f1  =file($_FILES['file1']['tmp_name']);
 
-		$TImport = array();
+	$hookmanager->initHooks(array('shipmentdispatchcard'));
 
-		foreach($f1 as $line) {
+	$parameters = array();
+	$reshook = $hookmanager->executeHooks('doActions', $parameters, $TImport, $action);
+	if ($reshook < 0) setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
 
-			list($ref, $numserie, $imei, $firmware)=str_getcsv($line,';','"');
+	if(empty($reshook))
+	{
+		switch ($action)
+		{
+			case 'importfile':
+				// TODO à nettoyer, dégueulasse et spécifique (ex. IMEI ?!) - MdLL, 12/03/2019
+				if (isset($_FILES['file1']) && $_FILES['file1']['name'] != '') {
+					$f1 = file($_FILES['file1']['tmp_name']);
 
-			$TImport = _addExpeditiondetLine($PDOdb,$TImport,$expedition,$numserie);
+					$TImport = array();
+
+					foreach ($f1 as $line) {
+						list($ref, $numserie, $imei, $firmware) = str_getcsv($line, ';', '"');
+
+						$TImport = _addExpeditiondetLine($PDOdb, $TImport, $expedition, $numserie);
+					}
+				}
+
+				break;
+
+			case 'deleteline':
+				array_splice($TImport, (int)GETPOST('k'), 1); // Supprime le k-ième élément et décale les suivants dans le tableau
+
+				$rowid = GETPOST('rowid');
+
+				$dispatchdetail = new TDispatchDetail;
+				$dispatchdetail->load($PDOdb, $rowid);
+				$dispatchdetail->delete($PDOdb);
+
+				setEventMessage('Ligne supprimée');
+
+				break;
+
+			case 'save':
+				$numserie = GETPOST('numserie');
+
+				$asset = new TAsset;
+				if ($asset->loadBy($PDOdb, $numserie, 'serial_number')) {
+
+					_addExpeditiondetLine($PDOdb, $TImport, $expedition, $numserie);
+
+					setEventMessage('Numéro de série enregistré');
+				} else {
+					setEventMessage('Aucun équipement pour ce numéro de série', 'errors');
+				}
+
+				break;
 		}
-		
 	}
-	else if($action=='DELETE_LINE') {
-		array_splice($TImport, (int) GETPOST('k'), 1); // Supprime le k-ième élément et décale les suivants dans le tableau
 
-		$rowid = GETPOST('rowid');
-		
-		$dispatchdetail = new TDispatchDetail;
-		$dispatchdetail->load($PDOdb, $rowid);
-		$dispatchdetail->delete($PDOdb);
-		
-		setEventMessage('Ligne supprimée');
-	}
-	elseif(isset($_POST['btaddasset'])) {
-		//var_dump($_POST);exit;
-		$numserie = GETPOST('numserie');
-		
-		$asset = new TAsset;
-		if($asset->loadBy($PDOdb, $numserie, 'serial_number')){
-				
-			_addExpeditiondetLine($PDOdb,$TImport,$expedition,$numserie);
-
-			setEventMessage('Numéro de série enregistré');
-		}
-		else{
-			setEventMessage('Aucun équipement pour ce numéro de série','errors');
-		}		
-	}
 
 	fiche($PDOdb,$expedition, $TImport);
 
-	function _loadDetail(&$PDOdb, &$expedition){
-		
+	function _loadDetail(&$PDOdb, &$expedition)
+	{
 		$TImport = array();
 
-		foreach($expedition->lines as $line){
-		
+		foreach($expedition->lines as $line)
+		{
 			$sql = "SELECT ea.rowid as fk_expeditiondet_asset, a.rowid as id,a.serial_number,p.ref,p.rowid, ea.fk_expeditiondet, ea.lot_number, ea.weight_reel, ea.weight_reel_unit, ea.is_prepared
 					FROM ".MAIN_DB_PREFIX."expeditiondet_asset as ea
 						LEFT JOIN ".MAIN_DB_PREFIX.ATM_ASSET_NAME." as a ON ( a.rowid = ea.fk_asset)
@@ -80,9 +97,9 @@
 			$PDOdb->Execute($sql);
 			$Tres = $PDOdb->Get_All();
 			
-			foreach ($Tres as $res) {
-				
-				$TImport[] =array(
+			foreach ($Tres as $res)
+			{
+				$TImport[] = array(
 					'fk_expeditiondet_asset'=>$res->fk_expeditiondet_asset
 					,'ref'=>$res->ref
 					,'numserie'=>$res->serial_number
@@ -99,7 +116,8 @@
 		return $TImport;
 	}
 
-	function _addExpeditiondetLine(&$PDOdb,&$TImport,&$expedition,$numserie){
+	function _addExpeditiondetLine(&$PDOdb,&$TImport,&$expedition,$numserie)
+	{
 		global $db;
 		
 		//Charge l'asset lié au numéro de série dans le fichier
@@ -166,7 +184,8 @@
 	}
 
 
-function fiche(&$PDOdb,&$expedition, &$TImport) {
+function fiche(&$PDOdb,&$expedition, &$TImport)
+{
 	global $langs, $db, $conf;
 
 	llxHeader();
@@ -178,13 +197,14 @@ function fiche(&$PDOdb,&$expedition, &$TImport) {
 	
 	enteteexpedition($expedition);
 	
-	if($expedition->statut == 0 && ! empty($conf->global->DISPATCH_USE_IMPORT_FILE)) {
+	if($expedition->statut == 0 && ! empty($conf->global->DISPATCH_USE_IMPORT_FILE))
+	{
 		//Form pour import de fichier
 		echo '<br>';
 
 		$form=new TFormCore('auto','formimport','post', true);
 		
-		echo $form->hidden('action', 'SAVE');
+		echo $form->hidden('action', 'importfile');
 		echo $form->hidden('id', $expedition->id);
 		
 		echo $form->fichier('Fichier à importer','file1','',80);
@@ -201,11 +221,12 @@ function fiche(&$PDOdb,&$expedition, &$TImport) {
 }
 
 
-function tabImport(&$TImport,&$expedition) {
-	global $langs, $db, $conf;
+function tabImport(&$TImport,&$expedition)
+{
+	global $langs, $db, $conf, $hookmanager;
 
 	$form = new TFormCore('auto', 'formaddasset','post');
-	echo $form->hidden('action','edit');
+	echo $form->hidden('action','save');
 	echo $form->hidden('mode','addasset');
 	echo $form->hidden('id', $expedition->id);
 
@@ -228,7 +249,12 @@ function tabImport(&$TImport,&$expedition) {
 			<td>Quantité</td>
 <?php if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
 			<td>Préparé</td>
-<?php } ?>
+<?php }
+
+		$parameters = array('fullColspan' => &$fullColspan);
+		$reshook = $hookmanager->executeHooks('addColumnsHeader', $parameters, $TImport, $action);
+		if(empty($reshook)) echo $hookmanager->resPrint;
+?>
 			<td>&nbsp;</td>
 		</tr>
 		
@@ -274,10 +300,14 @@ function tabImport(&$TImport,&$expedition) {
 <?php
 			if($expedition->statut < Expedition::STATUS_CLOSED) $form->Set_typeaff('view');
 		}
+
+		$parameters = array('line' => &$line, 'k' => &$k, 'asset' => &$asset, 'form' => &$form);
+		$reshook = $hookmanager->executeHooks('addColumnsLines', $parameters, $expedition, $action);
+		if(empty($reshook)) echo $hookmanager->resPrint;
 ?>
 					<td>
 						<?php 
-							if($canEdit) echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$expedition->id.'&rowid='.$Trowid[0].'">'.img_delete().'</a>';
+							if($canEdit) echo '<a href="?action=deleteline&k='.$k.'&id='.$expedition->id.'&rowid='.$Trowid[0].'">'.img_delete().'</a>';
 						?>
 					</td>
 				</tr>
@@ -309,7 +339,7 @@ function tabImport(&$TImport,&$expedition) {
 
 function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 {
-	global $conf;
+	global $conf, $db, $hookmanager;
 	$DoliFormProduct = new FormProduct($db);
 
 	$form->Set_typeaff('edit');
@@ -356,7 +386,13 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 					<td><input type="number" name="quantity" id="quantity" class="text" min="0" /> <?php echo $DoliFormProduct->load_measuring_units('quantity_unit" id="quantity_unit','weight'); ?></td>
 <?php if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
 					<td>&nbsp;</td>
-<?php } ?>
+<?php }
+
+
+		$parameters = array();
+		$reshook = $hookmanager->executeHooks('addColumnsNewLine', $parameters,$expedition ,$action);
+		if(empty($reshook)) echo $hookmanager->resPrint;
+?>
 					<td><?php echo $form->btsubmit('Ajouter', 'btaddasset'); ?></td>
 				</tr>
 <?php
@@ -545,7 +581,6 @@ function enteteexpedition(&$expedition) {
 			$morehtmlref .= '<br>' . $langs->trans('Project') . ' ';
 
 			// We don't have project on shipment, so we will use the project or source object instead
-			// TODO Add project on shipment
 			$morehtmlref .= ' : ';
 			if (! empty($objectsrc->fk_project)) {
 				$proj = new Project($db);
