@@ -617,12 +617,10 @@ global $langs, $db, $conf;
 	$head = ordersupplier_prepare_head($commande);
 
 	$title=$langs->trans("SupplierOrder");
-	$notab=0;
+	$notab=-1;
 	dol_fiche_head($head, 'recepasset', $title, $notab, 'order');
 
 	entetecmd($commande);
-
-	dol_fiche_end($notab);
 
 	$form=new TFormCore('auto','formrecept','post', true);
 	echo $form->hidden('action', 'SAVE');
@@ -637,6 +635,8 @@ global $langs, $db, $conf;
 
 	$form->end();
 	_list_already_dispatched($commande);
+
+	dol_fiche_end($notab);
 	llxFooter();
 }
 
@@ -802,7 +802,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 						print "\n";
 						print '<!-- Line '.$suffix.' -->'."\n";
-						print "<tr ".$bc[$var].">";
+						print '<tr class="oddeven">';
 
 						$linktoprod='<a href="'.DOL_URL_ROOT.'/product/fournisseurs.php?id='.$objp->fk_product.'">'.img_object($langs->trans("ShowProduct"),'product').' '.$objp->ref.'</a>';
 						$linktoprod.=' - '.$objp->label."\n";
@@ -1158,7 +1158,7 @@ global $langs, $db, $conf;
 			});
 		});
 	</script>
-	<table width="100%" class="border" id="dispatchAsset">
+	<table width="100%" class="noborder" id="dispatchAsset">
 		<tr class="liste_titre">
 			<td>Produit</td>
 			<td>Numéro de Série</td>
@@ -1206,7 +1206,7 @@ global $langs, $db, $conf;
 					}
 				}
 
-				?><tr class="dispatchAssetLine" id="dispatchAssetLine<?php print $k; ?>" data-fk-product="<?php print $prod->id; ?>">
+				?><tr class="dispatchAssetLine oddeven" id="dispatchAssetLine<?php print $k; ?>" data-fk-product="<?php print $prod->id; ?>">
 					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref)." - ".$prod->label; ?></td>
 					<td><?php
 						$asset=new TAsset;

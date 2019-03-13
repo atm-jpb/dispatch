@@ -109,9 +109,7 @@ function _fiche(&$PDOdb,&$dispatch) {
 		
 		if($da->to_delete) continue;
 		
-		$class= ($class == 'pair') ? 'impair' : 'pair';
-		
-		?><tr class="<?php echo $class ?>">
+		?><tr class="oddeven">
 			<?php if(GETPOST('type_object') !== 'ticketsup') echo '<td>'.$pListe[$da->fk_object].'</td>'; ?>
 			<td><?php echo $da->asset->getNomUrl(1,0,1); ?></td>
 			<?php
