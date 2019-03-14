@@ -1413,6 +1413,7 @@ function entetecmd(&$commande)
 		// Project
 		if (! empty($conf->projet->enabled))
 		{
+			dol_include_once('/projet/class/project.class.php');
 			$langs->load("projects");
 			$morehtmlref.='<br>'.$langs->trans('Project') . ' : ';
 
