@@ -48,6 +48,9 @@ DispatchExpeditionNoDetail=Le détail des équipements n'a pas été renseigné
 DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED=Bloquer la clôture d'une expédition si des équipements sont marqués comme non préparés
 AssetMarkedAsPrepared=Ligne marquée 'Préparée'
 AssetMarkedAsNotPrepared=Ligne marquée 'Non préparée'
+AssetsMarkedAsPrepared=Toutes les lignes marquée 'Préparée'
+AssetsMarkedAsNotPrepared=Tout les lignes marquées 'Non préparée'
+NAssetsMarkedCouldNotBeMarked=%s ligne(s) non modifiée(s)
 NoShipmentAssetDetail=Pas d'équipements dans cette expédition
 ShipmentCannotBeClosedAssetsNotPrepared=L'expédition ne peut être close : tous les équipements n'ont pas été préparés
 

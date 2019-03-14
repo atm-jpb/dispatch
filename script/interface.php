@@ -244,6 +244,11 @@ function _set_all_lines_is_prepared(TPDOdb &$PDOdb, $fk_expedition, $is_prepared
 
 	$message = $langs->trans(empty($is_prepared) ? 'AssetsMarkedAsNotPrepared' : 'AssetsMarkedAsPrepared');
 
+	if($countFail > 0)
+	{
+		$message = $langs->trans('NAssetsMarkedCouldNotBeMarked', $countFail);
+	}
+
 	return array('success' => $countFail == 0, 'message' => $message);
 }
 
