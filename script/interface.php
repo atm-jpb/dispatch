@@ -47,6 +47,10 @@ function _put(TPDOdb &$PDOdb, $put)
 		case 'set_line_is_prepared':
 			__out(_set_line_is_prepared($PDOdb, GETPOST('fk_expeditiondet_asset', 'int'), GETPOST('is_prepared', 'int')), 'json');
 			break;
+
+		case 'set_all_lines_is_prepared':
+			__out(_set_all_lines_is_prepared($PDOdb, GETPOST('fk_expedition', 'int'), GETPOST('is_prepared', 'int')), 'json');
+			break;
 	}
 }
 
@@ -199,5 +203,47 @@ function _set_line_is_prepared(TPDOdb &$PDOdb, $fk_expeditiondet_asset, $is_prep
 	$message = $langs->trans(empty($is_prepared) ? 'AssetMarkedAsNotPrepared' : 'AssetMarkedAsPrepared');
 
 	return array('success' => true, 'message' => $message);
+}
+
+
+/**
+ * Mark all shipment asset detail lines as prepared or not
+ *
+ * @param	TPDOdb	$PDOdb					Database connection
+ * @param	int		$fk_expdition			ID of expedition
+ * @param	int		$is_prepared			0/1, whether the asset has been prepared or not
+ *
+ * @return	array		Response array with success and message fields, to be JSON-encoded
+ */
+function _set_all_lines_is_prepared(TPDOdb &$PDOdb, $fk_expedition, $is_prepared)
+{
+	global $langs;
+
+	dol_include_once('/dispatch/class/dispatchdetail.class.php');
+
+	$langs->load('dispatch@dispatch');
+
+	$sql = 'SELECT eda.rowid
+			FROM ' . MAIN_DB_PREFIX . 'expeditiondet_asset eda
+			INNER JOIN ' . MAIN_DB_PREFIX .'expeditiondet ed ON (ed.rowid = eda.fk_expeditiondet)
+			WHERE ed.fk_expedition = ' . $fk_expedition;
+
+	$TDispatchDetail = $PDOdb->ExecuteAsArray($sql);
+
+	$countFail = 0;
+
+	foreach($TDispatchDetail as $dispatchDetailStatic)
+	{
+		$TResult = _set_line_is_prepared($PDOdb, $dispatchDetailStatic->rowid, $is_prepared);
+
+		if(empty($TResult['success']))
+		{
+			$countFail++;
+		}
+	}
+
+	$message = $langs->trans(empty($is_prepared) ? 'AssetsMarkedAsNotPrepared' : 'AssetsMarkedAsPrepared');
+
+	return array('success' => $countFail == 0, 'message' => $message);
 }
 

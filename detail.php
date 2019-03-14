@@ -248,7 +248,7 @@ function tabImport(&$TImport,&$expedition)
 			<td>Numéro de série</td>
 			<td>Quantité</td>
 <?php if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
-			<td>Préparé</td>
+			<td><?php echo $form->checkbox1('', 'allPrepared', 1, false, '','allPreparedCheckbox'); ?> Préparé</td>
 <?php }
 
 		$parameters = array('fullColspan' => &$fullColspan);
@@ -516,6 +516,8 @@ function printJSTabImportAddLine()
 					}
 					, success: function(response)
 					{
+						verifyIsPreparedCheckboxState();
+
 						var preset = response.success ? 'ok' : 'error';
 						var persist = ! response.success;
 
@@ -523,10 +525,54 @@ function printJSTabImportAddLine()
 					}
 					, error: function(xhr, textStatus, errorThrown)
 					{
+						checkbox.prop('checked', is_prepared == 1 ? false : true);
 						$.jnotify(textStatus + ' : ' + errorThrown, 'error', true);
 					}
 				})
 			});
+
+			$('.allPreparedCheckbox').change(function()
+			{
+				var checkbox = $(this);
+				var expeditionid = $('#id').val();
+				var is_prepared = $(this).is(':checked') ? 1 : 0;
+
+				$.ajax({
+					url: '<?php echo dol_escape_js(dol_buildpath('/dispatch/script/interface.php', 1)); ?>'
+					, method: 'POST'
+					, data:
+						{
+							put: 'set_all_lines_is_prepared'
+							, fk_expedition: expeditionid
+							, is_prepared: is_prepared
+						}
+					, dataType: 'json'
+					, success: function(response)
+					{
+						if(response.success)
+						{
+							$('.isPreparedCheckbox').prop('checked', is_prepared == 1 ? true : false);
+						}
+
+						var preset = response.success ? 'ok' : 'error';
+						var persist = ! response.success;
+
+						$.jnotify(response.message, preset, persist);
+					}
+					, error: function(xhr, textStatus, errorThrown)
+					{
+						checkbox.prop('checked', is_prepared == 1 ? false : true);
+						$.jnotify(textStatus + ' : ' + errorThrown, 'error', true);
+					}
+				});
+			});
+
+			function verifyIsPreparedCheckboxState()
+			{
+				$('.allPreparedCheckbox').prop('checked', $('.isPreparedCheckbox').not(':checked').length == 0);
+			}
+
+			verifyIsPreparedCheckboxState();
 <?php } ?>
 		});
 	</script>
