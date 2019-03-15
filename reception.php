@@ -884,11 +884,11 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 							print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']').img_info($langs->trans('SerializeThisProductInfo'));
 						}
 
-						print '</td>';
-
 						print $form->hidden('TOrderLine['.$objp->fk_product.'][fk_product]', $objp->fk_product);
 						print $form->hidden('TOrderLine['.$objp->fk_product.'][serialized]', $serializedProduct);
 						print $form->hidden('TOrderLine['.$objp->fk_product.'][subprice]', $objp->subprice);
+
+						print '</td>';
 						print "</tr>\n";
 
 					}

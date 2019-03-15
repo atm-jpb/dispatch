@@ -210,7 +210,7 @@ function _set_line_is_prepared(TPDOdb &$PDOdb, $fk_expeditiondet_asset, $is_prep
  * Mark all shipment asset detail lines as prepared or not
  *
  * @param	TPDOdb	$PDOdb					Database connection
- * @param	int		$fk_expdition			ID of expedition
+ * @param	int		$fk_expedition			ID of expedition
  * @param	int		$is_prepared			0/1, whether the asset has been prepared or not
  *
  * @return	array		Response array with success and message fields, to be JSON-encoded
