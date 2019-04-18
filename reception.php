@@ -144,6 +144,10 @@
 				}
 			}
 		}
+		else {
+		    header('location:'.$_SERVER['PHP_SELF'].'?id='.$id);
+		    exit;
+        }
 	}
 	elseif(isset($_POST['bt_create'])) {
 
