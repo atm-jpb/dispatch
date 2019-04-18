@@ -427,49 +427,52 @@
 				$ret = $commandefourn->dispatchProduct($user, $id_prod, $item['qty'], empty( $item['entrepot']) ? GETPOST('id_entrepot') : $item['entrepot'],$item['price'],$comment);
 			}
 
-			if($commandefourn->statut == 0){
-				$commandefourn->valid($user);
-			}
 
-			foreach($commandefourn->lines as $l){
-				if (!empty($l->fk_product) && !empty( $l->qty ) ) {
-					$TQtyWished[$l->fk_product]+=$l->qty;
-				}
-			}
-
-
-			$TQtyDispatched = array();
-			$sql = "SELECT cfd.fk_product, sum(cfd.qty) as qty";
-			$sql.= " FROM ".MAIN_DB_PREFIX."commande_fournisseur_dispatch as cfd";
-			$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."commande_fournisseurdet as l on l.rowid = cfd.fk_commandefourndet";
-			$sql.= " WHERE cfd.fk_commande = ".$commandefourn->id;
-			$sql.= " GROUP BY cfd.fk_product";
-			$resql = $db->query($sql);
-			while($objd = $db->fetch_object($resql)) {
-				$TQtyDispatched[$objd->fk_product] = $objd->qty;
-			}
-			
-			
-			//Compare array
-			dol_syslog(__METHOD__.' $TQtyDispatched='.var_export($TQtyDispatched,true), LOG_DEBUG);
-			dol_syslog(__METHOD__.' $TQtyWished='.var_export($TQtyWished,true), LOG_DEBUG);
-
-			$status = 5;
-
-			// Si on trouve au moins un produit dont la quantité ventilée est inférieure au commandé, la commande n'est reçue que partiellement
-			foreach($TQtyWished as $fk_product => $qty) {
-				if($TQtyDispatched[$fk_product] < $qty) {
-					$status = 4;
-					break;
-				}
-			}
-
-			$commandefourn->setStatus($user, $status);
-			$commandefourn->statut = $status;
-			if(method_exists($commandefourn, 'log')) $commandefourn->log($user, $status, time()); // removed in 4.0
-
-			setEventMessage('Equipements créés / produits ventilés');
 		}
+
+        if($commandefourn->statut == 0){
+            $commandefourn->valid($user);
+        }
+
+        foreach($commandefourn->lines as $l){
+            if (!empty($l->fk_product) && !empty( $l->qty ) ) {
+                $TQtyWished[$l->fk_product]+=$l->qty;
+            }
+        }
+
+
+        $TQtyDispatched = array();
+        $sql = "SELECT cfd.fk_product, sum(cfd.qty) as qty";
+        $sql.= " FROM ".MAIN_DB_PREFIX."commande_fournisseur_dispatch as cfd";
+        $sql.= " LEFT JOIN ".MAIN_DB_PREFIX."commande_fournisseurdet as l on l.rowid = cfd.fk_commandefourndet";
+        $sql.= " WHERE cfd.fk_commande = ".$commandefourn->id;
+        $sql.= " GROUP BY cfd.fk_product";
+        $resql = $db->query($sql);
+        while($objd = $db->fetch_object($resql)) {
+            $TQtyDispatched[$objd->fk_product] = $objd->qty;
+        }
+
+
+        //Compare array
+        dol_syslog(__METHOD__.' $TQtyDispatched='.var_export($TQtyDispatched,true), LOG_DEBUG);
+        dol_syslog(__METHOD__.' $TQtyWished='.var_export($TQtyWished,true), LOG_DEBUG);
+
+        $status = 5;
+
+        // Si on trouve au moins un produit dont la quantité ventilée est inférieure au commandé, la commande n'est reçue que partiellement
+        foreach($TQtyWished as $fk_product => $qty) {
+            if($TQtyDispatched[$fk_product] < $qty) {
+                $status = 4;
+                break;
+            }
+        }
+
+        $commandefourn->setStatus($user, $status);
+        $commandefourn->statut = $status;
+        if(method_exists($commandefourn, 'log')) $commandefourn->log($user, $status, time()); // removed in 4.0
+
+        setEventMessage('Equipements créés / produits ventilés');
+
 	}
 
 	//if(is_array($TImport)) usort($TImport,'_by_ref');
