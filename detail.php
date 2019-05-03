@@ -74,6 +74,9 @@
 					setEventMessage('Aucun équipement pour ce numéro de série', 'errors');
 				}
 
+				header('location:'.$_SERVER['PHP_SELF'].'?id='.$id);
+                		exit;
+
 				break;
 		}
 	}
