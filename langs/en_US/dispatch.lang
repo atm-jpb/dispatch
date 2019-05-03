@@ -22,6 +22,7 @@ AssetAlreadyLinked=Equipement déjà lié à cet import=Asset already linked to 
 DISPATCH_SHIPPING_VALIDATE_ALERT_IF_NO_DETAIL=When validating an expedition, display an alert if no asset detail has been set
 DispatchExpeditionNoDetail=No asset detail has been set for this shipment
 
+DISPATCH_SHIPPING_LINES_CAN_BE_CHECKED_PREPARED=Assets in the shipments can be marked as "Prepared"
 DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED=Block shipment closing if there are assets not marked as "Prepared"
 AssetMarkedAsPrepared=Line marked as "Prepared"
 AssetMarkedAsNotPrepared=Line marked as "Not prepared"

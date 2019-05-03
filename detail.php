@@ -239,7 +239,7 @@ function tabImport(&$TImport,&$expedition)
 
 	$fullColspan = 4;
 	if(! empty($conf->global->USE_LOT_IN_OF)) $fullColspan++;
-	if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) $fullColspan++;
+	if(! empty($conf->global->DISPATCH_SHIPPING_LINES_CAN_BE_CHECKED_PREPARED)) $fullColspan++;
 ?>
 	<br>
 	<table width="100%" class="noborder">
@@ -250,7 +250,7 @@ function tabImport(&$TImport,&$expedition)
 <?php } ?>
 			<td>Numéro de série</td>
 			<td>Quantité</td>
-<?php if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
+<?php if(! empty($conf->global->DISPATCH_SHIPPING_LINES_CAN_BE_CHECKED_PREPARED)) { ?>
 			<td><?php echo $form->checkbox1('', 'allPrepared', 1, false, '','allPreparedCheckbox'); ?> Préparé</td>
 <?php }
 
@@ -293,7 +293,7 @@ function tabImport(&$TImport,&$expedition)
 					<td><a href="<?php echo dol_buildpath('/' . ATM_ASSET_NAME . '/fiche.php?id='.$asset->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30); ?></a></td>
 					<td><?php echo $line['quantity'] . ' ' . (($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($line['quantity_unit'],$asset->assetType->measuring_units)); ?></td>
 <?php
-		if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED))
+		if(! empty($conf->global->DISPATCH_SHIPPING_LINES_CAN_BE_CHECKED_PREPARED))
 		{
 			if($expedition->statut < Expedition::STATUS_CLOSED) $form->Set_typeaff('edit');
 ?>
@@ -387,7 +387,7 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 					</td>
 					<td id="newline_numserie" style="visibility:hidden"><?php echo $form->combo_sexy('','numserie',$TSerialNumber,''); ?></td>
 					<td id="newline_quantity" style="visibility:hidden"><input type="number" name="quantity" id="quantity" class="text" min="0" /> <?php echo $DoliFormProduct->load_measuring_units('quantity_unit" id="quantity_unit','weight'); ?></td>
-<?php if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
+<?php if(! empty($conf->global->DISPATCH_SHIPPING_LINES_CAN_BE_CHECKED_PREPARED)) { ?>
 					<td>&nbsp;</td>
 <?php }
 
@@ -544,7 +544,7 @@ function printJSTabImportAddLine()
 				});
 			});
 
-<?php if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
+<?php if(! empty($conf->global->DISPATCH_SHIPPING_LINES_CAN_BE_CHECKED_PREPARED)) { ?>
 			$('.isPreparedCheckbox').change(function()
 			{
 				var checkbox = $(this);
