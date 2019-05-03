@@ -53,7 +53,10 @@ AssetsMarkedAsPrepared=Toutes les lignes marquée 'Préparée'
 AssetsMarkedAsNotPrepared=Tout les lignes marquées 'Non préparée'
 NAssetsMarkedCouldNotBeMarked=%s ligne(s) non modifiée(s)
 NoShipmentAssetDetail=Pas d'équipements dans cette expédition
-ShipmentCannotBeClosedAssetsNotPrepared=L'expédition ne peut être close : tous les équipements n'ont pas été préparés
+ShipmentCannotBeClosed=L'expédition ne peut être close : %s
+ShipmentCannotBeClosedAssetsNotPrepared=Tous les équipements n'ont pas été préparés
+ShipmentCannotBeClosedSerializedLinesHaveNoDetail=Certaines lignes de produits sérializés n'ont pas d'équipement lié
+ShipmentCannotBeClosedQtyDoesntMatch=La quantité d'équipements liés est inférieure à la quantité de la ligne associée
 
 NoBDRAssetDetail=Pas d'équipements dans ce bon de retour
 DispatchBonderetour=Réception du bon de retour %s
