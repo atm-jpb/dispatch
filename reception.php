@@ -624,12 +624,10 @@ global $langs, $db, $conf;
 	$head = ordersupplier_prepare_head($commande);
 
 	$title=$langs->trans("SupplierOrder");
-	$notab=0;
+	$notab=-1;
 	dol_fiche_head($head, 'recepasset', $title, $notab, 'order');
 
 	entetecmd($commande);
-
-	dol_fiche_end($notab);
 
 	$form=new TFormCore('auto','formrecept','post', true);
 	echo $form->hidden('action', 'SAVE');
@@ -644,6 +642,8 @@ global $langs, $db, $conf;
 
 	$form->end();
 	_list_already_dispatched($commande);
+
+	dol_fiche_end($notab);
 	llxFooter();
 }
 
@@ -705,6 +705,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 			$sql.= " FROM ".MAIN_DB_PREFIX."commande_fournisseurdet as l";
 			$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."product as p ON l.fk_product=p.rowid";
 			$sql.= " WHERE l.fk_commande = ".$commande->id;
+			$sql.= " AND l.fk_product > 0";
 			$sql.= " GROUP BY l.fk_product";	// Calculation of amount dispatched is done per fk_product so we must group by fk_product
 			$sql.= " ORDER BY p.ref, p.label";
 
@@ -719,9 +720,6 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 					print '<tr class="liste_titre">';
 
 					print '<td>'.$langs->trans("Description").'</td>';
-					print '<td></td>';
-					print '<td></td>';
-					print '<td></td>';
 
 					// NEW CODE FOR PRICE
 					if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE) print '<td align="right">'.$langs->trans("SupplierQtyPrice").'</td>';
@@ -762,7 +760,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 				}
 
-				$nbfreeproduct=0;
+
 				$nbproduct=0;
 
 				$TOrderLine = GETPOST('TOrderLine');
@@ -772,133 +770,123 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 				{
 					$objp = $db->fetch_object($resql);
 					$serializedProduct = 0;
-					// On n'affiche pas les produits personnalises
-					if (! $objp->fk_product > 0)
+
+					if (!empty($TProductCount[$objp->fk_product])) {
+							$serializedProduct = 1;
+					}
+
+					if(isset($TOrderLine[$objp->fk_product]['qty']) && !isset($_POST['bt_create'])) {
+						$remaintodispatch = $TOrderLine[$objp->fk_product]['qty'];
+					} else {
+						$remaintodispatch=price2num($objp->qty - ((float) $products_dispatched[$objp->fk_product]), 5);	// Calculation of dispatched
+					}
+
+					if ($remaintodispatch < 0) $remaintodispatch=0;
+
+					$nbproduct++;
+
+					$var=!$var;
+
+					// To show detail cref and description value, we must make calculation by cref
+					//print ($objp->cref?' ('.$objp->cref.')':'');
+					//if ($objp->description) print '<br>'.nl2br($objp->description);
+					if (DOL_VERSION<3.8 || (empty($conf->productbatch->enabled)) || $objp->tobatch==0)
 					{
-						$nbfreeproduct++;
+						$suffix='_'.$i;
+					} else {
+						$suffix='_0_'.$i;
+					}
+
+
+					print "\n";
+					print '<!-- Line '.$suffix.' -->'."\n";
+					print '<tr class="oddeven">';
+
+					$linktoprod='<a href="'.DOL_URL_ROOT.'/product/fournisseurs.php?id='.$objp->fk_product.'">'.img_object($langs->trans("ShowProduct"),'product').' '.$objp->ref.'</a>';
+					$linktoprod.=' - '.$objp->label."\n";
+
+
+					print '<td>' . $linktoprod . '</td>';
+
+					$up_ht_disc=$objp->subprice;
+					if (! empty($objp->remise_percent) && empty($conf->global->STOCK_EXCLUDE_DISCOUNT_FOR_PMP)) $up_ht_disc=price2num($up_ht_disc * (100 - $objp->remise_percent) / 100, 'MU');
+
+					// NEW CODE FOR PRICE
+					$exprice = $objp->subprice * $objp->qty;
+					if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE)
+					{
+						print '<td align="right">';
+						print '<input type="text" id="TOrderLine['.$objp->fk_product.'][supplier_qty]" name="TOrderLine['.$objp->fk_product.'][supplier_qty]" size="8" value="'.$objp->qty.'">';
+						print '</td>';
+					}
+					if($conf->global->DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION)
+					{
+						print '<td align="right">';
+						print '<input type="text" id="TOrderLine['.$objp->fk_product.'][supplier_price]" name="TOrderLine['.$objp->fk_product.'][supplier_price]" size="8" value="'.$exprice.'">';
+						print '</td>';
+					}
+					if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE)
+					{
+						print '<td align="right">';
+						print '<input type="checkbox" id="TOrderLine['.$objp->fk_product.'][generate_supplier_tarif]" name="TOrderLine['.$objp->fk_product.'][generate_supplier_tarif]">';
+						print '</td>';
+					}
+
+					// Qty ordered
+					print '<td align="right">'.$objp->qty.'</td>';
+
+					// Already dispatched
+					print '<td align="right">'.$products_dispatched[$objp->fk_product].'</td>';
+
+					// Dispatch
+					print '<td align="right">';
+
+					if($remaintodispatch==0) {
+						echo $form->texteRO('', 'TOrderLine['.$objp->fk_product.'][qty]', $remaintodispatch, 5,30);
+					}
+					else {
+						echo $form->texte('', 'TOrderLine['.$objp->fk_product.'][qty]', $remaintodispatch, 5,30);
+					}
+
+					print '</td>';
+
+
+					print '<td align="right" rel="entrepot" fk_product="'.$objp->fk_product.'">';
+
+					$formproduct=new FormProduct($db);
+					$formproduct->loadWarehouses();
+
+					if (count($formproduct->cache_warehouses)>1)
+					{
+						print $formproduct->selectWarehouses(($TOrderLine[$objp->fk_product]) ? $TOrderLine[$objp->fk_product]['entrepot'] : '', 'TOrderLine['.$objp->fk_product.'][entrepot]','',1,0,$objp->fk_product,'',0,1);
+					}
+					elseif  (count($formproduct->cache_warehouses)==1)
+					{
+						print $formproduct->selectWarehouses(($TOrderLine[$objp->fk_product]) ? $TOrderLine[$objp->fk_product]['entrepot'] : '', 'TOrderLine['.$objp->fk_product.'][entrepot]','',0,0,$objp->fk_product,'',0,1);
 					}
 					else
 					{
-
-						if (!empty($TProductCount[$objp->fk_product])) {
-								$serializedProduct = 1;
-						}
-						
-						if(isset($TOrderLine[$objp->fk_product]['qty']) && !isset($_POST['bt_create'])) {
-							$remaintodispatch = $TOrderLine[$objp->fk_product]['qty'];
-						} else {
-							$remaintodispatch=price2num($objp->qty - ((float) $products_dispatched[$objp->fk_product]), 5);	// Calculation of dispatched
-						}
-						
-						if ($remaintodispatch < 0) $remaintodispatch=0;
-
-						$nbproduct++;
-
-						$var=!$var;
-
-						// To show detail cref and description value, we must make calculation by cref
-						//print ($objp->cref?' ('.$objp->cref.')':'');
-						//if ($objp->description) print '<br>'.nl2br($objp->description);
-						if (DOL_VERSION<3.8 || (empty($conf->productbatch->enabled)) || $objp->tobatch==0)
-						{
-							$suffix='_'.$i;
-						} else {
-							$suffix='_0_'.$i;
-						}
-
-
-						print "\n";
-						print '<!-- Line '.$suffix.' -->'."\n";
-						print "<tr ".$bc[$var].">";
-
-						$linktoprod='<a href="'.DOL_URL_ROOT.'/product/fournisseurs.php?id='.$objp->fk_product.'">'.img_object($langs->trans("ShowProduct"),'product').' '.$objp->ref.'</a>';
-						$linktoprod.=' - '.$objp->label."\n";
-
-
-						print '<td colspan="4">';
-						print $linktoprod;
-						print "</td>";
-
-						$up_ht_disc=$objp->subprice;
-						if (! empty($objp->remise_percent) && empty($conf->global->STOCK_EXCLUDE_DISCOUNT_FOR_PMP)) $up_ht_disc=price2num($up_ht_disc * (100 - $objp->remise_percent) / 100, 'MU');
-
-						// NEW CODE FOR PRICE
-						$exprice = $objp->subprice * $objp->qty;
-						if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE)
-						{
-							print '<td align="right">';
-							print '<input type="text" id="TOrderLine['.$objp->fk_product.'][supplier_qty]" name="TOrderLine['.$objp->fk_product.'][supplier_qty]" size="8" value="'.$objp->qty.'">';
-							print '</td>';
-						}
-						if($conf->global->DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION)
-						{
-							print '<td align="right">';
-							print '<input type="text" id="TOrderLine['.$objp->fk_product.'][supplier_price]" name="TOrderLine['.$objp->fk_product.'][supplier_price]" size="8" value="'.$exprice.'">';
-							print '</td>';
-						}
-						if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE)
-						{
-							print '<td align="right">';
-							print '<input type="checkbox" id="TOrderLine['.$objp->fk_product.'][generate_supplier_tarif]" name="TOrderLine['.$objp->fk_product.'][generate_supplier_tarif]">';
-							print '</td>';
-						}
-
-						// Qty ordered
-						print '<td align="right">'.$objp->qty.'</td>';
-
-						// Already dispatched
-						print '<td align="right">'.$products_dispatched[$objp->fk_product].'</td>';
-
-						// Dispatch
-						print '<td align="right">';
-
-						if($remaintodispatch==0) {
-							echo $form->texteRO('', 'TOrderLine['.$objp->fk_product.'][qty]', $remaintodispatch, 5,30);
-						}
-						else {
-							echo $form->texte('', 'TOrderLine['.$objp->fk_product.'][qty]', $remaintodispatch, 5,30);
-						}
-
-						print '</td>';
-
-
-						print '<td align="right" rel="entrepot" fk_product="'.$objp->fk_product.'">';
-
-						$formproduct=new FormProduct($db);
-						$formproduct->loadWarehouses();
-
-						if (count($formproduct->cache_warehouses)>1)
-						{
-							print $formproduct->selectWarehouses(($TOrderLine[$objp->fk_product]) ? $TOrderLine[$objp->fk_product]['entrepot'] : '', 'TOrderLine['.$objp->fk_product.'][entrepot]','',1,0,$objp->fk_product,'',0,1);
-						}
-						elseif  (count($formproduct->cache_warehouses)==1)
-						{
-							print $formproduct->selectWarehouses(($TOrderLine[$objp->fk_product]) ? $TOrderLine[$objp->fk_product]['entrepot'] : '', 'TOrderLine['.$objp->fk_product.'][entrepot]','',0,0,$objp->fk_product,'',0,1);
-						}
-						else
-						{
-							print $langs->trans("NoWarehouseDefined");
-						}
-						print "</td>\n";
-
-
-						print '<td align="right">';
-						/*print $form->checkbox1('', 'TOrderLine['.$objp->fk_product.'][serialized]', 1, $serializedProduct); */
-
-						if($remaintodispatch==0) {
-							print $langs->trans('Yes').img_info('SerializedProductInfo');
-						} else {
-							print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']').img_info($langs->trans('SerializeThisProductInfo'));
-						}
-
-						print '</td>';
-
-						print $form->hidden('TOrderLine['.$objp->fk_product.'][fk_product]', $objp->fk_product);
-						print $form->hidden('TOrderLine['.$objp->fk_product.'][serialized]', $serializedProduct);
-						print $form->hidden('TOrderLine['.$objp->fk_product.'][subprice]', $objp->subprice);
-						print "</tr>\n";
-
+						print $langs->trans("NoWarehouseDefined");
 					}
+					print "</td>\n";
+
+
+					print '<td align="right">';
+					/*print $form->checkbox1('', 'TOrderLine['.$objp->fk_product.'][serialized]', 1, $serializedProduct); */
+
+					if($remaintodispatch==0) {
+						print $langs->trans('Yes').img_info('SerializedProductInfo');
+					} else {
+						print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']').img_info($langs->trans('SerializeThisProductInfo'));
+					}
+
+					print $form->hidden('TOrderLine['.$objp->fk_product.'][fk_product]', $objp->fk_product);
+					print $form->hidden('TOrderLine['.$objp->fk_product.'][serialized]', $serializedProduct);
+					print $form->hidden('TOrderLine['.$objp->fk_product.'][subprice]', $objp->subprice);
+
+					print '</td>';
+					print "</tr>\n";
+
 					$i++;
 				}
 				$db->free($resql);
@@ -1165,7 +1153,7 @@ global $langs, $db, $conf;
 			});
 		});
 	</script>
-	<table width="100%" class="border" id="dispatchAsset">
+	<table width="100%" class="noborder" id="dispatchAsset">
 		<tr class="liste_titre">
 			<td>Produit</td>
 			<td>Numéro de Série</td>
@@ -1213,7 +1201,7 @@ global $langs, $db, $conf;
 					}
 				}
 
-				?><tr class="dispatchAssetLine" id="dispatchAssetLine<?php print $k; ?>" data-fk-product="<?php print $prod->id; ?>">
+				?><tr class="dispatchAssetLine oddeven" id="dispatchAssetLine<?php print $k; ?>" data-fk-product="<?php print $prod->id; ?>">
 					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref)." - ".$prod->label; ?></td>
 					<td><?php
 						$asset=new TAsset;
@@ -1298,9 +1286,9 @@ global $langs, $db, $conf;
 
 		if($commande->statut < 5 && $commande->statut>2){
 
-			$pListe[0] = "Sélectionnez un produit";
+			$TProducts = array('Sélectionnez un produit');
 			foreach($commande->lines as $line){
-				if($line->fk_product) $pListe[$line->fk_product] = $line->product_ref." - ".$line->product_label;
+				if($line->fk_product) $TProducts[$line->fk_product] = $line->product_ref." - ".$line->product_label;
 			}
 
 			$defaultDLUO = '';
@@ -1311,7 +1299,7 @@ global $langs, $db, $conf;
 			echo $defaultDLUO;
 
 			?><tr style="background-color: lightblue;">
-					<td><?php print $form->combo('', 'new_line_fk_product', $pListe, ''); ?></td>
+					<td><?php print $form->combo('', 'new_line_fk_product', $TProducts, ''); ?></td>
 					<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30); ?></td>
 <?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
 					<td><?php echo $form->texte('','TLine[-1][lot_number]', '', 30);   ?></td>

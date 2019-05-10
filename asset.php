@@ -103,15 +103,13 @@ function _fiche(&$PDOdb,&$dispatch) {
 		
 	<?php
 
-	$canLink = ! empty($conf->global->DISPATCH_CAN_LINK_ASSET_TO_OBJECT_IN_ANY_STATUS) || $type_object == 'contrat' || $object->statut == 0;
+	$canLink = ! empty($conf->global->DISPATCH_CAN_LINK_ASSET_TO_OBJECT_IN_ANY_STATUS) || $dispatch->type_object == 'contrat' || $object->statut == 0;
 	
 	foreach($dispatch->TDispatchAsset as $k=>&$da) {
 		
 		if($da->to_delete) continue;
 		
-		$class= ($class == 'pair') ? 'impair' : 'pair';
-		
-		?><tr class="<?php echo $class ?>">
+		?><tr class="oddeven">
 			<?php if(GETPOST('type_object') !== 'ticketsup') echo '<td>'.$pListe[$da->fk_object].'</td>'; ?>
 			<td><?php echo $da->asset->getNomUrl(1,0,1); ?></td>
 			<?php

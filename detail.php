@@ -74,6 +74,9 @@
 					setEventMessage('Aucun équipement pour ce numéro de série', 'errors');
 				}
 
+				header('location:'.$_SERVER['PHP_SELF'].'?id='.$id);
+                		exit;
+
 				break;
 		}
 	}
@@ -236,7 +239,7 @@ function tabImport(&$TImport,&$expedition)
 
 	$fullColspan = 4;
 	if(! empty($conf->global->USE_LOT_IN_OF)) $fullColspan++;
-	if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) $fullColspan++;
+	if(! empty($conf->global->DISPATCH_SHIPPING_LINES_CAN_BE_CHECKED_PREPARED)) $fullColspan++;
 ?>
 	<br>
 	<table width="100%" class="noborder">
@@ -247,8 +250,8 @@ function tabImport(&$TImport,&$expedition)
 <?php } ?>
 			<td>Numéro de série</td>
 			<td>Quantité</td>
-<?php if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
-			<td>Préparé</td>
+<?php if(! empty($conf->global->DISPATCH_SHIPPING_LINES_CAN_BE_CHECKED_PREPARED)) { ?>
+			<td><?php echo $form->checkbox1('', 'allPrepared', 1, false, '','allPreparedCheckbox'); ?> Préparé</td>
 <?php }
 
 		$parameters = array('fullColspan' => &$fullColspan);
@@ -290,7 +293,7 @@ function tabImport(&$TImport,&$expedition)
 					<td><a href="<?php echo dol_buildpath('/' . ATM_ASSET_NAME . '/fiche.php?id='.$asset->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30); ?></a></td>
 					<td><?php echo $line['quantity'] . ' ' . (($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($line['quantity_unit'],$asset->assetType->measuring_units)); ?></td>
 <?php
-		if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED))
+		if(! empty($conf->global->DISPATCH_SHIPPING_LINES_CAN_BE_CHECKED_PREPARED))
 		{
 			if($expedition->statut < Expedition::STATUS_CLOSED) $form->Set_typeaff('edit');
 ?>
@@ -348,9 +351,9 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 					<td colspan="<?php echo $fullColspan; ?>">Nouvel équipement</td>
 				</tr>
 <?php
-	$TLotNumber = array(' -- aucun produit sélectionné -- ');
+	$TLotNumber = array('-- Selectionnez un lot --');
 
-	$TSerialNumber = array(' -- aucun lot sélectionné -- ');
+	$TSerialNumber = array('-- Selectionnez un équipement --');
 
 	$sql = "SELECT ed.rowid, p.rowid as fk_product,p.ref,p.label ,ed.qty
 			FROM ".MAIN_DB_PREFIX."product as p
@@ -365,7 +368,7 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 
 	if($PDOdb->Get_Recordcount() > 0) {
 
-		$productOptions = '<option value=""></option>';
+		$productOptions = '<option value="">-- Selectionnez un produit --</option>';
 
 		while ($obj = $PDOdb->Get_line()) {
 			$productOptions.= '<option value="'.$obj->rowid.'" fk-product="'.$obj->fk_product.'" qty="'.$obj->qty.'">'.$obj->ref.' - '.$obj->label.' x '.$obj->qty.'</option>';
@@ -376,15 +379,15 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 						<select id="lineexpeditionid" name="lineexpeditionid"><?php echo $productOptions; ?></select>
 <?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
 					</td>
-					<td>
-						<?php echo $form->combo('', 'lot_number', $TLotNumber, ''); ?>
+					<td id="newline_lot_number" style="visibility:hidden">
+						<?php echo $form->combo_sexy('', 'lot_number', $TLotNumber, ''); ?>
 <?php } else { ?>
 						<?php echo $form->hidden('lot_number', ''); ?>
 <?php } ?>
 					</td>
-					<td><?php echo $form->combo('','numserie',$TSerialNumber,''); ?></td>
-					<td><input type="number" name="quantity" id="quantity" class="text" min="0" /> <?php echo $DoliFormProduct->load_measuring_units('quantity_unit" id="quantity_unit','weight'); ?></td>
-<?php if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
+					<td id="newline_numserie" style="visibility:hidden"><?php echo $form->combo_sexy('','numserie',$TSerialNumber,''); ?></td>
+					<td id="newline_quantity" style="visibility:hidden"><input type="number" name="quantity" id="quantity" class="text" min="0" /> <?php echo $DoliFormProduct->load_measuring_units('quantity_unit" id="quantity_unit','weight'); ?></td>
+<?php if(! empty($conf->global->DISPATCH_SHIPPING_LINES_CAN_BE_CHECKED_PREPARED)) { ?>
 					<td>&nbsp;</td>
 <?php }
 
@@ -416,8 +419,11 @@ function printJSTabImportAddLine()
 		$(document).ready(function() {
 
 			$('#lot_number').change(function() {
-				var lot_number = $(this).val();
+				var elem = $(this);
+				var lot_number = elem.val();
 				var expeditionid = $('#id').val();
+
+				$('#newline_quantity').css({ visibility: 'hidden' });
 
 				$.ajax({
 					url: 'script/interface.php',
@@ -433,6 +439,11 @@ function printJSTabImportAddLine()
 				}).done(function(json_results) {
 
 					$('#numserie option').remove();
+					$('#numserie').append($('<option>', {
+						value: '',
+						text: '-- Selectionnez un équipement --',
+						selected: true
+					}));
 					cpt = 0;
 					$.each(json_results, function(index) {
 						var obj = json_results[index];
@@ -459,7 +470,30 @@ function printJSTabImportAddLine()
 							}
 						}
 					});
+
+					if((elem.is('input') && $('#lineexpeditionid').val().length > 0) || (lot_number && lot_number.length > 0))
+					{
+						$('#newline_numserie').css({ visibility: 'visible' });
+					}
+					else
+					{
+						$('#newline_numserie').css({ visibility: 'hidden' });
+					}
 				});
+			});
+
+			$('#numserie').change(function()
+			{
+				var numserie = $(this).val();
+
+				if(numserie && numserie.length > 0)
+				{
+					$('#newline_quantity').css({ visibility: 'visible' });
+				}
+				else
+				{
+					$('#newline_quantity').css({ visibility: 'hidden' });
+				}
 			});
 
 			$('#lineexpeditionid').change(function() {
@@ -484,6 +518,12 @@ function printJSTabImportAddLine()
 
 					$('#lot_number option').remove();
 
+					lotNumberSelect.append($('<option>', {
+						value: '',
+						text: '-- Selectionnez un lot --',
+						selected: true
+					}));
+
 					$.each(json_results, function(index) {
 						var obj = json_results[index];
 
@@ -492,10 +532,19 @@ function printJSTabImportAddLine()
 							text: obj.label
 						}));
 					});
+
+					if(productid && productid.length > 0)
+					{
+						$('#newline_lot_number').css({ visibility: 'visible' });
+					}
+					else
+					{
+						$('#newline_lot_number').css({ visibility: 'hidden' });
+					}
 				});
 			});
 
-<?php if(! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED)) { ?>
+<?php if(! empty($conf->global->DISPATCH_SHIPPING_LINES_CAN_BE_CHECKED_PREPARED)) { ?>
 			$('.isPreparedCheckbox').change(function()
 			{
 				var checkbox = $(this);
@@ -516,6 +565,8 @@ function printJSTabImportAddLine()
 					}
 					, success: function(response)
 					{
+						verifyIsPreparedCheckboxState();
+
 						var preset = response.success ? 'ok' : 'error';
 						var persist = ! response.success;
 
@@ -523,10 +574,54 @@ function printJSTabImportAddLine()
 					}
 					, error: function(xhr, textStatus, errorThrown)
 					{
+						checkbox.prop('checked', is_prepared == 1 ? false : true);
 						$.jnotify(textStatus + ' : ' + errorThrown, 'error', true);
 					}
 				})
 			});
+
+			$('.allPreparedCheckbox').change(function()
+			{
+				var checkbox = $(this);
+				var expeditionid = $('#id').val();
+				var is_prepared = $(this).is(':checked') ? 1 : 0;
+
+				$.ajax({
+					url: '<?php echo dol_escape_js(dol_buildpath('/dispatch/script/interface.php', 1)); ?>'
+					, method: 'POST'
+					, data:
+						{
+							put: 'set_all_lines_is_prepared'
+							, fk_expedition: expeditionid
+							, is_prepared: is_prepared
+						}
+					, dataType: 'json'
+					, success: function(response)
+					{
+						if(response.success)
+						{
+							$('.isPreparedCheckbox').prop('checked', is_prepared == 1 ? true : false);
+						}
+
+						var preset = response.success ? 'ok' : 'error';
+						var persist = ! response.success;
+
+						$.jnotify(response.message, preset, persist);
+					}
+					, error: function(xhr, textStatus, errorThrown)
+					{
+						checkbox.prop('checked', is_prepared == 1 ? false : true);
+						$.jnotify(textStatus + ' : ' + errorThrown, 'error', true);
+					}
+				});
+			});
+
+			function verifyIsPreparedCheckboxState()
+			{
+				$('.allPreparedCheckbox').prop('checked', $('.isPreparedCheckbox').not(':checked').length == 0);
+			}
+
+			verifyIsPreparedCheckboxState();
 <?php } ?>
 		});
 	</script>

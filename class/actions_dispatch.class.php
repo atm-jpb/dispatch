@@ -59,7 +59,7 @@ class ActionsDispatch
 			dol_include_once('/dispatch/config.php');
 			dol_include_once('/dispatch/lib/dispatch.lib.php');
 
-			$canBeClosed = dispatch_shipment_can_be_closed($object);
+			list($canBeClosed, $msg) = dispatch_shipment_can_be_closed($object);
 
 			if(empty($canBeClosed))
 			{
@@ -67,7 +67,7 @@ class ActionsDispatch
 
 				$langs->load('dispatch@dispatch');
 
-				$message = dol_escape_js($langs->transnoentities('ShipmentCannotBeClosedAssetsNotPrepared'), 1);
+				$message = dol_escape_js($langs->transnoentities('ShipmentCannotBeClosed', $msg), 1);
 ?>
 				<script>
 					$(document).ready(function()

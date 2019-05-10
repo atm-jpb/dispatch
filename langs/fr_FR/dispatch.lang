@@ -24,7 +24,7 @@ DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION=Mettre à jour les prix de la commande 
 DISPATCH_CREATE_SUPPLIER_PRICE=Générer des prix fournisseurs à la réception des produits vers stocks
 DISPATCH_HIDE_DLUO_PDF=Cacher la DLUO sur les PDF d'expédition
 
-SaveBeforeVentil=Sauvegarder vos modifications avant de lancer la ventilation
+SaveBeforeVentil=Sauvegardez vos modifications avant de lancer la ventilation
 DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_IF_LOT=Permettre de créer les équipements avec numéro de série automatique lors d'une réception si le lot est saisi
 createNumSerieOnTheFly=Création du numérot de série %s à la volée 
 
@@ -45,11 +45,18 @@ AssetAlreadyLinked=Numéro de série déjà réceptionné
 DISPATCH_SHIPPING_VALIDATE_ALERT_IF_NO_DETAIL=Lors de la validation d'une expédition, afficher une alerte si aucun détail des équipements n'a été renseigné
 DispatchExpeditionNoDetail=Le détail des équipements n'a pas été renseigné
 
+DISPATCH_SHIPPING_LINES_CAN_BE_CHECKED_PREPARED=Les équipements présents dans le détail d'expédition peuvent être marqués "préparés"
 DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED=Bloquer la clôture d'une expédition si des équipements sont marqués comme non préparés
 AssetMarkedAsPrepared=Ligne marquée 'Préparée'
 AssetMarkedAsNotPrepared=Ligne marquée 'Non préparée'
+AssetsMarkedAsPrepared=Toutes les lignes marquée 'Préparée'
+AssetsMarkedAsNotPrepared=Tout les lignes marquées 'Non préparée'
+NAssetsMarkedCouldNotBeMarked=%s ligne(s) non modifiée(s)
 NoShipmentAssetDetail=Pas d'équipements dans cette expédition
-ShipmentCannotBeClosedAssetsNotPrepared=L'expédition ne peut être close : tous les équipements n'ont pas été préparés
+ShipmentCannotBeClosed=L'expédition ne peut être close : %s
+ShipmentCannotBeClosedAssetsNotPrepared=Tous les équipements n'ont pas été préparés
+ShipmentCannotBeClosedSerializedLinesHaveNoDetail=Certaines lignes de produits sérializés n'ont pas d'équipement lié
+ShipmentCannotBeClosedQtyDoesntMatch=La quantité d'équipements liés est inférieure à la quantité de la ligne associée
 
 NoBDRAssetDetail=Pas d'équipements dans ce bon de retour
 DispatchBonderetour=Réception du bon de retour %s
