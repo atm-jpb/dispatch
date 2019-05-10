@@ -106,7 +106,7 @@ class InterfaceDispatchWorkflow
      */
 	function run_trigger($action,$object,$user,$langs,$conf)
 	{
-		global $conf,$db;
+		global $conf,$db, $langs;
 
 		if(!defined('INC_FROM_DOLIBARR')) define('INC_FROM_DOLIBARR',true);
 
@@ -233,11 +233,11 @@ class InterfaceDispatchWorkflow
 			dol_include_once('/dispatch/config.php');
 			dol_include_once('/dispatch/lib/dispatch.lib.php');
 
-			$canBeClosed = dispatch_shipment_can_be_closed($object);
+			list($canBeClosed, $msg) = dispatch_shipment_can_be_closed($object);
 
 			if(empty($canBeClosed))
 			{
-				setEventMessage('ShipmentCannotBeClosedAssetsNotPrepared', 'errors');
+				setEventMessage($langs->trans('ShipmentCannotBeClosed', $msg), 'errors');
 				return -1;
 			}
 		}
