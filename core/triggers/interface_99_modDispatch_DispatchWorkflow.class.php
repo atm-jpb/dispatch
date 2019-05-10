@@ -206,6 +206,21 @@ class InterfaceDispatchWorkflow
 
 				foreach($TDetail as &$detail)
 				{
+					if (!empty($conf->global->DISPATCH_RESET_ASSET_WAREHOUSE_ON_SHIPMENT))
+					{
+						$asset = new TAsset;
+						$asset->load($PDOdb, $detail->fk_asset);
+
+						$asset->fk_entrepot = $line->entrepot_id;
+						$asset->fk_societe_localisation = 0;
+
+						// on ne fait pas le mouvement standard qui a été traité par dolibarr à la suppression d'expédition
+						$asset->save($PDOdb, $user, $langs->trans("ShipmentDeletedInDolibarr",$object->ref), $detail->weight_reel, false, 0, true);
+
+						$stock = new TAssetStock;
+						$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $detail->weight_reel, $langs->trans("ShipmentDeletedInDolibarr",$object->ref), $detail->fk_expeditiondet);
+					}
+
 					$detail->delete($PDOdb);
 				}
 			}
@@ -251,6 +266,8 @@ class InterfaceDispatchWorkflow
 
 		//$asset->contenancereel_value = $asset->contenancereel_value - $poids_destocke;
 		$asset->fk_societe_localisation = $fk_soc;
+		if (!empty($conf->global->DISPATCH_RESET_ASSET_WAREHOUSE_ON_SHIPMENT)) $asset->fk_entrepot = 0;
+
 
 		// Destockage Dolibarr déjà fait par à la validation de l'expédition, et impossible de ne destocker que l'équipement : on save sans rien déstocker
 		$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref), -$poids_destocke, false, 0, true);
