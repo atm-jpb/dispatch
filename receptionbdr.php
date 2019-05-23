@@ -1211,6 +1211,7 @@ global $langs, $db, $conf;
 							if($bdr->statut >0) {
 								echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('AssetAlreadyLinked'), 'warning.png');
 							}
+							else echo $line['numserie'];
 						}
 						else {
 							echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('NoAssetCreated'), 'info.png');
