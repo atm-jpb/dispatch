@@ -227,19 +227,22 @@ class InterfaceDispatchWorkflow
 		}
 
 
-		if($action == 'SHIPPING_CLOSED' && ! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED))
+		if($action == 'SHIPPING_CLOSED')
 		{
-			if(! defined('INC_FROM_DOLIBARR')) define('INC_FROM_DOLIBARR', true);
-			dol_include_once('/dispatch/config.php');
-			dol_include_once('/dispatch/lib/dispatch.lib.php');
+		    if (! empty($conf->global->DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED))
+            {
+                if(! defined('INC_FROM_DOLIBARR')) define('INC_FROM_DOLIBARR', true);
+                dol_include_once('/dispatch/config.php');
+                dol_include_once('/dispatch/lib/dispatch.lib.php');
 
-			list($canBeClosed, $msg) = dispatch_shipment_can_be_closed($object);
+                list($canBeClosed, $msg) = dispatch_shipment_can_be_closed($object);
 
-			if(empty($canBeClosed))
-			{
-				setEventMessage($langs->trans('ShipmentCannotBeClosed', $msg), 'errors');
-				return -1;
-			}
+                if(empty($canBeClosed))
+                {
+                    setEventMessage($langs->trans('ShipmentCannotBeClosed', $msg), 'errors');
+                    return -1;
+                }
+            }
 		}
 
 		return 0;

@@ -982,7 +982,7 @@ $(document).ready(function() {
 }
 
 function _list_already_dispatched(&$commande) {
-	global $db, $langs;
+	global $db, $langs, $conf;
 
 	// List of lines already dispatched
 		$sql = "SELECT p.ref, p.label,";
