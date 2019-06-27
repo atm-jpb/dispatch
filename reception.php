@@ -1126,7 +1126,7 @@ function _list_already_dispatched(&$commande) {
 }
 
 function tabImport(&$TImport,&$commande,$comment) {
-global $langs, $db, $conf;
+global $langs, $db, $conf, $hookmanager;
 
 	$PDOdb=new TPDOdb;
 
@@ -1178,6 +1178,10 @@ global $langs, $db, $conf;
 				<td>Firmware</td>
 				<?php
 			}
+
+            $parameters=array('commande'=>$commande);
+            $reshook=$hookmanager->executeHooks('printFieldListTitle',$parameters);    // Note that $action and $object may have been modified by hook
+            print $hookmanager->resPrint;
 			?>
 			<td>&nbsp;</td>
 		</tr>
@@ -1269,7 +1273,9 @@ global $langs, $db, $conf;
 						<td><?php echo $form->texte('','TLine['.$k.'][firmware]', $line['firmware'], 30)   ?></td>
 						<?php
 					}
-
+                    $parameters=array('line' => $line, 'prod' => $prod, 'k' => $k);
+                    $reshook=$hookmanager->executeHooks('printFieldListValue',$parameters);    // Note that $action and $object may have been modified by hook
+                    print $hookmanager->resPrint;
 					?>
 					<td>
 						<?php
@@ -1343,6 +1349,11 @@ global $langs, $db, $conf;
 						<td><?php echo $form->texte('','TLine[-1][firmware]', '', 30);   ?></td>
 						<?php
 					}
+
+                    $parameters=array('line' => $line, 'prod' => $prod, 'k' => -1);
+                    $reshook=$hookmanager->executeHooks('printFieldListValue',$parameters);    // Note that $action and $object may have been modified by hook
+                    print $hookmanager->resPrint;
+
 					?>
 					<td>Nouveau
 					</td>
