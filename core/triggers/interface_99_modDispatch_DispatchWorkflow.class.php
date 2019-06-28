@@ -118,6 +118,7 @@ class InterfaceDispatchWorkflow
 
 			$noDetailAlert = true;
 
+            if (!empty(!empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT))) {
 			// Pour chaque ligne de l'expédition
 			foreach($object->lines as $line) {
 				// Chargement de l'objet detail dispatch relié à la ligne d'expédition
@@ -191,6 +192,7 @@ class InterfaceDispatchWorkflow
 
 			dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
 		}
+        }
 
 		if($action == 'SHIPPING_DELETE')
 		{
@@ -313,4 +315,14 @@ class InterfaceDispatchWorkflow
 
 		return $weight_reel / $poids;
 	}
+
+    /**
+     * @param $object  Expedition
+     * @return int  -1: error, 0: nothing updated, 1: items updated in the database
+     */
+	private function update_stock_according_to_shipment($object)
+    {
+        global $db, $conf;
+        if (empty($conf->{ ATM_ASSET_NAME }->enabled)) return 0;
+    }
 }
