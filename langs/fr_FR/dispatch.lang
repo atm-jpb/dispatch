@@ -64,3 +64,4 @@ ReceivingForSameBDR=Réceptions pour ce bon de retour
 StockMovementAssetStockTransfered=Retour de l'équipement  %s sur bon de retour %s
 
 DISPATCH_RESET_ASSET_WAREHOUSE_ON_SHIPMENT=Retirer l'entrepot de l'équipement à la validation de l'expédition
+DISPATCH_SKIP_SERVICES=Ignorer les lignes de type service

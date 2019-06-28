@@ -179,6 +179,14 @@
 	print ajax_constantonoff('DISPATCH_RESET_ASSET_WAREHOUSE_ON_SHIPMENT');
 	print '</td></tr>';
 
+	$var=!$var;
+	print '<tr '.$bc[$var].'>';
+	print '<td>'.$langs->trans('DISPATCH_SKIP_SERVICES').'</td>';
+	print '<td align="center" width="20">&nbsp;</td>';
+	print '<td align="center" width="300">';
+	print ajax_constantonoff('DISPATCH_SKIP_SERVICES');
+	print '</td></tr>';
+
 	
 	print "</table>";
 
