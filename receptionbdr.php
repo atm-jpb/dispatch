@@ -194,7 +194,7 @@
     			if(empty($line['numserie'])) {
     				setEventMessage("Pas de numéro de série : impossible de créer l'équipement pour ".$line['ref'].". Si vous ne voulez pas sérialiser ce produit, supprimez les lignes de numéro de série et faites une réception simple. ","errors");
     			}
-    			else if(!$asset->loadReference($PDOdb, $line['numserie'])) {
+    			else if(!$asset->loadReference($PDOdb, $line['numserie'], $line['fk_product'])) {
     				// si inexistant
     				//Seulement si nouvelle ligne
     
@@ -1207,7 +1207,7 @@ global $langs, $db, $conf;
 							echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('SerialNumberNeeded'), 'warning.png');
 							$warning_asset = true;
 						}
-						else if($asset->loadReference($PDOdb, $line['numserie'])) {
+						else if($asset->loadReference($PDOdb, $line['numserie'], $line['fk_product'])) {
 							if($bdr->statut >0) {
 								echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('AssetAlreadyLinked'), 'warning.png');
 							}
