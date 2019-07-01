@@ -111,121 +111,48 @@ class InterfaceDispatchWorkflow
 		if(!defined('INC_FROM_DOLIBARR')) define('INC_FROM_DOLIBARR',true);
 
 		if ($action == 'SHIPPING_VALIDATE') {
-			dol_include_once('/dispatch/config.php');
-			dol_include_once('/dispatch/class/dispatchdetail.class.php');
-
-			$PDOdb = new TPDOdb();
-
-			$noDetailAlert = true;
-
-            if (!empty(!empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT))) {
-			// Pour chaque ligne de l'expédition
-			foreach($object->lines as $line) {
-				// Chargement de l'objet detail dispatch relié à la ligne d'expédition
-				$dd = new TDispatchDetail();
-
-				$TIdExpeditionDet = TRequeteCore::get_id_from_what_you_want($PDOdb, MAIN_DB_PREFIX.'expeditiondet', array('fk_expedition' => $object->id, 'fk_origin_line' => $line->fk_origin_line));
-				$idExpeditionDet = $TIdExpeditionDet[0];
-
-				//if(!empty($idExpeditionDet) && $dd->loadBy($PDOdb, $idExpeditionDet, 'fk_expeditiondet')) {
-				if(!empty($idExpeditionDet)) {
-
-					$dd->loadLines($PDOdb, $idExpeditionDet);
-
-					if($conf->{ ATM_ASSET_NAME }->enabled){
-						// Création des mouvements de stock de flacon
-						foreach($dd->lines as $detail) {
-							// Création du mouvement de stock standard
-							$poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref,(empty($object->fk_soc)?$object->socid:$object->fk_soc));
-							if($poids_destocke > 0) $noDetailAlert = false;
-							//$this->create_standard_stock_mouvement($line, $poids_destocke, $object->ref);
-
-							if($conf->clinomadic->enabled){
-								$asset = new TAsset;
-								$asset->load($PDOdb, $detail->fk_asset);
-
-								$prod = new Product($db);
-								$prod->fetch($asset->fk_product);
-
-								//Affectation du type d'équipement pour avoir accès aux extrafields équipement
-								$asset->fk_asset_type = $asset->get_asset_type($PDOdb, $prod->id);
-								$asset->load_asset_type($PDOdb);
-
-								//Localisation client
-								$asset->fk_societe_localisation = $object->socid;
-
-								if(!empty($object->linkedObjects['commande'][0]->array_options['options_duree_pret'])){
-									$asset->etat = 2; //Prêté
-									$asset->set_date('date_deb_pret', $object->date_valid);
-									$asset->set_date('date_fin_pret', strtotime('+'.$object->commande[0]->array_options['options_duree_pret'].'year',$object->date_valid));
-								}
-								else{
-									$asset->etat = 1; //Vendu
-								}
-
-								foreach($object->linkedObjects['commande'][0]->lines as $line){
-									if($line->fk_product == $asset->fk_product){
-										$extension_garantie = $line->array_options['options_extension_garantie'];
-									}
-								}
-
-								$nb_year_garantie+=$prod->array_options['options_duree_garantie_client'];
-
-								$asset->date_fin_garantie_cli = strtotime('+'.$nb_year_garantie.'year', $object->date_valid);
-								$asset->date_fin_garantie_cli = strtotime('+'.$extension_garantie.'year', $asset->date_fin_garantie_cli);
-
-								$asset->save($PDOdb);
-							}
-						}
-					}
-					//exit;
-				} // if(!empty($idExpeditionDet))
-				/* else { // Pas de détail, on déstocke la quantité comme Dolibarr standard
-					$this->create_standard_stock_mouvement($line, $line->qty, $object->ref);
-				}*/
-			}
-
-			if(! empty($conf->global->DISPATCH_SHIPPING_VALIDATE_ALERT_IF_NO_DETAIL) && $noDetailAlert) {
-				$langs->load('dispatch@dispatch');
-				setEventMessage('DispatchExpeditionNoDetail');
-			}
-
-			dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
+		    if (!empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT)) {
+		        $this->move_assets_according_to_shipment($object);
+            }
+            dol_syslog("Trigger '".$this->name."' for action '$action' launched by ".__FILE__.". id=".$object->id);
+            return 1;
 		}
-        }
 
 		if($action == 'SHIPPING_DELETE')
 		{
-			dol_include_once('/dispatch/config.php');
-			dol_include_once('/dispatch/class/dispatchdetail.class.php');
+		    if (($conf->global->STOCK_CALCULATE_ON_SHIPMENT && $object->statut > 0) ||
+                ($conf->global->STOCK_CALCULATE_ON_SHIPMENT_CLOSE && $object->statut == 2)) {
+                dol_include_once('/dispatch/config.php');
+                dol_include_once('/dispatch/class/dispatchdetail.class.php');
 
-			$PDOdb = new TPDOdb;
+                $PDOdb = new TPDOdb;
 
-			foreach($object->lines as &$line)
-			{
-				$dispatchDetail = new TDispatchDetail;
-				$TDetail = $dispatchDetail->LoadAllBy($PDOdb, array('fk_expeditiondet' => $line->id));
+                foreach($object->lines as &$line)
+                {
+                    $dispatchDetail = new TDispatchDetail;
+                    $TDetail = $dispatchDetail->LoadAllBy($PDOdb, array('fk_expeditiondet' => $line->id));
 
-				foreach($TDetail as &$detail)
-				{
-					if (!empty($conf->global->DISPATCH_RESET_ASSET_WAREHOUSE_ON_SHIPMENT))
-					{
-						$asset = new TAsset;
-						$asset->load($PDOdb, $detail->fk_asset);
+                    foreach($TDetail as &$detail)
+                    {
+                        if (!empty($conf->global->DISPATCH_RESET_ASSET_WAREHOUSE_ON_SHIPMENT))
+                        {
+                            $asset = new TAsset;
+                            $asset->load($PDOdb, $detail->fk_asset);
 
-						$asset->fk_entrepot = $line->entrepot_id;
-						$asset->fk_societe_localisation = 0;
+                            $asset->fk_entrepot = $line->entrepot_id;
+                            $asset->fk_societe_localisation = 0;
 
-						// on ne fait pas le mouvement standard qui a été traité par dolibarr à la suppression d'expédition
-						$asset->save($PDOdb, $user, $langs->trans("ShipmentDeletedInDolibarr",$object->ref), $detail->weight_reel, false, 0, true);
+                            // on ne fait pas le mouvement standard qui a été traité par dolibarr à la suppression d'expédition
+                            $asset->save($PDOdb, $user, $langs->trans("ShipmentDeletedInDolibarr",$object->ref), $detail->weight_reel, false, 0, true);
 
-						$stock = new TAssetStock;
-						$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $detail->weight_reel, $langs->trans("ShipmentDeletedInDolibarr",$object->ref), $detail->fk_expeditiondet);
-					}
+                            $stock = new TAssetStock;
+                            $stock->mouvement_stock($PDOdb, $user, $asset->getId(), $detail->weight_reel, $langs->trans("ShipmentDeletedInDolibarr",$object->ref), $detail->fk_expeditiondet);
+                        }
 
-					$detail->delete($PDOdb);
-				}
-			}
+                        $detail->delete($PDOdb);
+                    }
+                }
+            }
 		}
 
 
@@ -243,6 +170,9 @@ class InterfaceDispatchWorkflow
                 {
                     setEventMessage($langs->trans('ShipmentCannotBeClosed', $msg), 'errors');
                     return -1;
+                }
+                if (!empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT_CLOSE)) {
+                    $this->move_assets_according_to_shipment($object);
                 }
             }
 		}
@@ -317,12 +247,90 @@ class InterfaceDispatchWorkflow
 	}
 
     /**
-     * @param $object  Expedition
-     * @return int  -1: error, 0: nothing updated, 1: items updated in the database
+     * @param $object
+     *
+     * @return bool
      */
-	private function update_stock_according_to_shipment($object)
-    {
-        global $db, $conf;
-        if (empty($conf->{ ATM_ASSET_NAME }->enabled)) return 0;
+	private function move_assets_according_to_shipment($object) {
+	    global $conf, $db, $langs;
+        dol_include_once('/dispatch/config.php');
+        dol_include_once('/dispatch/class/dispatchdetail.class.php');
+
+        $PDOdb = new TPDOdb();
+
+        $noDetailAlert = true;
+
+        // Pour chaque ligne de l'expédition
+        foreach($object->lines as $line) {
+            // Chargement de l'objet detail dispatch relié à la ligne d'expédition
+            $dd = new TDispatchDetail();
+
+            $TIdExpeditionDet = TRequeteCore::get_id_from_what_you_want($PDOdb, MAIN_DB_PREFIX.'expeditiondet', array('fk_expedition' => $object->id, 'fk_origin_line' => $line->fk_origin_line));
+            $idExpeditionDet = $TIdExpeditionDet[0];
+            $nb_year_garantie = 0;
+
+            //if(!empty($idExpeditionDet) && $dd->loadBy($PDOdb, $idExpeditionDet, 'fk_expeditiondet')) {
+            if(!empty($idExpeditionDet)) {
+
+                $dd->loadLines($PDOdb, $idExpeditionDet);
+
+                if($conf->{ ATM_ASSET_NAME }->enabled){
+                    // Création des mouvements de stock de flacon
+                    foreach($dd->lines as $detail) {
+                        // Création du mouvement de stock standard
+                        $poids_destocke = $this->create_flacon_stock_mouvement($PDOdb, $detail, $object->ref,(empty($object->fk_soc)?$object->socid:$object->fk_soc));
+                        if($poids_destocke > 0) $noDetailAlert = false;
+                        //$this->create_standard_stock_mouvement($line, $poids_destocke, $object->ref);
+
+                        if($conf->clinomadic->enabled){
+                            $asset = new TAsset;
+                            $asset->load($PDOdb, $detail->fk_asset);
+
+                            $prod = new Product($db);
+                            $prod->fetch($asset->fk_product);
+
+                            //Affectation du type d'équipement pour avoir accès aux extrafields équipement
+                            $asset->fk_asset_type = $asset->get_asset_type($PDOdb, $prod->id);
+                            $asset->load_asset_type($PDOdb);
+
+                            //Localisation client
+                            $asset->fk_societe_localisation = $object->socid;
+
+                            if(!empty($object->linkedObjects['commande'][0]->array_options['options_duree_pret'])){
+                                $asset->etat = 2; //Prêté
+                                $asset->set_date('date_deb_pret', $object->date_valid);
+                                $asset->set_date('date_fin_pret', strtotime('+'.$object->commande[0]->array_options['options_duree_pret'].'year',$object->date_valid));
+                            }
+                            else{
+                                $asset->etat = 1; //Vendu
+                            }
+
+                            foreach($object->linkedObjects['commande'][0]->lines as $line){
+                                if($line->fk_product == $asset->fk_product){
+                                    $extension_garantie = $line->array_options['options_extension_garantie'];
+                                }
+                            }
+
+                            $nb_year_garantie+=$prod->array_options['options_duree_garantie_client'];
+
+                            $asset->date_fin_garantie_cli = strtotime('+'.$nb_year_garantie.'year', $object->date_valid);
+                            $asset->date_fin_garantie_cli = strtotime('+'.$extension_garantie.'year', $asset->date_fin_garantie_cli);
+
+                            $asset->save($PDOdb);
+                        }
+                    }
+                }
+                //exit;
+            } // if(!empty($idExpeditionDet))
+            /* else { // Pas de détail, on déstocke la quantité comme Dolibarr standard
+                $this->create_standard_stock_mouvement($line, $line->qty, $object->ref);
+            }*/
+        }
+
+        if(! empty($conf->global->DISPATCH_SHIPPING_VALIDATE_ALERT_IF_NO_DETAIL) && $noDetailAlert) {
+            $langs->load('dispatch@dispatch');
+            setEventMessage('DispatchExpeditionNoDetail');
+        }
+
     }
 }
