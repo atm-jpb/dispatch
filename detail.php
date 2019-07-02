@@ -266,7 +266,7 @@ function tabImport(&$TImport,&$expedition)
 		
 		$form->Set_typeaff('view');
 
-		$canEdit = $expedition->statut == 0 || (! empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT) && $expedition->statut == 1);
+		$canEdit = $expedition->statut == 0 || (! empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT_CLOSE) && $expedition->statut == 1);
 
 		if(! empty($TImport)){
 
