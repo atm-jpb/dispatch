@@ -155,43 +155,6 @@ class InterfaceDispatchWorkflow
             }
 		}
 
-		if($action == 'SHIPPING_REOPEN')
-		{
-
-			if (!empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT_CLOSE))
-			{
-				dol_include_once('/dispatch/config.php');
-				dol_include_once('/dispatch/class/dispatchdetail.class.php');
-
-				$PDOdb = new TPDOdb;
-
-				foreach($object->lines as &$line)
-				{
-					$dispatchDetail = new TDispatchDetail;
-					$TDetail = $dispatchDetail->LoadAllBy($PDOdb, array('fk_expeditiondet' => $line->id));
-
-					foreach($TDetail as &$detail)
-					{
-						if (!empty($conf->global->DISPATCH_RESET_ASSET_WAREHOUSE_ON_SHIPMENT))
-						{
-							$asset = new TAsset;
-							$asset->load($PDOdb, $detail->fk_asset);
-
-							$asset->fk_entrepot = $line->entrepot_id;
-							$asset->fk_societe_localisation = 0;
-
-							// on ne fait pas le mouvement standard qui a été traité par dolibarr à la suppression d'expédition
-							$asset->save($PDOdb, $user, $langs->trans("ShipmentReopenInDolibarr",$object->ref), $detail->weight_reel, false, 0, true);
-
-							$stock = new TAssetStock;
-							$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $detail->weight_reel, $langs->trans("ShipmentReopenInDolibarr",$object->ref), $detail->fk_expeditiondet);
-						}
-
-						$detail->delete($PDOdb);
-					}
-				}
-			}
-		}
 
 		if($action == 'SHIPPING_CLOSED')
 		{
