@@ -645,7 +645,7 @@ global $langs, $db, $conf;
 }
 
 function _show_product_ventil(&$TImport, &$bdr,&$form) {
-	global $langs, $db, $conf, $hookmanager;
+	global $langs, $db, $conf, $hookmanager, $bc;
 		$langs->load('dispatch@dispatch');
 
 		$TProductCount = array();
@@ -903,11 +903,11 @@ function _show_product_ventil(&$TImport, &$bdr,&$form) {
 
 						if (count($formproduct->cache_warehouses)>1)
 						{
-							print $formproduct->selectWarehouses(($TOrderLine[$objp->fk_product]) ? $TOrderLine[$objp->fk_product]['entrepot'] : $objp->fk_entrepot, 'TOrderLine['.$objp->fk_product.'][entrepot]','',1,0,$objp->fk_product,'',0,1);
+							print $formproduct->selectWarehouses(($TOrderLine[$objp->fk_product]) ? $TOrderLine[$objp->fk_product]['entrepot'] : '', 'TOrderLine['.$objp->fk_product.'][entrepot]','',1,0,$objp->fk_product,'',0,1);
 						}
 						elseif  (count($formproduct->cache_warehouses)==1)
 						{
-							print $formproduct->selectWarehouses(($TOrderLine[$objp->fk_product]) ? $TOrderLine[$objp->fk_product]['entrepot'] : $objp->fk_entrepot, 'TOrderLine['.$objp->fk_product.'][entrepot]','',1,0,$objp->fk_product,'',0,1);
+							print $formproduct->selectWarehouses(($TOrderLine[$objp->fk_product]) ? $TOrderLine[$objp->fk_product]['entrepot'] : '', 'TOrderLine['.$objp->fk_product.'][entrepot]','',1,0,$objp->fk_product,'',0,1);
 						}
 						else
 						{
@@ -1028,7 +1028,7 @@ $(document).ready(function() {
 }
 
 function _list_already_dispatched(&$bdr) {
-	global $db, $langs;
+	global $db, $langs, $bc, $conf;
 
 	// List of lines already dispatched
 	$sql = "SELECT p.ref, p.label,";
