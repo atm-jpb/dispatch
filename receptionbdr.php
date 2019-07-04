@@ -728,7 +728,7 @@ function _show_product_ventil(&$TImport, &$bdr,&$form) {
 	}
 
 
-	$sql = "SELECT l.fk_product, SUM(l.qty * l.price) / SUM(l.qty) AS subprice, 0 AS remise_percent, SUM(l.qty) as qty,";
+	$sql = "SELECT l.fk_entrepot, l.fk_product, SUM(l.qty * l.price) / SUM(l.qty) AS subprice, 0 AS remise_percent, SUM(l.qty) as qty,";
 			$sql.= " p.ref, p.label";
 
 			if(DOL_VERSION>=3.8) {
@@ -770,7 +770,7 @@ function _show_product_ventil(&$TImport, &$bdr,&$form) {
 					$formproduct=new FormProduct($db);
 					$formproduct->loadWarehouses();
 
-					print '<td align="right">'.$langs->trans("Warehouse").' : '.$formproduct->selectWarehouses(GETPOST('id_entrepot'), 'id_entrepot','',0,0,0,'',0,1).'</td>';
+					print '<td align="right">'.$langs->trans("Warehouse").' : '.$formproduct->selectWarehouses(GETPOST('id_entrepot'), 'id_entrepot','',1,0,0,'',0,1).'</td>';
 					print '<td align="right">'.$langs->trans("SerializedProduct").'</td>';
 					print "</tr>\n";
 
@@ -903,11 +903,11 @@ function _show_product_ventil(&$TImport, &$bdr,&$form) {
 
 						if (count($formproduct->cache_warehouses)>1)
 						{
-							print $formproduct->selectWarehouses(($TOrderLine[$objp->fk_product]) ? $TOrderLine[$objp->fk_product]['entrepot'] : '', 'TOrderLine['.$objp->fk_product.'][entrepot]','',1,0,$objp->fk_product,'',0,1);
+							print $formproduct->selectWarehouses(($TOrderLine[$objp->fk_product]) ? $TOrderLine[$objp->fk_product]['entrepot'] : $objp->fk_entrepot, 'TOrderLine['.$objp->fk_product.'][entrepot]','',1,0,$objp->fk_product,'',0,1);
 						}
 						elseif  (count($formproduct->cache_warehouses)==1)
 						{
-							print $formproduct->selectWarehouses(($TOrderLine[$objp->fk_product]) ? $TOrderLine[$objp->fk_product]['entrepot'] : '', 'TOrderLine['.$objp->fk_product.'][entrepot]','',0,0,$objp->fk_product,'',0,1);
+							print $formproduct->selectWarehouses(($TOrderLine[$objp->fk_product]) ? $TOrderLine[$objp->fk_product]['entrepot'] : $objp->fk_entrepot, 'TOrderLine['.$objp->fk_product.'][entrepot]','',1,0,$objp->fk_product,'',0,1);
 						}
 						else
 						{
@@ -926,7 +926,7 @@ function _show_product_ventil(&$TImport, &$bdr,&$form) {
 						}
 
 						print '</td>';
-
+						print $form->hidden('TOrderLine['.$objp->fk_product.'][fk_entrepot]', $objp->fk_entrepot);
 						print $form->hidden('TOrderLine['.$objp->fk_product.'][fk_product]', $objp->fk_product);
 						print $form->hidden('TOrderLine['.$objp->fk_product.'][serialized]', $serializedProduct);
 						print $form->hidden('TOrderLine['.$objp->fk_product.'][subprice]', $objp->subprice);
@@ -1354,6 +1354,21 @@ global $langs, $db, $conf;
 
 
 	</table>
+	<script type="text/javascript">
+		$(document).ready(function(){
+			$('#new_line_fk_product').on('change', function () {
+
+				var prod = $(this).val();
+				var entrepot = $('[name="TOrderLine['+prod+'][fk_entrepot]"]').val();
+
+				if (entrepot != undefined) {
+					$('[name="TLine[-1][entrepot]"]').find('option[value="'+entrepot+'"]').attr('selected', true);
+				}
+
+			});
+		});
+	</script>
+
 	<?php
 	if($bdr->statut > 0 || $warning_asset){
 
