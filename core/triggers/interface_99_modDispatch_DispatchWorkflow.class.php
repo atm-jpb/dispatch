@@ -171,10 +171,11 @@ class InterfaceDispatchWorkflow
                     setEventMessage($langs->trans('ShipmentCannotBeClosed', $msg), 'errors');
                     return -1;
                 }
-                if (!empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT_CLOSE)) {
-                    $this->move_assets_according_to_shipment($object);
-                }
-            }
+			}
+
+			if (!empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT_CLOSE)) {
+				$this->move_assets_according_to_shipment($object);
+			}
 		}
 
 		if ($action == 'BONDERETOUR_VALIDATE')
