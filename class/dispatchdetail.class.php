@@ -98,6 +98,20 @@ class TRecepBDRDetail extends TObjetStd {
 		parent::_init_vars();
 		parent::start();
 	}
+
+	function loadLines(&$PDOdb, $id_bdrLine){
+
+		$sql = "SELECT rowid FROM ".$this->get_table()." WHERE fk_bonderetourdet = ".$id_bdrLine." ORDER BY rang";
+
+		$TIdBDRdet = TRequeteCore::_get_id_by_sql($PDOdb, $sql);
+
+		foreach($TIdBDRdet as $idbdrdet){
+			$detail_temp = new TRecepBDRDetail;
+			$detail_temp->load($PDOdb, $idbdrdet);
+			$this->lines[] = $detail_temp;
+			$this->nbLines = $this->nbLines + 1;
+		}
+	}
 }
 
 class TRecepBDRDispatch extends TObjetStd {

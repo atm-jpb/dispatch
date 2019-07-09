@@ -19,8 +19,8 @@ class ActionsDispatch
 		if(in_array('bonderetourcard', $TContexts))
 		{
 //			var_dump($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE, $conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE);
-			if (! empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE)) $conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE = 0;
-			if (! empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE)) $conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE = 0;
+			//if (! empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE)) $conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE = 0;
+			//if (! empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE)) $conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE = 0;
 //			var_dump($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE, $conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE);
 //			exit('la');
 		}

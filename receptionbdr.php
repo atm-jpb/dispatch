@@ -1131,12 +1131,12 @@ global $langs, $db, $conf;
 	$formDoli =	new Form($db);
 	$formproduct=new FormProduct($db);
 
-	if($bdr->statut < 1) $form->type_aff = "view";
-
-	if ($bdr->statut < 1)
-	{
-		print $langs->trans("OrderStatusNotReadyToDispatch");
-	}
+//	if($bdr->statut < 1) $form->type_aff = "view";
+//
+//	if ($bdr->statut < 1)
+//	{
+//		print $langs->trans("OrderStatusNotReadyToDispatch");
+//	}
 
 	_show_product_ventil($TImport,$bdr,$form);
 
@@ -1251,7 +1251,7 @@ global $langs, $db, $conf;
 						<td><?php echo $form->texte('','TLine['.$k.'][quantity]', $line['quantity'], 10);   ?></td><?php
 
 						if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) {
-							echo '<td>'. ($bdr->statut > 0) ? $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']) : measuring_units_string($line['quantity_unit'],'weight').'</td>';
+							echo '<td>'. /*($bdr->statut > 0) ? */$formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit'])/* : measuring_units_string($line['quantity_unit'],'weight')*/.'</td>';
 						}
 					}
 					else{
@@ -1269,7 +1269,7 @@ global $langs, $db, $conf;
 					?>
 					<td>
 						<?php
-						if($bdr->statut > 0 && $line['bonderetourdet_asset'] > 0){
+						if(/*$bdr->statut > 0 &&*/ $line['bonderetourdet_asset'] > 0){
 							echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$bdr->id.'&rowid='.$line['bonderetourdet_asset'].'">'.img_delete().'</a>';
 						}
 						?>
@@ -1280,7 +1280,7 @@ global $langs, $db, $conf;
 			}
 		}
 
-		if($bdr->statut > 0){
+//		if($bdr->statut > 0){
 
 			$pListe[0] = "Sélectionnez un produit";
 			foreach($bdr->lines as $line){
@@ -1349,7 +1349,7 @@ global $langs, $db, $conf;
 					</td>
 				</tr>
 			<?php
-		}
+//		}
 		?>
 
 
@@ -1370,17 +1370,23 @@ global $langs, $db, $conf;
 	</script>
 
 	<?php
-	if($bdr->statut > 0 || $warning_asset){
-
-		if($bdr->statut > 0 ) {
+//	if($bdr->statut > 0 || $warning_asset){
+//
+//		if($bdr->statut > 0 ) {
 			echo '<div class="tabsAction">'.$form->btsubmit('Enregistrer', 'bt_save').'</div>';
-		}
+//		}
 
 
 		$form->type_aff = 'edit';
 		?>
 		<hr />
 		<?php
+	if (!empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE) || !empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE)){
+		if (!empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE)) $trigger = $langs->trans("BDRValidate");
+		if (!empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE)) $trigger = $langs->trans("BDRClose");
+		print '<div align="center">'.$langs->trans('BDRCalculateAuto', $trigger).'</div>';
+	}
+	else{
 		echo '<div id="actionVentilation">';
 		echo 'Date de réception : '.$form->calendrier('', 'date_recep', time());
 
@@ -1389,6 +1395,8 @@ global $langs, $db, $conf;
 		echo ' '.$form->btsubmit($langs->trans('AssetVentil'), 'bt_create');
 		echo '</div>';
 	}
+
+//	}
 
 }
 

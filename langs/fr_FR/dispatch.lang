@@ -62,6 +62,9 @@ NoBDRAssetDetail=Pas d'équipements dans ce bon de retour
 DispatchBonderetour=Réception du bon de retour %s
 ReceivingForSameBDR=Réceptions pour ce bon de retour
 StockMovementAssetStockTransfered=Retour de l'équipement  %s sur bon de retour %s
+BDRCalculateAuto=La ventilation est faite automatiquement à la %s du bon de retour
+BDRValidate=validation
+BDRClose=cloture
 
 DISPATCH_RESET_ASSET_WAREHOUSE_ON_SHIPMENT=Retirer l'entrepot de l'équipement à la validation de l'expédition
 DISPATCH_SKIP_SERVICES=Ignorer les lignes de type service

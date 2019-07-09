@@ -177,6 +177,72 @@ class InterfaceDispatchWorkflow
             }
 		}
 
+		if ($action == 'BONDERETOUR_VALIDATE')
+		{
+			if (!empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE))
+			{
+				$this->move_assets_according_to_BDR($object, $action);
+			}
+		}
+
+		if ($action == 'BONDERETOUR_UNVALIDATE')
+		{
+			if (!empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE))
+			{
+				$this->move_assets_according_to_BDR($object, $action, true);
+			}
+		}
+
+		if ($action == 'BONDERETOUR_CLOSED')
+		{
+			if (!empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE))
+			{
+				$this->move_assets_according_to_BDR($object, $action);
+			}
+		}
+
+		if ($action == 'BONDERETOUR_REOPEN')
+		{
+			if (!empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE))
+			{
+				$this->move_assets_according_to_BDR($object, $action, true);
+			}
+		}
+
+		if ($action == 'BONDERETOUR_DELETE')
+		{
+			if (($object->statut == 1 && !empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE))
+				|| ($object->statut == 2 && !empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE))
+			)
+			{
+				$this->move_assets_according_to_BDR($object, $action, true);
+			}
+
+			dol_include_once('/dispatch/config.php');
+			dol_include_once('/dispatch/class/dispatchdetail.class.php');
+
+			$PDOdb = new TPDOdb();
+
+			if (!empty($object->lines))
+			{
+				foreach ($object->lines as $line)
+				{
+					$d = new TRecepBDRDetail();
+					$d->loadLines($PDOdb, $line->id);
+
+					if (!empty($d->lines))
+					{
+						foreach ($d->lines as $detail)
+						{
+							$detail->delete($PDOdb);
+						}
+					}
+				}
+			}
+
+		}
+
+
 		return 0;
 	}
 
@@ -244,6 +310,68 @@ class InterfaceDispatchWorkflow
 		$weight_reel = $linedetail->weight_reel * pow(10,$linedetail->weight_reel_unit );
 
 		return $weight_reel / $poids;
+	}
+
+	private function move_assets_according_to_BDR($object, $event = '', $reverse = false)
+	{
+		global $conf, $db, $user, $langs;
+
+		dol_include_once('/dispatch/config.php');
+		dol_include_once('/dispatch/class/dispatchdetail.class.php');
+
+		if($conf->{ ATM_ASSET_NAME }->enabled)
+		{
+			dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
+
+			$PDOdb = new TPDOdb();
+
+			if (!empty($object->lines))
+			{
+				foreach ($object->lines as $line) {
+					$d = new TRecepBDRDetail();
+
+					$d->loadLines($PDOdb, $line->id);
+
+					if (!empty($d->lines))
+					{
+						foreach ($d->lines as $detail)
+						{
+							$asset = new TAsset();
+
+							$prod = new Product($db);
+							$prod->fetch($line->fk_product);
+
+							$ret = $asset->loadReference($PDOdb, $detail->serial_number, $detail->fk_product);
+							if (!$ret) // l'asset n'existe pas
+							{
+								$asset->fk_product = $detail->fk_product;
+								$asset->serial_number = $detail->serial_number;
+								$asset->weight = $detail->weight;
+								$asset->weight_reel = $detail->weight_reel;
+								$asset->fk_asset_type = $asset->get_asset_type($PDOdb, $prod->id);
+							}
+
+							$asset->fk_societe_localisation = 0;
+							$asset->fk_entrepot = $detail->fk_warehouse;
+							$qty = $detail->weight_reel;
+
+							if ($reverse)
+							{
+								$qty = -$qty;
+								$asset->fk_societe_localisation = $object->socid;
+								$asset->fk_entrepot = 0;
+							}
+
+							$asset->save($PDOdb, $user, $langs->trans($event."InDolibarr",$object->ref), $qty, false, 0, true);
+
+							// Destockage équipement
+							$stock = new TAssetStock;
+							$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $qty, $langs->trans($event."InDolibarr",$object->ref), $detail->fk_bonderetourdet);
+						}
+					}
+				}
+			}
+		}
 	}
 
     /**
