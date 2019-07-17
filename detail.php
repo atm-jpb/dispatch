@@ -373,7 +373,7 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 
 		while ($obj = $PDOdb->Get_line()) {
 			$prodStatic = new Product($db);
-			$prodStatic->fetch(0, $obj->ref);
+			$prodStatic->fetch($obj->fk_product);
 			if (!empty($prodStatic->array_options['options_type_asset']))
 			$productOptions.= '<option value="'.$obj->rowid.'" fk-product="'.$obj->fk_product.'" qty="'.$obj->qty.'">'.$obj->ref.' - '.$obj->label.' x '.$obj->qty.'</option>';
 		}
