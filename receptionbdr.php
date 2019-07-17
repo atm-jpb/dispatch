@@ -663,7 +663,7 @@ function _show_product_ventil(&$TImport, &$bdr,&$form) {
 		<?php
 
 
-		print '<table class="noborder" width="100%">';
+		print '<table class="noborder" width="100%" style="display:none;">';
 
 		// Ici : rechercher les qty déjà retournées
 			// Set $products_dispatched with qty dispatched for each product id
@@ -1138,7 +1138,7 @@ global $langs, $db, $conf;
 //		print $langs->trans("OrderStatusNotReadyToDispatch");
 //	}
 
-	//_show_product_ventil($TImport,$bdr,$form);
+	_show_product_ventil($TImport,$bdr,$form);
 
 	print count($TImport).' équipement(s) dans votre réception';
 
@@ -1230,11 +1230,11 @@ global $langs, $db, $conf;
 
 						if (count($formproduct->cache_warehouses)>1)
 						{
-							print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',0,1);
+							print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',1,1,$prod->id,'',0,1);
 						}
 						elseif  (count($formproduct->cache_warehouses)==1)
 						{
-							print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
+							print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',1,1,$prod->id,'',0,1);
 						}
 						else
 						{
@@ -1280,7 +1280,7 @@ global $langs, $db, $conf;
 			}
 		}
 
-//		if($bdr->statut > 0){
+		if($bdr->statut < 2){
 
 			$pListe[0] = "Sélectionnez un produit";
 			foreach($bdr->lines as $line){
@@ -1312,11 +1312,11 @@ global $langs, $db, $conf;
 
 						if (count($formproduct->cache_warehouses)>1)
 						{
-							print $formproduct->selectWarehouses('', 'TLine[-1][entrepot]','',1,0,$prod->id,'',0,1);
+							print $formproduct->selectWarehouses('', 'TLine[-1][entrepot]','',1,1,$prod->id,'',0,1);
 						}
 						elseif  (count($formproduct->cache_warehouses)==1)
 						{
-							print $formproduct->selectWarehouses('', 'TLine[-1][entrepot]','',0,0,$prod->id,'',0,1);
+							print $formproduct->selectWarehouses('', 'TLine[-1][entrepot]','',1,1,$prod->id,'',0,1);
 						}
 						else
 						{
@@ -1349,7 +1349,7 @@ global $langs, $db, $conf;
 					</td>
 				</tr>
 			<?php
-//		}
+		}
 		?>
 
 
@@ -1362,7 +1362,7 @@ global $langs, $db, $conf;
 				var entrepot = $('[name="TOrderLine['+prod+'][fk_entrepot]"]').val();
 
 				if (entrepot != undefined) {
-					$('[name="TLine[-1][entrepot]"]').find('option[value="'+entrepot+'"]').attr('selected', true);
+					$('[name="TLine[-1][entrepot]_disabled"]').find('option[value="'+entrepot+'"]').attr('selected', true);
 				}
 
 			});
@@ -1370,7 +1370,7 @@ global $langs, $db, $conf;
 	</script>
 
 	<?php
-//	if($bdr->statut > 0 || $warning_asset){
+	if($bdr->statut < 2 || $warning_asset){
 //
 //		if($bdr->statut > 0 ) {
 			echo '<div class="tabsAction">'.$form->btsubmit('Enregistrer', 'bt_save').'</div>';
@@ -1396,7 +1396,7 @@ global $langs, $db, $conf;
 		echo '</div>';
 	}
 
-//	}
+	}
 
 }
 
