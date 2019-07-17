@@ -1138,7 +1138,7 @@ global $langs, $db, $conf;
 //		print $langs->trans("OrderStatusNotReadyToDispatch");
 //	}
 
-	_show_product_ventil($TImport,$bdr,$form);
+	//_show_product_ventil($TImport,$bdr,$form);
 
 	print count($TImport).' équipement(s) dans votre réception';
 
@@ -1208,10 +1208,10 @@ global $langs, $db, $conf;
 							$warning_asset = true;
 						}
 						else if($asset->loadReference($PDOdb, $line['numserie'], $line['fk_product'])) {
-							if($bdr->statut >0) {
+//							if($bdr->statut >0) {
 								echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('AssetAlreadyLinked'), 'warning.png');
-							}
-							else echo $line['numserie'];
+//							}
+//							else echo $line['numserie'];
 						}
 						else {
 							echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('NoAssetCreated'), 'info.png');
@@ -1288,7 +1288,7 @@ global $langs, $db, $conf;
 				{
 					$prodStatic = new Product($db);
 					$prodStatic->fetch($line->fk_product);
-					$pListe[$line->fk_product] = $prodStatic->ref." - ".$prodStatic->label;
+					if (!empty($prodStatic->array_options['options_type_asset'])) $pListe[$line->fk_product] = $prodStatic->ref." - ".$prodStatic->label;
 				}
 			}
 
