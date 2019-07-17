@@ -3,6 +3,7 @@
 	require('config.php');
 
 	dol_include_once('/expedition/class/expedition.class.php' );
+	dol_include_once('/product/class/product.class.php' );
 	dol_include_once('/dispatch/class/dispatchdetail.class.php' );
 	dol_include_once('/product/class/html.formproduct.class.php' );
 	dol_include_once('/core/lib/admin.lib.php' );
@@ -371,6 +372,9 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 		$productOptions = '<option value="">-- Selectionnez un produit --</option>';
 
 		while ($obj = $PDOdb->Get_line()) {
+			$prodStatic = new Product($db);
+			$prodStatic->fetch(0, $obj->ref);
+			if (!empty($prodStatic->array_options['options_type_asset']))
 			$productOptions.= '<option value="'.$obj->rowid.'" fk-product="'.$obj->fk_product.'" qty="'.$obj->qty.'">'.$obj->ref.' - '.$obj->label.' x '.$obj->qty.'</option>';
 		}
 ?>
