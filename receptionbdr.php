@@ -1208,10 +1208,10 @@ global $langs, $db, $conf;
 							$warning_asset = true;
 						}
 						else if($asset->loadReference($PDOdb, $line['numserie'], $line['fk_product'])) {
-//							if($bdr->statut >0) {
+							if($bdr->statut < 2) {
 								echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('AssetAlreadyLinked'), 'warning.png');
-//							}
-//							else echo $line['numserie'];
+							}
+							else echo $asset->getNomUrl(1);
 						}
 						else {
 							echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('NoAssetCreated'), 'info.png');
@@ -1269,7 +1269,7 @@ global $langs, $db, $conf;
 					?>
 					<td>
 						<?php
-						if(/*$bdr->statut > 0 &&*/ $line['bonderetourdet_asset'] > 0){
+						if( $bdr->statut < 2 && $line['bonderetourdet_asset'] > 0){
 							echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$bdr->id.'&rowid='.$line['bonderetourdet_asset'].'">'.img_delete().'</a>';
 						}
 						?>
