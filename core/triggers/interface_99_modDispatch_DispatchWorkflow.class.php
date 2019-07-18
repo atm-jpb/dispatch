@@ -243,6 +243,32 @@ class InterfaceDispatchWorkflow
 
 		}
 
+		if ($action == "LINEBONDERETOUR_UPDATE")
+		{
+			if (!empty($object->oldcopy))
+			{
+				if ($object->fk_entrepot != $object->oldcopy->fk_entrepot)
+				{
+					dol_include_once('/dispatch/config.php');
+					dol_include_once('/dispatch/class/dispatchdetail.class.php');
+
+					$PDOdb = new TPDOdb();
+
+					$d = new TRecepBDRDetail();
+					$d->loadLines($PDOdb, $object->id);
+
+					if (!empty($d->lines))
+					{
+						foreach ($d->lines as $detail)
+						{
+							$detail->fk_warehouse = $object->fk_entrepot;
+							$detail->save($PDOdb);
+						}
+					}
+				}
+			}
+		}
+
 
 		return 0;
 	}
