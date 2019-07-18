@@ -343,6 +343,8 @@ class InterfaceDispatchWorkflow
 	{
 		global $conf, $db, $user, $langs;
 
+		$object->old_details = array();
+
 		dol_include_once('/dispatch/config.php');
 		dol_include_once('/dispatch/class/dispatchdetail.class.php');
 
@@ -379,6 +381,7 @@ class InterfaceDispatchWorkflow
 							}
 
 							$asset->fk_societe_localisation = 0;
+                            $object->old_details[$asset->id] = $asset->fk_entrepot;
 							$asset->fk_entrepot = $detail->fk_warehouse;
 							$qty = $detail->weight_reel;
 
