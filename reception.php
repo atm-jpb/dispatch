@@ -23,11 +23,12 @@
 	$langs->load('dispatch@dispatch');
 
 	$id = GETPOST('id');
+	$ref = GETPOST('ref');
 
 	$hookmanager->initHooks(array('receptionstockcard'));
 
 	$commandefourn = new CommandeFournisseur($db);
-	$commandefourn->fetch($id);
+	$commandefourn->fetch($id, $ref);
 
 	$action = GETPOST('action');
 	$comment = GETPOST('comment');

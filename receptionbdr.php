@@ -26,11 +26,12 @@
 	$langs->load('bonderetour@bonderetour');
 
 	$id = GETPOST('id');
+	$ref = GETPOST('ref');
 
 	$hookmanager->initHooks(array('receptionstockbdrcard'));
 
 	$bdr = new Bonderetour($db);
-	$bdr->fetch($id);
+	$bdr->fetch($id, $ref);
 
 	$action = GETPOST('action');
 	$comment = GETPOST('comment');
