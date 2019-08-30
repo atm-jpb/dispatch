@@ -82,6 +82,7 @@ function _autocomplete_asset(&$PDOdb, $lot_number, $productid, $expeditionID, $e
 
 	dol_include_once('/core/lib/product.lib.php');
 	dol_include_once('/societe/class/societe.class.php');
+	dol_include_once('/expedition/class/expedition.class.php');
 
 	$sql = "SELECT fk_entrepot FROM ".MAIN_DB_PREFIX."expeditiondet WHERE rowid = ".$expeditionDetID." LIMIT 1";
 
@@ -99,6 +100,14 @@ function _autocomplete_asset(&$PDOdb, $lot_number, $productid, $expeditionID, $e
 			WHERE a.lot_number = '".$lot_number."'
 			AND a.fk_product = ".$productid;
 
+	//Si l'équipement est attribué à une autre expédition qui a le statut brouillon ou validé, on ne le propose pas
+    $exp = new Expedition($db);
+    if(!empty($expeditionID)) {
+        $exp->fetch($expeditionID);
+        if($exp->statut == Expedition::STATUS_DRAFT || $exp->statut == Expedition::STATUS_VALIDATED ) {
+            $sql.= " AND a.rowid NOT IN (SELECT fk_asset FROM ".MAIN_DB_PREFIX . "expeditiondet_asset)";
+        }
+    }
 	if(! empty($societe->id))
 	{
 		// Par défaut, dispatch associe un équipement réceptionné par commande fournisseur à une société qui porte le même nom que $mysoc
