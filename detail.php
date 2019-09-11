@@ -16,9 +16,10 @@
 	$PDOdb=new TPDOdb;
 
 	$id = GETPOST('id');
+	$ref = GETPOST('ref');
 
 	$expedition = new Expedition($db);
-	$expedition->fetch($id);
+	$expedition->fetch($id, $ref);
 	
 	$action = GETPOST('action');
 	$TImport = _loadDetail($PDOdb, $expedition);
