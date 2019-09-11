@@ -145,9 +145,8 @@ class InterfaceDispatchWorkflow
                             // on ne fait pas le mouvement standard qui a été traité par dolibarr à la suppression d'expédition
                             $asset->save($PDOdb, $user, $langs->trans("ShipmentDeletedInDolibarr",$object->ref), $detail->weight_reel, false, 0, true);
 
-
                             $stock = new TAssetStock;
-                            $stock->mouvement_stock($PDOdb, $user, $asset->getId(), $detail->weight_reel, $langs->trans("ShipmentDeletedInDolibarr",$object->ref), $detail->fk_expeditiondet, 0); //TODO récuperer le fk_dol_moov
+                            $stock->mouvement_stock($PDOdb, $user, $asset->getId(), $detail->weight_reel, $langs->trans("ShipmentDeletedInDolibarr",$object->ref), $detail->fk_expeditiondet);
                         }
 
                         $detail->delete($PDOdb);
@@ -300,7 +299,7 @@ class InterfaceDispatchWorkflow
 
 		// Destockage Dolibarr déjà fait par à la validation de l'expédition, et impossible de ne destocker que l'équipement : on save sans rien déstocker
 		$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref), -$poids_destocke, false, 0, true);
-		//On a besoin du mouvement de stock associé (donc celui qui vient d'être ajouté)
+		
 		$fk_dol_moov = 0;
 		if ($conf->global->DISPATCH_LINK_ASSET_TO_STOCK_MOOV)
 		{
@@ -413,10 +412,9 @@ class InterfaceDispatchWorkflow
 
 							$asset->save($PDOdb, $user, $langs->trans($event."InDolibarr",$object->ref), $qty, false, 0, true);
 
-
 							// Destockage équipement
 							$stock = new TAssetStock;
-							$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $qty, $langs->trans($event."InDolibarr",$object->ref), $detail->fk_bonderetourdet,0); //TODO récuperer le fk_dol_moov
+							$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $qty, $langs->trans($event."InDolibarr",$object->ref), $detail->fk_bonderetourdet);
 						}
 					}
 				}
