@@ -258,11 +258,12 @@
 //				$asset->save($PDOdb, $user,$langs->trans("Asset").' '.$asset->serial_number.' '. $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $line['quantity'], false, $line['fk_product'], false,$fk_entrepot);
 				$TAssetCreated[$asset->fk_product][] = $asset->save($PDOdb, $user, '', 0, false, 0, true,$fk_entrepot);
 
-				$stock = new TAssetStock;
-				$stock->mouvement_stock($PDOdb, $user, $asset->rowid, $line['quantity'], $comment, $asset->rowid);
+
 
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot]['qty']+=$line['quantity'];
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot]['price']+=$line['quantity']*$asset->prix_achat;
+@				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['qty']=$line['quantity'];
+@				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['comment']=$comment;
 
 
 /*				$TImport[$k]['numserie'] = $asset->serial_number;
@@ -314,8 +315,10 @@
 					                $obj = $db->fetch_object($res);
 					                
 					                $lastStockMouvement = $obj->id;
-					            
+
     					            TAsset::set_element_element($asset_id, 'TAssetOFLine', $lastStockMouvement, 'DolStockMouv');
+									$stock = new TAssetStock;
+									$stock->mouvement_stock($PDOdb, $user, $asset_id, $TDispatchEntrepot[$asset_id]['qty'], $TDispatchEntrepot[$asset_id]['comment'], $asset->rowid,$lastStockMouvement);
 					            }
 					            
 					            

@@ -261,9 +261,6 @@
     //				$asset->save($PDOdb, $user,$langs->trans("Asset").' '.$asset->serial_number.' '. $langs->trans("DispatchSupplierOrder",$bdr->ref), $line['quantity'], false, $line['fk_product'], false,$fk_entrepot);
     				$TAssetCreated[$asset->fk_product][] = $asset->save($PDOdb, $user, '', 0, false, 0, true,$fk_entrepot);
     
-    				$stock = new TAssetStock;
-    				$stock->mouvement_stock($PDOdb, $user, $asset->rowid, $line['quantity'], $comment, $asset->rowid);
-    
     @				$TAssetVentil[$line['fk_product']][$fk_entrepot]['qty']+=$line['quantity'];
     @				$TAssetVentil[$line['fk_product']][$fk_entrepot]['price']+=$line['quantity']*$asset->prix_achat;
     @				$TAssetVentil[$line['fk_product']][$fk_entrepot]['bonderetourdet'] =$line['fk_bonderetourdet'];
@@ -319,7 +316,7 @@
     						$asset->fk_entrepot = $fk_entrepot;
     
     						// crée le mouvement positif sur le nouveau
-    						$asset->addStockMouvementDolibarr(
+    						$fk_stock_mouvement = $asset->addStockMouvementDolibarr(
     							$asset->fk_product
     							, $line['quantity']
     							, $langs->trans('StockMovementAssetStockTransfered', $asset->serial_number, $bdr->ref)
@@ -327,6 +324,9 @@
     							, 0
     							, $asset->fk_entrepot
     							, $product->pmp);
+
+							$stock = new TAssetStock;
+							$stock->mouvement_stock($PDOdb, $user, $asset->rowid, $line['quantity'], $comment, $asset->rowid, $fk_stock_mouvement);
     
     					}
     

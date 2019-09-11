@@ -145,8 +145,13 @@ class InterfaceDispatchWorkflow
                             // on ne fait pas le mouvement standard qui a été traité par dolibarr à la suppression d'expédition
                             $asset->save($PDOdb, $user, $langs->trans("ShipmentDeletedInDolibarr",$object->ref), $detail->weight_reel, false, 0, true);
 
+							//On a besoin du mouvement de stock associé (donc celui qui vient d'être ajouté)
+							$sql = "SELECT MAX(rowid) as fk_stock_mouvement FROM ".MAIN_DB_PREFIX."stock_mouvement";
+							$resql = $db->query($sql);
+							if(!empty($resql)) $stdMvt = $db->fetch_object($resql);
+
                             $stock = new TAssetStock;
-                            $stock->mouvement_stock($PDOdb, $user, $asset->getId(), $detail->weight_reel, $langs->trans("ShipmentDeletedInDolibarr",$object->ref), $detail->fk_expeditiondet);
+                            $stock->mouvement_stock($PDOdb, $user, $asset->getId(), $detail->weight_reel, $langs->trans("ShipmentDeletedInDolibarr",$object->ref), $detail->fk_expeditiondet, !empty($stdMvt->fk_stock_mouvement)?$stdMvt->fk_stock_mouvement:0);
                         }
 
                         $detail->delete($PDOdb);
@@ -274,7 +279,7 @@ class InterfaceDispatchWorkflow
 	}
 
 	private function create_flacon_stock_mouvement(&$PDOdb, &$linedetail, $numref,$fk_soc = 0) {
-		global $user, $langs, $conf;
+		global $user, $langs, $conf, $db;
 		dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
 		dol_include_once('/product/class/product.class.php');
 		dol_include_once('/expedition/class/expedition.class.php');
@@ -299,10 +304,14 @@ class InterfaceDispatchWorkflow
 
 		// Destockage Dolibarr déjà fait par à la validation de l'expédition, et impossible de ne destocker que l'équipement : on save sans rien déstocker
 		$asset->save($PDOdb, $user, $langs->trans("ShipmentValidatedInDolibarr",$numref), -$poids_destocke, false, 0, true);
+		//On a besoin du mouvement de stock associé (donc celui qui vient d'être ajouté)
+		$sql = "SELECT MAX(rowid) as fk_stock_mouvement FROM ".MAIN_DB_PREFIX."stock_mouvement";
+		$resql = $db->query($sql);
+		if(!empty($resql)) $stdMvt = $db->fetch_object($resql);
 
 		// Destockage équipement
 		$stock = new TAssetStock;
-		$stock->mouvement_stock($PDOdb, $user, $asset->getId(), -$poids_destocke, $langs->trans("ShipmentValidatedInDolibarr",$numref), $linedetail->fk_expeditiondet);
+		$stock->mouvement_stock($PDOdb, $user, $asset->getId(), -$poids_destocke, $langs->trans("ShipmentValidatedInDolibarr",$numref), $linedetail->fk_expeditiondet, !empty($stdMvt->fk_stock_mouvement)?$stdMvt->fk_stock_mouvement:0);
 
 		return $poids_destocke;
 	}
@@ -394,9 +403,14 @@ class InterfaceDispatchWorkflow
 
 							$asset->save($PDOdb, $user, $langs->trans($event."InDolibarr",$object->ref), $qty, false, 0, true);
 
+							//On a besoin du mouvement de stock associé (donc celui qui vient d'être ajouté)
+							$sql = "SELECT MAX(rowid) as fk_stock_mouvement FROM ".MAIN_DB_PREFIX."stock_mouvement";
+							$resql = $db->query($sql);
+							if(!empty($resql)) $stdMvt = $db->fetch_object($resql);
+
 							// Destockage équipement
 							$stock = new TAssetStock;
-							$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $qty, $langs->trans($event."InDolibarr",$object->ref), $detail->fk_bonderetourdet);
+							$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $qty, $langs->trans($event."InDolibarr",$object->ref), $detail->fk_bonderetourdet,!empty($stdMvt->fk_stock_mouvement)?$stdMvt->fk_stock_mouvement:0);
 						}
 					}
 				}
