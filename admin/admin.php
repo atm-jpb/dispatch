@@ -187,6 +187,14 @@
 	print ajax_constantonoff('DISPATCH_SKIP_SERVICES');
 	print '</td></tr>';
 
+$var=!$var;
+print '<tr '.$bc[$var].'>';
+print '<td>'.$langs->trans('DISPATCH_STOCK_MOVEMENT_BY_ASSET').'</td>';
+print '<td align="center" width="20">&nbsp;</td>';
+print '<td align="center" width="300">';
+print ajax_constantonoff('DISPATCH_STOCK_MOVEMENT_BY_ASSET');
+print '</td></tr>';
+
 	
 	print "</table>";
 

@@ -264,6 +264,7 @@
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot]['qty']+=$line['quantity'];
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot]['price']+=$line['quantity']*$asset->prix_achat;
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['qty']=$line['quantity'];
+@				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['price']=$line['quantity']*$asset->prix_achat;
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['comment']=$comment;
 
 
@@ -294,7 +295,8 @@
 				foreach($item as $fk_entrepot=>$TDispatchEntrepot) {
 					$qty = $TDispatchEntrepot['qty'];
 					$unitPrice = $TDispatchEntrepot['qty'] > 0 ? $TDispatchEntrepot['price'] / $TDispatchEntrepot['qty'] : 0;
-					$ret = $commandefourn->dispatchProduct($user,$fk_product, $qty, $fk_entrepot, $unitPrice, $comment);
+					if(empty($conf->global->DISPATCH_STOCK_MOVEMENT_BY_ASSET)) $ret = $commandefourn->dispatchProduct($user,$fk_product, $qty, $fk_entrepot, $unitPrice, $comment);
+					else $ret = 1;
 
 					if ($ret > 0 && ! empty($conf->stock->enabled) 
 					    && ! empty($conf->global->STOCK_CALCULATE_ON_SUPPLIER_DISPATCH_ORDER)
@@ -305,6 +307,9 @@
 					    {
 					        foreach ($TAssetCreated[$fk_product] as $asset_id)
 					        {
+								if(!empty($conf->global->DISPATCH_STOCK_MOVEMENT_BY_ASSET)) {
+									$commandefourn->dispatchProduct($user,$fk_product, $TDispatchEntrepot[$asset_id]['qty'], $fk_entrepot, $TDispatchEntrepot[$asset_id]['price'], $TDispatchEntrepot[$asset_id]['comment']);
+								}
 					            $sql = "SELECT MAX(rowid) as id FROM ".MAIN_DB_PREFIX."stock_mouvement";
 					            $sql.= " WHERE origintype = 'order_supplier'";
 					            $sql.= " AND fk_origin = " . $commandefourn->id;
