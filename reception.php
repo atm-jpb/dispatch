@@ -699,7 +699,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 			}
 
 			$sql = "SELECT l.fk_product, SUM(l.qty * l.subprice) / SUM(l.qty) AS subprice, SUM(l.qty * l.remise_percent) / SUM(l.qty) AS remise_percent, SUM(l.qty) as qty,";
-			$sql.= " p.ref, p.label";
+			$sql.= " p.ref, p.label, pe.type_asset";
 
 			if(DOL_VERSION>=3.8) {
 				$sql.=", p.tobatch";
@@ -708,10 +708,11 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 			$sql.= " FROM ".MAIN_DB_PREFIX."commande_fournisseurdet as l";
 			$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."product as p ON l.fk_product=p.rowid";
+			$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."product_extrafields as pe ON pe.fk_object=p.rowid";
 			$sql.= " WHERE l.fk_commande = ".$commande->id;
 			$sql.= " AND l.fk_product > 0";
             if (!empty($conf->global->DISPATCH_SKIP_SERVICES)) $sql.= ' AND l.product_type = 0';
-            $sql.= " GROUP BY l.fk_product";	// Calculation of amount dispatched is done per fk_product so we must group by fk_product
+            $sql.= " GROUP BY l.fk_product, pe.type_asset";	// Calculation of amount dispatched is done per fk_product so we must group by fk_product
 			$sql.= " ORDER BY p.ref, p.label";
 
 			$resql = $db->query($sql);
@@ -881,8 +882,8 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 					if($remaintodispatch==0) {
 						print $langs->trans('Yes').img_info('SerializedProductInfo');
-					} else {
-						print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']').img_info($langs->trans('SerializeThisProductInfo'));
+					} elseif($objp->type_asset > 0){
+						 print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']').img_info($langs->trans('SerializeThisProductInfo'));
 					}
 
 					print $form->hidden('TOrderLine['.$objp->fk_product.'][fk_product]', $objp->fk_product);
