@@ -309,7 +309,7 @@
 					        {
 								if(!empty($conf->global->DISPATCH_STOCK_MOVEMENT_BY_ASSET)) {
 									$ret = $commandefourn->dispatchProduct($user,$fk_product, $TDispatchEntrepot[$asset_id]['qty'], $fk_entrepot, $TDispatchEntrepot[$asset_id]['price'], $TDispatchEntrepot[$asset_id]['comment']);
-								}
+								} else $ret = 1;
 								if($ret > 0) {
 									$sql = "SELECT MAX(rowid) as id FROM " . MAIN_DB_PREFIX . "stock_mouvement";
 									$sql .= " WHERE origintype = 'order_supplier'";
