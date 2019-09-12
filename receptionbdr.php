@@ -740,7 +740,7 @@ function _show_product_ventil(&$TImport, &$bdr,&$form) {
 			$sql.= " FROM ".MAIN_DB_PREFIX."bonderetourdet as l";
 			$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."product as p ON l.fk_product=p.rowid";
 			$sql.= " WHERE l.fk_bonderetour = ".$bdr->id;
-			$sql.= " GROUP BY l.fk_product";	// Calculation of amount dispatched is done per fk_product so we must group by fk_product
+			$sql.= " GROUP BY l.fk_product, l.fk_entrepot";	// Calculation of amount dispatched is done per fk_product so we must group by fk_product
 			$sql.= " ORDER BY p.ref, p.label";
 
 			$resql = $db->query($sql);
