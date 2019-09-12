@@ -9,7 +9,7 @@
 	dol_include_once('/core/lib/sendings.lib.php' );
 	dol_include_once('/core/lib/product.lib.php');
 	dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
-	
+
 	global $langs, $user,$db;
 	$langs->load('orders');
 	$PDOdb=new TPDOdb;
@@ -18,10 +18,10 @@
 
 	$expedition = new Expedition($db);
 	$expedition->fetch($id);
-	
+
 	$action = GETPOST('action');
 	$TImport = _loadDetail($PDOdb, $expedition);
-	
+
 	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
 		$f1  =file($_FILES['file1']['tmp_name']);
 
@@ -33,43 +33,43 @@
 
 			$TImport = _addExpeditiondetLine($PDOdb,$TImport,$expedition,$numserie);
 		}
-		
+
 	}
 	else if($action=='DELETE_LINE') {
 		array_splice($TImport, (int) GETPOST('k'), 1); // Supprime le k-ième élément et décale les suivants dans le tableau
 
 		$rowid = GETPOST('rowid');
-		
+
 		$dispatchdetail = new TDispatchDetail;
 		$dispatchdetail->load($PDOdb, $rowid);
 		$dispatchdetail->delete($PDOdb);
-		
+
 		setEventMessage('Ligne supprimée');
 	}
 	elseif(isset($_POST['btaddasset'])) {
 		//var_dump($_POST);exit;
 		$numserie = GETPOST('numserie');
-		
+
 		$asset = new TAsset;
 		if($asset->loadBy($PDOdb, $numserie, 'serial_number')){
-				
+
 			_addExpeditiondetLine($PDOdb,$TImport,$expedition,$numserie);
 
 			setEventMessage('Numéro de série enregistré');
 		}
 		else{
 			setEventMessage('Aucun équipement pour ce numéro de série','errors');
-		}		
+		}
 	}
 
 	fiche($PDOdb,$expedition, $TImport);
 
 function _loadDetail(&$PDOdb,&$expedition){
-		
+
 		$TImport = array();
 
 		foreach($expedition->lines as $line){
-		
+
 			$sql = "SELECT a.rowid as id,a.serial_number,p.ref,p.rowid, ea.fk_expeditiondet, ea.lot_number, ea.weight_reel, ea.weight_reel_unit
 					FROM ".MAIN_DB_PREFIX."expeditiondet_asset as ea
 						LEFT JOIN ".MAIN_DB_PREFIX.ATM_ASSET_NAME." as a ON ( a.rowid = ea.fk_asset)
@@ -79,9 +79,9 @@ function _loadDetail(&$PDOdb,&$expedition){
 
 			$PDOdb->Execute($sql);
 			$Tres = $PDOdb->Get_All();
-			
+
 			foreach ($Tres as $res) {
-				
+
 				$TImport[] =array(
 					'ref'=>$res->ref
 					,'numserie'=>$res->serial_number
@@ -99,17 +99,17 @@ function _loadDetail(&$PDOdb,&$expedition){
 
 	function _addExpeditiondetLine(&$PDOdb,&$TImport,&$expedition,$numserie){
 		global $db;
-		
+
 		//Charge l'asset lié au numéro de série dans le fichier
 		$asset = new TAsset;
 		if($asset->loadBy($PDOdb,$numserie,'serial_number')){
-			
+
 			//Charge le produit associé à l'équipement
 			$prodAsset = new Product($db);
 			$prodAsset->fetch($asset->fk_product);
 
 			$fk_line_expe = (int)GETPOST('lineexpeditionid');
-			if( empty($fk_line_expe) ) { 
+			if( empty($fk_line_expe) ) {
 				//Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
 				foreach($expedition->lines as $expeline){
 					if($expeline->fk_product == $prodAsset->id){
@@ -117,7 +117,7 @@ function _loadDetail(&$PDOdb,&$expedition){
 					}
 				}
 			}
-			
+
 			//Sauvegarde (ajout/MAJ) des lignes de détail d'expédition
 			$dispatchdetail = new TDispatchDetail;
 
@@ -140,7 +140,7 @@ function _loadDetail(&$PDOdb,&$expedition){
 			$dispatchdetail->weight_reel_unit = $asset->contenancereel_units;
 
 			$dispatchdetail->save($PDOdb);
-			
+
 			//Rempli le tableau utilisé pour l'affichage des lignes
 			$TImport[] =array(
 				'ref'=>$prodAsset->ref
@@ -165,21 +165,21 @@ function fiche(&$PDOdb,&$expedition, &$TImport) {
 	llxHeader();
 
 	$head = shipping_prepare_head($expedition);
-	
+
 	$title=$langs->trans("Shipment");
 	dol_fiche_head($head, 'dispatch', $title, 0, 'dispatch');
-	
+
 	enteteexpedition($expedition);
-	
+
 	if($expedition->statut == 0 && ! empty($conf->global->DISPATCH_USE_IMPORT_FILE)) {
 		//Form pour import de fichier
 		echo '<br>';
 
 		$form=new TFormCore('auto','formimport','post', true);
-		
+
 		echo $form->hidden('action', 'SAVE');
 		echo $form->hidden('id', $expedition->id);
-		
+
 		echo $form->fichier('Fichier à importer','file1','',80);
 		echo $form->btsubmit('Envoyer', 'btsend');
 
@@ -201,9 +201,9 @@ function tabImport(&$TImport,&$expedition) {
 	echo $form->hidden('id', $expedition->id);
 
 	$PDOdb=new TPDOdb;
-	
+
 	print count($TImport).' équipement(s) dans votre expédition';
-	
+
 	$fullColspan = ! empty($conf->global->USE_LOT_IN_OF) ? 5 : 4;
 ?>
 	<br>
@@ -217,29 +217,29 @@ function tabImport(&$TImport,&$expedition) {
 			<td>Quantité</td>
 			<td>&nbsp;</td>
 		</tr>
-		
+
 	<?php
 		$prod = new Product($db);
-		
+
 		$form->Set_typeaff('view');
-		
+
 		if(is_array($TImport)){
 			$canEdit = $expedition->statut == 0 || (! empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT) && $expedition->statut == 1);
 
 			foreach ($TImport as $k=>$line) {
-							
+
 				if($prod->id==0 || $line['ref']!= $prod->ref) {
 					if(!empty( $line['fk_product']))$prod->fetch($line['fk_product']);
 					else $prod->fetch('', $line['ref']);
-				} 		
-				
+				}
+
 				$asset = new TAsset;
 				$asset->loadBy($PDOdb,$line['numserie'],'serial_number');
 				$asset->load_asset_type($PDOdb);
-				
+
 				$assetLot = new TAssetLot;
 				$assetLot->loadBy($PDOdb,$line['lot_number'],'lot_number');
-				
+
 				$Trowid = TRequeteCore::get_id_from_what_you_want($PDOdb, MAIN_DB_PREFIX."expeditiondet_asset",array('fk_asset'=>$asset->rowid,'fk_expeditiondet'=>$line['fk_expeditiondet']));
 				?><tr>
 					<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref) ?></td>
@@ -249,7 +249,7 @@ function tabImport(&$TImport,&$expedition) {
 					<td><a href="<?php echo dol_buildpath('/' . ATM_ASSET_NAME . '/fiche.php?id='.$asset->rowid,1); ?>"><?php echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30); ?></a></td>
 					<td><?php echo $line['quantity']." ".(($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($line['quantity_unit'],$asset->assetType->measuring_units)); ?></td>
 					<td>
-						<?php 
+						<?php
 							if($canEdit) echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$expedition->id.'&rowid='.$Trowid[0].'">'.img_delete().'</a>';
 						?>
 					</td>
@@ -263,7 +263,7 @@ function tabImport(&$TImport,&$expedition) {
 			}
 		} // if(is_array($TImport))
 ?>
-		
+
 	</table>
 	<?php
 
@@ -277,7 +277,7 @@ function tabImport(&$TImport,&$expedition) {
 
 function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 {
-	global $conf;
+	global $conf, $db;
 	$DoliFormProduct = new FormProduct($db);
 
 	$form->Set_typeaff('edit');
@@ -321,7 +321,16 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 <?php } ?>
 					</td>
 					<td><?php echo $form->combo('','numserie',$TSerialNumber,''); ?></td>
-					<td><?php echo $form->texte('','quantity','',10); ?> <?php echo $DoliFormProduct->load_measuring_units('quantity_unit" id="quantity_unit','weight'); ?></td>
+					<td><?php echo $form->texte('','quantity','',10); ?>
+						<?php
+						if(intval(DOL_VERSION) < 10 ) {
+							echo $DoliFormProduct->load_measuring_units('quantity_unit" id="quantity_unit', 'weight');
+						}
+						else{
+							echo $DoliFormProduct->selectMeasuringUnits('quantity_unit" id="quantity_unit', 'weight');
+						}
+						?>
+					</td>
 					<td><?php echo $form->btsubmit('Ajouter', 'btaddasset'); ?></td>
 				</tr>
 <?php
@@ -431,17 +440,17 @@ function enteteexpedition(&$expedition) {
 	global $langs, $db, $user, $hookmanager, $conf;
 
 	$form =	new Form($db);
-	
+
 	$soc = new Societe($db);
 	$soc->fetch($expedition->socid);
-	
+
 	if (!empty($expedition->origin))
 	{
 		$typeobject = $expedition->origin;
 		$origin = $expedition->origin;
 		$expedition->fetch_origin();
 	}
-	
+
     print '<table class="border" width="100%">';
 
     $linkback = '<a href="'.DOL_URL_ROOT.'/expedition/liste.php">'.$langs->trans("BackToList").'</a>';
@@ -496,7 +505,7 @@ function enteteexpedition(&$expedition) {
     print '<table class="nobordernopadding" width="100%"><tr><td>';
     print $langs->trans('DateDeliveryPlanned');
     print '</td>';
-	
+
     print '</tr></table>';
     print '</td><td colspan="2">';
 	print $expedition->date_delivery ? dol_print_date($expedition->date_delivery,'dayhourtext') : '&nbsp;';
