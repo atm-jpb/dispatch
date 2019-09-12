@@ -308,25 +308,25 @@
 					        foreach ($TAssetCreated[$fk_product] as $asset_id)
 					        {
 								if(!empty($conf->global->DISPATCH_STOCK_MOVEMENT_BY_ASSET)) {
-									$commandefourn->dispatchProduct($user,$fk_product, $TDispatchEntrepot[$asset_id]['qty'], $fk_entrepot, $TDispatchEntrepot[$asset_id]['price'], $TDispatchEntrepot[$asset_id]['comment']);
+									$ret = $commandefourn->dispatchProduct($user,$fk_product, $TDispatchEntrepot[$asset_id]['qty'], $fk_entrepot, $TDispatchEntrepot[$asset_id]['price'], $TDispatchEntrepot[$asset_id]['comment']);
 								}
-					            $sql = "SELECT MAX(rowid) as id FROM ".MAIN_DB_PREFIX."stock_mouvement";
-					            $sql.= " WHERE origintype = 'order_supplier'";
-					            $sql.= " AND fk_origin = " . $commandefourn->id;
-					            $sql.= " AND fk_product = ". $fk_product;
-					            $sql.= " AND fk_entrepot = " . $fk_entrepot;
-					            $res = $db->query($sql);
-					            if ($res)
-					            {
-					                $obj = $db->fetch_object($res);
-					                
-					                $lastStockMouvement = $obj->id;
+								if($ret > 0) {
+									$sql = "SELECT MAX(rowid) as id FROM " . MAIN_DB_PREFIX . "stock_mouvement";
+									$sql .= " WHERE origintype = 'order_supplier'";
+									$sql .= " AND fk_origin = " . $commandefourn->id;
+									$sql .= " AND fk_product = " . $fk_product;
+									$sql .= " AND fk_entrepot = " . $fk_entrepot;
+									$res = $db->query($sql);
+									if($res) {
+										$obj = $db->fetch_object($res);
 
-    					            TAsset::set_element_element($asset_id, 'TAssetOFLine', $lastStockMouvement, 'DolStockMouv');
-									$stock = new TAssetStock;
-									$stock->mouvement_stock($PDOdb, $user, $asset_id, $TDispatchEntrepot[$asset_id]['qty'], $TDispatchEntrepot[$asset_id]['comment'], $asset->rowid,$lastStockMouvement);
-					            }
-					            
+										$lastStockMouvement = $obj->id;
+
+										TAsset::set_element_element($asset_id, 'TAssetOFLine', $lastStockMouvement, 'DolStockMouv');
+										$stock = new TAssetStock;
+										$stock->mouvement_stock($PDOdb, $user, $asset_id, $TDispatchEntrepot[$asset_id]['qty'], $TDispatchEntrepot[$asset_id]['comment'], $asset->rowid, $lastStockMouvement);
+									}
+								}
 					            
 					        }
 					    }
