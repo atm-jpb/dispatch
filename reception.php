@@ -298,39 +298,38 @@
 					if(empty($conf->global->DISPATCH_STOCK_MOVEMENT_BY_ASSET)) $ret = $commandefourn->dispatchProduct($user,$fk_product, $qty, $fk_entrepot, $unitPrice, $comment);
 					else $ret = 1;
 
-					if ($ret > 0 && ! empty($conf->stock->enabled) 
-					    && ! empty($conf->global->STOCK_CALCULATE_ON_SUPPLIER_DISPATCH_ORDER)
-					    && ! empty($conf->global->DISPATCH_LINK_ASSET_TO_STOCK_MOVEMENT)) // conf cachée
+					if($ret > 0 && !empty($conf->stock->enabled)
+						&& !empty($conf->global->STOCK_CALCULATE_ON_SUPPLIER_DISPATCH_ORDER)
+						&& !empty($conf->global->DISPATCH_LINK_ASSET_TO_STOCK_MOVEMENT) // conf cachée
+						&& !empty($TAssetCreated[$fk_product]))
 					{
-					    // lier les asset créés au mouvement de stock pour en récupérer le prix
-					    if (!empty($TAssetCreated[$fk_product]))
-					    {
-					        foreach ($TAssetCreated[$fk_product] as $asset_id)
-					        {
-								if(!empty($conf->global->DISPATCH_STOCK_MOVEMENT_BY_ASSET)) {
-									$ret = $commandefourn->dispatchProduct($user,$fk_product, $TDispatchEntrepot[$asset_id]['qty'], $fk_entrepot, $TDispatchEntrepot[$asset_id]['price'], $TDispatchEntrepot[$asset_id]['comment']);
-								} else $ret = 1;
-								if($ret > 0) {
-									$sql = "SELECT MAX(rowid) as id FROM " . MAIN_DB_PREFIX . "stock_mouvement";
-									$sql .= " WHERE origintype = 'order_supplier'";
-									$sql .= " AND fk_origin = " . $commandefourn->id;
-									$sql .= " AND fk_product = " . $fk_product;
-									$sql .= " AND fk_entrepot = " . $fk_entrepot;
-									$res = $db->query($sql);
-									if($res) {
-										$obj = $db->fetch_object($res);
+						// lier les asset créés au mouvement de stock pour en récupérer le prix
 
-										$lastStockMouvement = $obj->id;
+						foreach($TAssetCreated[$fk_product] as $asset_id) {
+							if(!empty($conf->global->DISPATCH_STOCK_MOVEMENT_BY_ASSET)) {
+								$ret = $commandefourn->dispatchProduct($user, $fk_product, $TDispatchEntrepot[$asset_id]['qty'], $fk_entrepot, $TDispatchEntrepot[$asset_id]['price'], $TDispatchEntrepot[$asset_id]['comment']);
+							}
+							else $ret = 1;
+							if($ret > 0) {
+								$sql = "SELECT MAX(rowid) as id FROM " . MAIN_DB_PREFIX . "stock_mouvement";
+								$sql .= " WHERE origintype = 'order_supplier'";
+								$sql .= " AND fk_origin = " . $commandefourn->id;
+								$sql .= " AND fk_product = " . $fk_product;
+								$sql .= " AND fk_entrepot = " . $fk_entrepot;
+								$res = $db->query($sql);
+								if($res) {
+									$obj = $db->fetch_object($res);
 
-										TAsset::set_element_element($asset_id, 'TAssetOFLine', $lastStockMouvement, 'DolStockMouv');
-										$stock = new TAssetStock;
-										$stock->mouvement_stock($PDOdb, $user, $asset_id, $TDispatchEntrepot[$asset_id]['qty'], $TDispatchEntrepot[$asset_id]['comment'], $asset->rowid, $lastStockMouvement);
-									}
+									$lastStockMouvement = $obj->id;
+
+									TAsset::set_element_element($asset_id, 'TAssetOFLine', $lastStockMouvement, 'DolStockMouv');
+									$stock = new TAssetStock;
+									$stock->mouvement_stock($PDOdb, $user, $asset_id, $TDispatchEntrepot[$asset_id]['qty'], $TDispatchEntrepot[$asset_id]['comment'], $asset->rowid, $lastStockMouvement);
 								}
-					            
-					        }
-					    }
+							}
+						}
 					}
+					elseif(!empty($conf->global->DISPATCH_STOCK_MOVEMENT_BY_ASSET)) $ret = $commandefourn->dispatchProduct($user,$fk_product, $qty, $fk_entrepot, $unitPrice, $comment);
 					
                 	//Build array with quantity serialze by product
                 	$TQtyDispatch[$fk_product]+=$qty;
