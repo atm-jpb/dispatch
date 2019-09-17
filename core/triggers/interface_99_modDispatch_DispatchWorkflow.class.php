@@ -120,39 +120,37 @@ class InterfaceDispatchWorkflow
 
 		if($action == 'SHIPPING_DELETE')
 		{
-		    if (($conf->global->STOCK_CALCULATE_ON_SHIPMENT && $object->statut > 0) ||
-                ($conf->global->STOCK_CALCULATE_ON_SHIPMENT_CLOSE && $object->statut == 2)) {
-                dol_include_once('/dispatch/config.php');
-                dol_include_once('/dispatch/class/dispatchdetail.class.php');
+			dol_include_once('/dispatch/config.php');
+			dol_include_once('/dispatch/class/dispatchdetail.class.php');
 
-                $PDOdb = new TPDOdb;
+			$PDOdb = new TPDOdb;
 
-                foreach($object->lines as &$line)
-                {
-                    $dispatchDetail = new TDispatchDetail;
-                    $TDetail = $dispatchDetail->LoadAllBy($PDOdb, array('fk_expeditiondet' => $line->id));
+			foreach($object->lines as &$line) {
+				$dispatchDetail = new TDispatchDetail;
+				$TDetail = $dispatchDetail->LoadAllBy($PDOdb, array('fk_expeditiondet' => $line->id));
 
-                    foreach($TDetail as &$detail)
-                    {
-                        if (!empty($conf->global->DISPATCH_RESET_ASSET_WAREHOUSE_ON_SHIPMENT))
-                        {
-                            $asset = new TAsset;
-                            $asset->load($PDOdb, $detail->fk_asset);
+				foreach($TDetail as &$detail) {
+					if(!empty($conf->global->DISPATCH_RESET_ASSET_WAREHOUSE_ON_SHIPMENT)
+						&& (($conf->global->STOCK_CALCULATE_ON_SHIPMENT && $object->statut > 0)
+							|| ($conf->global->STOCK_CALCULATE_ON_SHIPMENT_CLOSE && $object->statut == 2))) {
+						$asset = new TAsset;
+						$asset->load($PDOdb, $detail->fk_asset);
 
-                            $asset->fk_entrepot = $line->entrepot_id;
-                            $asset->fk_societe_localisation = 0;
+						$asset->fk_entrepot = $line->entrepot_id;
+						$asset->fk_societe_localisation = 0;
 
-                            // on ne fait pas le mouvement standard qui a été traité par dolibarr à la suppression d'expédition
-                            $asset->save($PDOdb, $user, $langs->trans("ShipmentDeletedInDolibarr",$object->ref), $detail->weight_reel, false, 0, true);
+						// on ne fait pas le mouvement standard qui a été traité par dolibarr à la suppression d'expédition
+						$asset->save($PDOdb, $user, $langs->trans("ShipmentDeletedInDolibarr", $object->ref), $detail->weight_reel, false, 0, true);
 
-                            $stock = new TAssetStock;
-                            $stock->mouvement_stock($PDOdb, $user, $asset->getId(), $detail->weight_reel, $langs->trans("ShipmentDeletedInDolibarr",$object->ref), $detail->fk_expeditiondet);
-                        }
+						$stock = new TAssetStock;
+						$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $detail->weight_reel, $langs->trans("ShipmentDeletedInDolibarr", $object->ref), $detail->fk_expeditiondet);
+					}
 
-                        $detail->delete($PDOdb);
-                    }
-                }
-            }
+					$detail->delete($PDOdb);
+				}
+			}
+
+
 		}
 
 
