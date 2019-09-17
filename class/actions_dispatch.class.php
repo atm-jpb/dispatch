@@ -296,24 +296,17 @@ class ActionsDispatch
                             $('<td align="center" class="linecoldispatch"><?php print $langs->transnoentities('colDispatch'); ?></td>').insertAfter($( this ).find("td:first"));
                         }
                         else if($( this ).data( "product_type" ) == "9"){
+                            // pas encore géré mais au cas où
                             $( this ).find("td[colspan]:first").attr('colspan',    parseInt($( this ).find("td[colspan]:first").attr('colspan')) + <?php print $totalAddedCols; ?>  );
                         }
                         else
                         {
                             // PARTIE LIGNE
-                            var nobottom = '';
-                            if($( this ).hasClass( "liste_titre_create" ) || $( this ).attr("data-element") == "extrafield" ){
-                                nobottom = ' nobottom ';
-                            }
 
                             $('<td align="center" class="linecoldispatch' + nobottom + '"></td>').insertAfter($( this ).find("td.linecoldescription"));
 
-                            if($( this ).hasClass( "liste_titre_create" )){
-                                $( this ).find("td.linecoledit").attr('colspan',    parseInt($( this ).find("td.linecoledit").attr('colspan')) + <?php print $totalAddedCols; ?>  );
-                            }
-
                             if($( this ).attr("data-element") == "extrafield"){
-                                $( this ).find("td[colspan]:first").attr('colspan',    parseInt($( this ).find("td[colspan]:first").attr('colspan')) + <?php print $totalAddedCols; ?>  );
+                                $( this ).find("td[colspan]:first").attr('colspan',    parseInt($( this ).find("td[colspan]:first").attr('colspan')) + <?php print $totalAddedCols + 1; ?>  );
                             }
                         }
                     });
