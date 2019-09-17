@@ -264,6 +264,7 @@
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot]['qty']+=$line['quantity'];
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot]['price']+=$line['quantity']*$asset->prix_achat;
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['qty']=$line['quantity'];
+@				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['price']=$line['quantity']*$asset->prix_achat;
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['comment']=$comment;
 
 
@@ -294,38 +295,41 @@
 				foreach($item as $fk_entrepot=>$TDispatchEntrepot) {
 					$qty = $TDispatchEntrepot['qty'];
 					$unitPrice = $TDispatchEntrepot['qty'] > 0 ? $TDispatchEntrepot['price'] / $TDispatchEntrepot['qty'] : 0;
-					$ret = $commandefourn->dispatchProduct($user,$fk_product, $qty, $fk_entrepot, $unitPrice, $comment);
+					if(empty($conf->global->DISPATCH_STOCK_MOVEMENT_BY_ASSET)) $ret = $commandefourn->dispatchProduct($user,$fk_product, $qty, $fk_entrepot, $unitPrice, $comment);
+					else $ret = 1;
 
-					if ($ret > 0 && ! empty($conf->stock->enabled) 
-					    && ! empty($conf->global->STOCK_CALCULATE_ON_SUPPLIER_DISPATCH_ORDER)
-					    && ! empty($conf->global->DISPATCH_LINK_ASSET_TO_STOCK_MOVEMENT)) // conf cachée
+					if($ret > 0 && !empty($conf->stock->enabled)
+						&& !empty($conf->global->STOCK_CALCULATE_ON_SUPPLIER_DISPATCH_ORDER)
+						&& !empty($conf->global->DISPATCH_LINK_ASSET_TO_STOCK_MOVEMENT) // conf cachée
+						&& !empty($TAssetCreated[$fk_product]))
 					{
-					    // lier les asset créés au mouvement de stock pour en récupérer le prix
-					    if (!empty($TAssetCreated[$fk_product]))
-					    {
-					        foreach ($TAssetCreated[$fk_product] as $asset_id)
-					        {
-					            $sql = "SELECT MAX(rowid) as id FROM ".MAIN_DB_PREFIX."stock_mouvement";
-					            $sql.= " WHERE origintype = 'order_supplier'";
-					            $sql.= " AND fk_origin = " . $commandefourn->id;
-					            $sql.= " AND fk_product = ". $fk_product;
-					            $sql.= " AND fk_entrepot = " . $fk_entrepot;
-					            $res = $db->query($sql);
-					            if ($res)
-					            {
-					                $obj = $db->fetch_object($res);
-					                
-					                $lastStockMouvement = $obj->id;
+						// lier les asset créés au mouvement de stock pour en récupérer le prix
 
-    					            TAsset::set_element_element($asset_id, 'TAssetOFLine', $lastStockMouvement, 'DolStockMouv');
+						foreach($TAssetCreated[$fk_product] as $asset_id) {
+							if(!empty($conf->global->DISPATCH_STOCK_MOVEMENT_BY_ASSET)) {
+								$ret = $commandefourn->dispatchProduct($user, $fk_product, $TDispatchEntrepot[$asset_id]['qty'], $fk_entrepot, $TDispatchEntrepot[$asset_id]['price'], $TDispatchEntrepot[$asset_id]['comment']);
+							}
+							else $ret = 1;
+							if($ret > 0) {
+								$sql = "SELECT MAX(rowid) as id FROM " . MAIN_DB_PREFIX . "stock_mouvement";
+								$sql .= " WHERE origintype = 'order_supplier'";
+								$sql .= " AND fk_origin = " . $commandefourn->id;
+								$sql .= " AND fk_product = " . $fk_product;
+								$sql .= " AND fk_entrepot = " . $fk_entrepot;
+								$res = $db->query($sql);
+								if($res) {
+									$obj = $db->fetch_object($res);
+
+									$lastStockMouvement = $obj->id;
+
+									TAsset::set_element_element($asset_id, 'TAssetOFLine', $lastStockMouvement, 'DolStockMouv');
 									$stock = new TAssetStock;
-									$stock->mouvement_stock($PDOdb, $user, $asset_id, $TDispatchEntrepot[$asset_id]['qty'], $TDispatchEntrepot[$asset_id]['comment'], $asset->rowid,$lastStockMouvement);
-					            }
-					            
-					            
-					        }
-					    }
+									$stock->mouvement_stock($PDOdb, $user, $asset_id, $TDispatchEntrepot[$asset_id]['qty'], $TDispatchEntrepot[$asset_id]['comment'], $asset->rowid, $lastStockMouvement);
+								}
+							}
+						}
 					}
+					elseif(!empty($conf->global->DISPATCH_STOCK_MOVEMENT_BY_ASSET)) $ret = $commandefourn->dispatchProduct($user,$fk_product, $qty, $fk_entrepot, $unitPrice, $comment);
 					
                 	//Build array with quantity serialze by product
                 	$TQtyDispatch[$fk_product]+=$qty;
@@ -699,7 +703,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 			}
 
 			$sql = "SELECT l.fk_product, SUM(l.qty * l.subprice) / SUM(l.qty) AS subprice, SUM(l.qty * l.remise_percent) / SUM(l.qty) AS remise_percent, SUM(l.qty) as qty,";
-			$sql.= " p.ref, p.label";
+			$sql.= " p.ref, p.label, pe.type_asset";
 
 			if(DOL_VERSION>=3.8) {
 				$sql.=", p.tobatch";
@@ -708,10 +712,11 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 			$sql.= " FROM ".MAIN_DB_PREFIX."commande_fournisseurdet as l";
 			$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."product as p ON l.fk_product=p.rowid";
+			$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."product_extrafields as pe ON pe.fk_object=p.rowid";
 			$sql.= " WHERE l.fk_commande = ".$commande->id;
 			$sql.= " AND l.fk_product > 0";
             if (!empty($conf->global->DISPATCH_SKIP_SERVICES)) $sql.= ' AND l.product_type = 0';
-            $sql.= " GROUP BY l.fk_product";	// Calculation of amount dispatched is done per fk_product so we must group by fk_product
+            $sql.= " GROUP BY l.fk_product, pe.type_asset";	// Calculation of amount dispatched is done per fk_product so we must group by fk_product
 			$sql.= " ORDER BY p.ref, p.label";
 
 			$resql = $db->query($sql);
@@ -881,8 +886,8 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 					if($remaintodispatch==0) {
 						print $langs->trans('Yes').img_info('SerializedProductInfo');
-					} else {
-						print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']').img_info($langs->trans('SerializeThisProductInfo'));
+					} elseif($objp->type_asset > 0){
+						 print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']').img_info($langs->trans('SerializeThisProductInfo'));
 					}
 
 					print $form->hidden('TOrderLine['.$objp->fk_product.'][fk_product]', $objp->fk_product);

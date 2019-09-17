@@ -429,7 +429,8 @@ class InterfaceDispatchWorkflow
      */
 	private function move_assets_according_to_shipment($object) {
 	    global $conf, $db, $langs;
-        dol_include_once('/dispatch/config.php');
+		if(!defined('INC_FROM_DOLIBARR')) define('INC_FROM_DOLIBARR', true);
+		dol_include_once('/dispatch/config.php');
         dol_include_once('/dispatch/class/dispatchdetail.class.php');
 
         $PDOdb = new TPDOdb();
