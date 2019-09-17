@@ -68,3 +68,6 @@ BDRClose=cloture
 
 DISPATCH_RESET_ASSET_WAREHOUSE_ON_SHIPMENT=Retirer l'entrepot de l'équipement à la validation de l'expédition
 DISPATCH_SKIP_SERVICES=Ignorer les lignes de type service
+
+# Expedition Card
+colDispatch=N° de série / lot
