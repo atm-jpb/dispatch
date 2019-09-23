@@ -303,7 +303,7 @@ class ActionsDispatch
                         {
                             // PARTIE LIGNE
 
-                            $('<td align="center" class="linecoldispatch' + nobottom + '"></td>').insertAfter($( this ).find("td.linecoldescription"));
+                            $('<td align="center" class="linecoldispatch"></td>').insertAfter($( this ).find("td.linecoldescription"));
 
                             if($( this ).attr("data-element") == "extrafield"){
                                 $( this ).find("td[colspan]:first").attr('colspan',    parseInt($( this ).find("td[colspan]:first").attr('colspan')) + <?php print $totalAddedCols + 1; ?>  );
