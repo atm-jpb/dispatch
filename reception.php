@@ -230,7 +230,7 @@
 
 				foreach($commandefourn->lines as $l){
 					if($l->fk_product == $asset->fk_product){
-						$asset->prix_achat  = price2num($l->subprice, 'MU');
+						$asset->valeur = $asset->prix_achat  = price2num($l->subprice, 'MU');
 
 						$extension_garantie = 0;
 						$PDOdb->Execute('SELECT extension_garantie FROM '.MAIN_DB_PREFIX.'commande_fournisseurdet WHERE rowid = '.$l->id);

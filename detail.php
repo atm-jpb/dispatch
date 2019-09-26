@@ -358,11 +358,27 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 	$TSerialNumber = array('-- Selectionnez un équipement --');
 
 	$sql = "SELECT ed.rowid, p.rowid as fk_product,p.ref,p.label ,ed.qty
-			FROM ".MAIN_DB_PREFIX."product as p
+			FROM ".MAIN_DB_PREFIX."product as p";
+
+	if (! empty($conf->global->DISPATCH_SERIALIZED_PRODUCTS_MUST_HAVE_ASSET_TYPE_SET))
+	{
+		$sql.= "
+			LEFT JOIN " . MAIN_DB_PREFIX . "product_extrafields pe ON pe.fk_object = p.rowid ";
+	}
+
+	$sql.= "
 			LEFT JOIN ".MAIN_DB_PREFIX."commandedet as cd ON (cd.fk_product = p.rowid)
 			LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet as ed ON (ed.fk_origin_line = cd.rowid)
 			LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet_asset as eda ON (eda.fk_expeditiondet = ed.rowid)
-			WHERE ed.fk_expedition = ".$expedition->id."
+			WHERE ed.fk_expedition = ".$expedition->id;
+
+	if (! empty($conf->global->DISPATCH_SERIALIZED_PRODUCTS_MUST_HAVE_ASSET_TYPE_SET))
+	{
+		$sql.= "
+			AND COALESCE(pe.type_asset, 0) > 0";
+	}
+
+	$sql.= "
 			GROUP BY ed.rowid
 			HAVING COALESCE(SUM(eda.weight_reel), 0) < ed.qty";
 
@@ -375,7 +391,7 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 		while ($obj = $PDOdb->Get_line()) {
 			$prodStatic = new Product($db);
 			$prodStatic->fetch($obj->fk_product);
-			if (!empty($prodStatic->array_options['options_type_asset']))
+
 			$productOptions.= '<option value="'.$obj->rowid.'" fk-product="'.$obj->fk_product.'" qty="'.$obj->qty.'">'.$obj->ref.' - '.$obj->label.' x '.$obj->qty.'</option>';
 		}
 ?>
