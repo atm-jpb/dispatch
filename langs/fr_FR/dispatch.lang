@@ -69,3 +69,6 @@ BDRClose=cloture
 DISPATCH_RESET_ASSET_WAREHOUSE_ON_SHIPMENT=Retirer l'entrepot de l'équipement à la validation de l'expédition
 DISPATCH_SKIP_SERVICES=Ignorer les lignes de type service
 DISPATCH_STOCK_MOVEMENT_BY_ASSET=Lorsqu'il y a plusieurs équipements pour le même produit lors d'une réception, faire en sorte qu'il y ait un mouvement de stock par équipement, plutôt qu'un mouvement de stock global contenant tous les équipements
+
+# Expedition Card
+colDispatch=N° de série / lot
