@@ -1,4 +1,20 @@
 Module104970Name=Dispatch
+Module104970Desc=Gestion de la ventilation des équipements sur réception, expédition, ...
+
+DispatchSetup=Administration du module Dispatch
+UseImportFile=Utiliser l'import de fichier pour créer les détails expédition/réception
+DispatchRecepAutoQuantity=Renseigné automatiquement la quantité commandé lors de la réception d'un produit
+DispatchDLUOByDefault=Renseigner automatiquement la DLUO avec date du jour + X (X étant l'ajout de jour, mois ou année au format sql ex: +1 year)
+ReceptionTab=Réception équipements/produits
+SerializedProduct=Produit sérialisé
+SerializeThisProductInfo=Réceptionner des équipements de ce produit
+SerializedProductInfo=Ce produit est en réception sérialisé. Pour réceptionner ce produit de manière standard, supprimez les lignes adéquates des équipements
+SerializeThisProduct=Sérialiser cette ligne
+SerialNumberNeeded=Numéro de série requis
+AssetVentil=Ventiler les produits et créer les équipements
+ProductsSent=Products sent
+ProductsReceived=Products received
+
 
 ErrorSupplierTarif=Quantity price and Total price (if checked)
 ErrorSupplierTarifNoConf=Total price
@@ -9,7 +25,17 @@ GenerateSupplierTarif=Create new price
 
 DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION=Update Supplier Order prices at products reception
 DISPATCH_CREATE_SUPPLIER_PRICE=Create supplier price at products reception to stock
+DISPATCH_HIDE_DLUO_PDF=Cacher la DLUO sur les PDF d'expédition
 
+SaveBeforeVentil=Sauvegardez vos modifications avant de lancer la ventilation
+DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_IF_LOT=Permettre de créer les équipements avec numéro de série automatique lors d'une réception si le lot est saisi
+createNumSerieOnTheFly=Création du numéro de série %s à la volée
+
+DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION=Pouvoir ventiler la quantité
+DISPATCH_SHOW_UNIT_RECEPTION=Afficher l'unité sur l'écran de récéption
+
+QtyDispatchedShort=AlreaDéjà ventilé
+QtyToDispatchShort=Qté à ventiler
 
 DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_FROM_FIRST_INPUT=Enable asset creation with automatic serial numbers when dispatching, from the first input serial number for a product
 CalculateFollowingSerialNumbers=Calculate the others
@@ -26,8 +52,23 @@ DISPATCH_SHIPPING_LINES_CAN_BE_CHECKED_PREPARED=Assets in the shipments can be m
 DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED=Block shipment closing if there are assets not marked as "Prepared"
 AssetMarkedAsPrepared=Line marked as "Prepared"
 AssetMarkedAsNotPrepared=Line marked as "Not prepared"
+AssetsMarkedAsPrepared=All lines marked as "Prepared"
+AssetsMarkedAsNotPrepared=All lines marked as "Not prepared"
+NAssetsMarkedCouldNotBeMarked=%s line(s) unmodified
 NoShipmentAssetDetail=There are no assets in this shipment
 ShipmentCannotBeClosed=This shipment can't be closed :
 ShipmentCannotBeClosedAssetsNotPrepared=All assets have not been prepared
 ShipmentCannotBeClosedSerializedLinesHaveNoDetail=Some serialized lines don't have assets
 ShipmentCannotBeClosedQtyDoesntMatch=The quantity of assets linked to one or more lines is lower than the line's quantity
+
+NoBDRAssetDetail=No asset in this return voucher
+DispatchBonderetour=Réception du bon de retour %s
+ReceivingForSameBDR=Réceptions pour ce bon de retour
+StockMovementAssetStockTransfered=Retour de l'équipement  %s sur bon de retour %s
+BDRCalculateAuto=La ventilation est faite automatiquement à la %s du bon de retour
+BDRValidate=validation
+BDRClose=cloture
+
+DISPATCH_RESET_ASSET_WAREHOUSE_ON_SHIPMENT=Retirer l'entrepot de l'équipement à la validation de l'expédition
+DISPATCH_SKIP_SERVICES=Ignorer les lignes de type service
+DISPATCH_STOCK_MOVEMENT_BY_ASSET=Lorsqu'il y a plusieurs équipements pour le même produit lors d'une réception, faire en sorte qu'il y ait un mouvement de stock par équipement, plutôt qu'un mouvement de stock global contenant tous les équipements

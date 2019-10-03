@@ -12,6 +12,9 @@ SerializedProductInfo=Ce produit est en réception sérialisé. Pour réceptionn
 SerializeThisProduct=Sérialiser cette ligne
 SerialNumberNeeded=Numéro de série requis
 AssetVentil=Ventiler les produits et créer les équipements
+ProductsSent=Produits expédiés
+ProductsReceived=Produits reçus
+
 
 ErrorSupplierTarif=Quantité tarif et Prix Total (si coché)
 ErrorSupplierTarifNoConf=Prix Total payé
@@ -26,7 +29,7 @@ DISPATCH_HIDE_DLUO_PDF=Cacher la DLUO sur les PDF d'expédition
 
 SaveBeforeVentil=Sauvegardez vos modifications avant de lancer la ventilation
 DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_IF_LOT=Permettre de créer les équipements avec numéro de série automatique lors d'une réception si le lot est saisi
-createNumSerieOnTheFly=Création du numérot de série %s à la volée 
+createNumSerieOnTheFly=Création du numéro de série %s à la volée
 
 DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION=Pouvoir ventiler la quantité
 DISPATCH_SHOW_UNIT_RECEPTION=Afficher l'unité sur l'écran de récéption

@@ -103,6 +103,11 @@ class ActionsDispatch
 
 				$PDOdb = new TPDOdb;
 
+				$outputlangs = $parameters['outputlangs'];
+				$outputlangs->load(ATM_ASSET_NAME . '@' . ATM_ASSET_NAME);
+				$outputlangs->load('productbatch');
+				$outputlangs->load('dispatch@dispatch');
+
 				$expedition = $object;
 				if(get_class($object) == 'Livraison') {
 					$expedition = new Expedition($object->db);
@@ -131,14 +136,14 @@ class ActionsDispatch
 
 						if(count($TRecepDetail) > 0) {
 							if(!empty($line->description) && $line->description != $line->desc) $line->desc.=$line->description.'<br />'; // Sinon Dans certains cas desc écrase description
-							$line->desc .= "<br>Produit(s) expédié(s) : ";
+							$line->desc .= '<br>' . $outputlangs->trans('ProductsSent') . ' :';
 
 							foreach($TRecepDetail as $detail) {
 								$asset = new TAsset;
 								$asset->load($PDOdb, $detail->fk_asset);
 								$asset->load_asset_type($PDOdb);
 
-								$this->_addAssetToLineDesc($line, $detail, $asset);
+								$this->_addAssetToLineDesc($line, $detail, $asset, $outputlangs);
 							}
 						}
 					}
@@ -149,19 +154,24 @@ class ActionsDispatch
 
 				$PDOdb = new TPDOdb;
 
+				$outputlangs = $parameters['outputlangs'];
+				$outputlangs->load(ATM_ASSET_NAME . '@' . ATM_ASSET_NAME);
+				$outputlangs->load('productbatch');
+				$outputlangs->load('dispatch@dispatch');
+
 				foreach($object->lines as &$line){
 					$details = new TRecepDetail;
 					$TRecepDetail = $details->LoadAllBy($PDOdb, array('fk_commandedet' => $line->id));
 
 					if(count($TRecepDetail) > 0) {
-						$line->desc .= "<br>Produit(s) reçu(s) : ";
+						$line->desc .= '<br>' . $outputlangs->trans('ProductsReceived') . ' :';
 
 						foreach($TRecepDetail as $detail) {
 							$asset = new TAsset;
 							$asset->loadBy($PDOdb, $detail->serial_number, 'serial_number');
 							$asset->load_asset_type($PDOdb);
 
-							$this->_addAssetToLineDesc($line, $detail, $asset);
+							$this->_addAssetToLineDesc($line, $detail, $asset, $outputlangs);
 						}
 					}
 				}
@@ -169,19 +179,22 @@ class ActionsDispatch
 		}
 	}
 
-	function _addAssetToLineDesc(&$line, $detail, $asset)
+	function _addAssetToLineDesc(&$line, $detail, $asset, Translate $outputlangs)
 	{
 		global $conf;
 
-		$unite = (($asset->assetType->measuring_units == 'unit') ? 'unité(s)' : measuring_units_string($detail->weight_reel_unit, $asset->assetType->measuring_units));
+		$unite = (($asset->assetType->measuring_units == 'unit') ? $outputlangs->trans('Assetunit_s') : measuring_units_string($detail->weight_reel_unit, $asset->assetType->measuring_units));
 
 		if(empty($asset->lot_number)) {
-			$desc = "<br>- N° série : ".$asset->serial_number;
+			$desc = '<br>- ' . $outputlangs->trans('SerialNumberShort') . ' : ' . $asset->serial_number;
 		} else {
 			$desc = "<br>- ".$asset->lot_number." x ".$detail->weight_reel." ".$unite;
 		}
 
-		if(! empty($conf->global->ASSET_SHOW_DLUO) && empty($conf->global->DISPATCH_HIDE_DLUO_PDF) && ! empty($asset->date_dluo)) $desc.= ' (DLUO : '.$asset->get_date('dluo').')';
+		if(! empty($conf->global->ASSET_SHOW_DLUO) && empty($conf->global->DISPATCH_HIDE_DLUO_PDF) && ! empty($asset->date_dluo))
+		{
+			$desc .= ' (' . $outputlangs->trans('EatByDate') . ' : ' . $asset->get_date('dluo') . ')';
+		}
 
 		$line->desc.= $desc;
 	}
