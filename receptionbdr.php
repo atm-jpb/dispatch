@@ -1210,7 +1210,8 @@ global $langs, $db, $conf;
 						}
 						else if($asset->loadReference($PDOdb, $line['numserie'], $line['fk_product'])) {
 							if($bdr->statut < 2) {
-								echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('AssetAlreadyLinked'), 'warning.png');
+								echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30);
+								if (empty($asset->fk_societe_localisation)) echo ' '.img_picto($langs->trans('AssetAlreadyLinked'), 'warning.png');
 							}
 							else echo $asset->getNomUrl(1);
 						}
