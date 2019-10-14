@@ -344,7 +344,7 @@ function tabImport(&$TImport,&$expedition)
 
 function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 {
-	global $conf, $db, $hookmanager;
+	global $conf, $db, $hookmanager, $langs;
 	$DoliFormProduct = new FormProduct($db);
 
 	$form->Set_typeaff('edit');
@@ -386,7 +386,7 @@ function tabImportAddLine(&$PDOdb, &$expedition, $form, $fullColspan)
 
 	if($PDOdb->Get_Recordcount() > 0) {
 
-		$productOptions = '<option value="">-- Selectionnez un produit --</option>';
+		$productOptions = '<option value="">-- ' . $langs->transnoentities( 'DispatchSelectProduct' ) . ' --</option>';
 
 		while ($obj = $PDOdb->Get_line()) {
 			$prodStatic = new Product($db);

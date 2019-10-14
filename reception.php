@@ -1165,7 +1165,7 @@ global $langs, $db, $conf, $hookmanager;
 	</script>
 	<table width="100%" class="noborder" id="dispatchAsset">
 		<tr class="liste_titre">
-			<td>Produit</td>
+			<td><?php echo $langs->trans('Product') ?></td>
 			<td>Numéro de Série</td>
 <?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
 			<td>Numéro de Lot</td>

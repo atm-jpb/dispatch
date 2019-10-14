@@ -1,7 +1,13 @@
 Module104970Name=Dispatch
 Module104970Desc=Gestion de la ventilation des équipements sur réception, expédition, ...
 
+DispatchInterfaceDesc=Trigger du module expédtion spécifique Latoxan
+
+DispatchMenuTitle=Expédition à préparer
+
 DispatchSetup=Administration du module Dispatch
+DispatchSetupTitle=Gestion des détails Réception/Expédidion, à propos
+
 UseImportFile=Utiliser l'import de fichier pour créer les détails expédition/réception
 DispatchRecepAutoQuantity=Renseigné automatiquement la quantité commandé lors de la réception d'un produit
 DispatchDLUOByDefault=Renseigner automatiquement la DLUO avec date du jour + X (X étant l'ajout de jour, mois ou année au format sql ex: +1 year)
@@ -77,3 +83,9 @@ DISPATCH_STOCK_MOVEMENT_BY_ASSET=Lorsqu'il y a plusieurs équipements pour le m�
 
 # Expedition Card
 colDispatch=N° de série / lot
+
+LIST_SHIPMENTS_TO_PREPARE=Liste des expéditions à préparer
+LIST_NO_SHIPMENTS=Il n'y a aucunes expédition à afficher
+COUNT_REL_EQUIPMENT=%s équipement(s) lié(s)
+AFFECTED_ROW=Ligne concernée
+DispatchSelectProduct=Selectionnez un produit

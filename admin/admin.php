@@ -30,7 +30,7 @@
 	}
 	
 
-	llxHeader('','Gestion des détails Réception/Expédidion, à propos', '');
+	llxHeader('', $langs->trans("DispatchSetupTitle"), '');
 	
 	//$head = assetPrepareHead();
 	$linkback = '<a href="'.DOL_URL_ROOT.'/admin/modules.php">'.$langs->trans("BackToModuleList").'</a>';

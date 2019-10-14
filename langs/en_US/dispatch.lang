@@ -1,7 +1,13 @@
 Module104970Name=Dispatch
 Module104970Desc=Management of the movement of equipment on receipt, shipment, ...
 
+DispatchInterfaceDesc=Trigger of the specific Latoxan shipping modul
+
+DispatchMenuTitle=Shipment to be prepared
+
 DispatchSetup=Administration of the Dispatch module
+DispatchSetupTitle=Management of Receipt/Shipment details
+
 UseImportFile=Use file import to create shipping/receiving details
 DispatchRecepAutoQuantity=Automatically fill in the quantity ordered when a product is received
 DispatchDLUOByDefault=Automatically enter the BBD with current date + X (X being the addition of day, month or year in sql format ex: +1 year)
@@ -77,3 +83,9 @@ DISPATCH_STOCK_MOVEMENT_BY_ASSET=When there is more than one piece of equipment 
 
 # Expedition Card
 colDispatch=Serial number / batch
+
+LIST_SHIPMENTS_TO_PREPARE=List of shipments to be prepared
+LIST_NO_SHIPMENTS=No shipments to display
+COUNT_REL_EQUIPMENT=%s related equipments
+AFFECTED_ROW=Affected row
+DispatchSelectProduct=Select a product
