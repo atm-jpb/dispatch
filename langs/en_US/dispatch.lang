@@ -13,7 +13,11 @@ DispatchRecepAutoQuantity=Automatically fill in the quantity ordered when a prod
 DispatchDLUOByDefault=Automatically enter the BBD with current date + X (X being the addition of day, month or year in sql format ex: +1 year)
 SUPPLIER_ORDER_RECEPTION=Supplier order reception
 
+ShippingDetailsTab=Shipping details
+ManualReceptionTab=Manual reception
+EquipmentDetailsTab=Equipment details
 ReceptionTab=Reception of equipment/products
+
 SerializedProduct=Serialized product
 SerializeThisProductInfo=Receive equipment of this product
 SerializedProductInfo=This product is in serialized reception. To receive this product as standard, delete the appropriate lines from the equipment

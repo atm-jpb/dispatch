@@ -13,7 +13,11 @@ DispatchRecepAutoQuantity=Renseigné automatiquement la quantité commandé lors
 DispatchDLUOByDefault=Renseigner automatiquement la DLUO avec date du jour + X (X étant l'ajout de jour, mois ou année au format sql ex: +1 year)
 SUPPLIER_ORDER_RECEPTION=Réception commande fournisseur
 
+ShippingDetailsTab=Détail expédition
+ManualReceptionTab=Réception manuelle
+EquipmentDetailsTab=Détail équipement
 ReceptionTab=Réception équipements/produits
+
 SerializedProduct=Produit sérialisé
 SerializeThisProductInfo=Réceptionner des équipements de ce produit
 SerializedProductInfo=Ce produit est en réception sérialisé. Pour réceptionner ce produit de manière standard, supprimez les lignes adéquates des équipements
