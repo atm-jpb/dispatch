@@ -5,6 +5,8 @@ DispatchSetup=Administration du module Dispatch
 UseImportFile=Utiliser l'import de fichier pour créer les détails expédition/réception
 DispatchRecepAutoQuantity=Renseigné automatiquement la quantité commandé lors de la réception d'un produit
 DispatchDLUOByDefault=Renseigner automatiquement la DLUO avec date du jour + X (X étant l'ajout de jour, mois ou année au format sql ex: +1 year)
+SUPPLIER_ORDER_RECEPTION=Réception commande fournisseur
+
 ReceptionTab=Réception équipements/produits
 SerializedProduct=Produit sérialisé
 SerializeThisProductInfo=Réceptionner des équipements de ce produit

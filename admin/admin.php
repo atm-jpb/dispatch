@@ -70,7 +70,7 @@
 	$form=new TFormCore;
 	
 	print '<tr class="liste_titre">';
-	print '<td>'.$langs->trans("Réception commande fournisseur").'</td>'."\n";
+	print '<td>'.$langs->trans("SUPPLIER_ORDER_RECEPTION").'</td>'."\n";
 	print '<td align="center" width="20">&nbsp;</td>';
 	print '<td align="center" width="100">'.$langs->trans("Value").'</td>'."\n";
 	print '<tr>';
