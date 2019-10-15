@@ -32,10 +32,8 @@
 
 	llxHeader('', $langs->trans("DispatchSetupTitle"), '');
 	
-	//$head = assetPrepareHead();
 	$linkback = '<a href="'.DOL_URL_ROOT.'/admin/modules.php">'.$langs->trans("BackToModuleList").'</a>';
-	dol_fiche_head($head, 1, $langs->trans("Dispatch"), 0, '');
-	print_fiche_titre($langs->trans("DispatchSetup"),$linkback);
+	print load_fiche_titre( $langs->trans("DispatchSetup"), $linkback );
 	
 	print '<table class="noborder" width="100%">';
 	print '<tr class="liste_titre">';

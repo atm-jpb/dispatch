@@ -44,6 +44,7 @@ class moddispatch extends DolibarrModules
 
         $this->db = $db;
 		$this->editor_name = 'ATM-Consulting';
+		$this->editor_url = 'https://www.atm-consulting.fr';
 		// Id for module (must be unique).
 		// Use here a free id (See in Home -> System information -> Dolibarr for list of used modules id).
 		$this->numero = 104970;
