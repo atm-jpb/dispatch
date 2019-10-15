@@ -47,9 +47,11 @@ class InterfaceDispatchWorkflow
     {
         $this->db = $db;
 
+	    global $langs;
+
         $this->name = preg_replace('/^Interface/i','',get_class($this));
         $this->family = "ATM";
-        $this->description = "Trigger du module expédtion spécifique Latoxan";
+        $this->description = $langs->trans( 'DispatchInterfaceDesc' ); // Trigger of the specific Latoxan shipping module //
         $this->version = 'dolibarr';            // 'development', 'experimental', 'dolibarr' or version
         $this->picto = 'technic';
     }

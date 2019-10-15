@@ -72,21 +72,20 @@ function _fiche(&$PDOdb,&$dispatch) {
 		$pListe[$line->id] = ($k+1).'/ '.$label;
 	}
 	
-	
-	print count($dispatch->TDispatchAsset).' équipement(s) lié(s)<br />';
-	
+	print $langs->trans( 'COUNT_REL_EQUIPMENT',  count($dispatch->TDispatchAsset) ).'<br />';
+
 	?>
 	<table width="100%" class="border">
 		<tr class="liste_titre">
 			<?php
-				if(GETPOST('type_object') !== 'ticketsup') print '<td>Ligne concernée</td>';
+				if(GETPOST('type_object') !== 'ticketsup') print '<td>' . $langs->trans('AFFECTED_ROW' ) . '</td>';
 			?>
-			<td>Equipement</td>
+			<td><?php print $langs->trans('Equipment'); // Equipement ?></td>
 			<?php
 				if(!empty($conf->global->USE_LOT_IN_OF)) {
 				?>
-				<td>Numéro de Lot</td>
-				<td>DLUO</td>
+				<td><?php print $langs->trans('batch_number'); // Numéro de Lot ?></td>
+				<td><?php print $langs->trans('EatByDate'); // DLUO ?></td>
 				<?php
 				}
 			?>
