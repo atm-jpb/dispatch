@@ -627,7 +627,7 @@ function _by_ref(&$a, &$b) {
 function fiche(&$commande, &$TImport, $comment) {
 global $langs, $db, $conf;
 
-	llxHeader();
+	llxHeader( '', $langs->transnoentities('ReceptionTab').' | '.$commande->ref);
 
 	$head = ordersupplier_prepare_head($commande);
 
@@ -992,7 +992,7 @@ $(document).ready(function() {
 }
 
 function _list_already_dispatched(&$commande) {
-	global $db, $langs, $conf;
+	global $db, $langs, $conf, $user;
 
 	// List of lines already dispatched
 		$sql = "SELECT p.ref, p.label,";
@@ -1153,7 +1153,7 @@ global $langs, $db, $conf, $hookmanager;
 
 	_show_product_ventil($TImport,$commande,$form);
 
-	print count($TImport).' équipement(s) dans votre réception';
+	print $langs->trans("DispatchItemCountReception", count($TImport));
 
 	?>
 	<script type="text/javascript">
@@ -1166,9 +1166,9 @@ global $langs, $db, $conf, $hookmanager;
 	<table width="100%" class="noborder" id="dispatchAsset">
 		<tr class="liste_titre">
 			<td><?php echo $langs->trans('Product') ?></td>
-			<td>Numéro de Série</td>
+			<td><?php print $langs->trans('DispatchSerialNumber'); ?></td>
 <?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
-			<td>Numéro de Lot</td>
+			<td><?php print $langs->trans('DispatchBatchNumber'); ?></td>
 <?php } ?>
 			<td><?php echo $langs->trans('Warehouse'); ?></td>
 			<?php if($conf->global->ASSET_SHOW_DLUO){ ?>
@@ -1176,7 +1176,7 @@ global $langs, $db, $conf, $hookmanager;
 			<?php }
 			 if(empty($conf->global->DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION)) {
 			?>
-			<td>Quantité</td>
+			<td><?php print $langs->trans('Quantity'); ?></td>
 			<?php
 			if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) echo '<td>Unité</td>';
 
@@ -1302,7 +1302,7 @@ global $langs, $db, $conf, $hookmanager;
 
 		if($commande->statut < 5 && $commande->statut>2){
 
-			$TProducts = array('Sélectionnez un produit');
+			$TProducts = array($langs->transnoentities('DispatchSelectProduct'));
 			foreach($commande->lines as $line){
 				if($line->fk_product) $TProducts[$line->fk_product] = $line->product_ref." - ".$line->product_label;
 			}
@@ -1387,7 +1387,7 @@ global $langs, $db, $conf, $hookmanager;
 		<hr />
 		<?php
 		echo '<div id="actionVentilation">';
-		echo 'Date de réception : '.$form->calendrier('', 'date_recep', time());
+		echo $langs->trans("DispatchDateReception").' : '.$form->calendrier('', 'date_recep', time());
 
 		echo ' - '.$langs->trans("Comment").' : '.$form->texte('', 'comment', !empty($comment)?$comment:$langs->trans("DispatchSupplierOrder",$commande->ref), 60,128);
 
@@ -1462,12 +1462,12 @@ function entetecmd(&$commande)
 		print '</td>';
 		print '</tr>';
 
-		// Fournisseur
+		// Supplier/ThirdParty
 		print '<tr><td>'.$langs->trans("Supplier")."</td>";
 		print '<td colspan="2">' . $commande->thirdparty->getNomUrl(1, 'supplier') . '</td>';
 		print '</tr>';
 
-		// Statut
+		// Status
 		print '<tr>';
 		print '<td>'.$langs->trans("Status").'</td>';
 		print '<td colspan="2">';

@@ -1,7 +1,7 @@
 Module104970Name=Dispatch
 Module104970Desc=Management of the movement of equipment on receipt, shipment, ...
 
-DispatchInterfaceDesc=Trigger of the specific Latoxan shipping modul
+DispatchInterfaceDesc=Trigger of the specific Latoxan shipping moduls
 
 DispatchMenuTitle=Shipment to be prepared
 
@@ -93,3 +93,8 @@ LIST_NO_SHIPMENTS=No shipments to display
 COUNT_REL_EQUIPMENT=%s related equipments
 AFFECTED_ROW=Affected row
 DispatchSelectProduct=Select a product
+DispatchItemCountDispatch=%s item(s) in this delivery
+DispatchItemCountReception=%s item(s) in this shipment
+DispatchSerialNumber=Serial number
+DispatchBatchNumber=Batch number
+DispatchDateReception=Date of incoming delivery

@@ -51,11 +51,11 @@ echo $r->render($ATMdb, $sql, array(
 		,'picto_search'=>img_picto('','search.png', '', 0)
 	)
 	,'title'=>array(
-		'soc_nom'=>'Client'
+		'soc_nom'=>$langs->trans('Client')
 		,'expe_ref'=>'Expédition'
 		,'comm_ref'=>'Commande'
-		,'prod_ref'=>'Produit'
-		,'qty'=>'Quantité'
+		,'prod_ref'=>$langs->trans('Product')
+		,'qty'=>$langs->trans('Quantity')
 		,'tarif_poids'=>'Poids'
 		,'asset_lot'=>'Lot'
 	)

@@ -1153,10 +1153,10 @@ global $langs, $db, $conf;
 	</script>
 	<table width="100%" class="border" id="dispatchAsset">
 		<tr class="liste_titre">
-			<td>Produit</td>
-			<td>Numéro de Série</td>
+			<td><?php echo $langs->trans('Product') ?></td>
+			<td><?php print $langs->trans('DispatchSerialNumber'); ?></td>
 <?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
-			<td>Numéro de Lot</td>
+			<td><?php print $langs->trans('DispatchBatchNumber'); ?></td>
 <?php } ?>
 			<td><?php echo $langs->trans('Warehouse'); ?></td>
 			<?php if($conf->global->ASSET_SHOW_DLUO){ ?>
@@ -1164,7 +1164,7 @@ global $langs, $db, $conf;
 			<?php }
 			 if(empty($conf->global->DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION)) {
 			?>
-			<td>Quantité</td>
+			<td><?php print $langs->trans('Quantity'); ?></td>
 			<?php
 			if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) echo '<td>Unité</td>';
 
@@ -1390,7 +1390,7 @@ global $langs, $db, $conf;
 	}
 	else{
 		echo '<div id="actionVentilation">';
-		echo 'Date de réception : '.$form->calendrier('', 'date_recep', time());
+		echo $langs->trans("DispatchDateReception").' : '.$form->calendrier('', 'date_recep', time());
 
 		echo ' - '.$langs->trans("Comment").' : '.$form->texte('', 'comment', !empty($comment)?$comment:$langs->trans("DispatchBonderetour",$bdr->ref), 60,128);
 

@@ -84,7 +84,7 @@ function _fiche(&$PDOdb,&$dispatch) {
 			<?php
 				if(!empty($conf->global->USE_LOT_IN_OF)) {
 				?>
-				<td><?php print $langs->trans('batch_number'); // Numéro de Lot ?></td>
+				<td><?php print $langs->trans('DispatchBatchNumber'); ?></td>
 				<td><?php print $langs->trans('EatByDate'); // DLUO ?></td>
 				<?php
 				}
