@@ -1486,11 +1486,11 @@ function entetecmd(&$commande)
 
 		if ($commande->methode_commande)
 		{
-			print '<tr><td>' . $langs->trans("Method") . '</td><td colspan="2">' . $commande->methode_commande . '</td></tr>';
+			print '<tr><td>' . $langs->trans("Method") . '</td><td colspan="2">' . $commande->getInputMethod() . '</td></tr>';
 		}
 	}
 
-	// Auteur
+	// Author
 	print '<tr><td>' . $langs->trans("AuthorRequest") . '</td>';
 	print '<td colspan="2">' . $author->getNomUrl(1) . '</td>';
 	print '</tr>';
