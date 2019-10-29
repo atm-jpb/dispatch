@@ -625,7 +625,8 @@ function _by_ref(&$a, &$b) {
 
 }
 function fiche(&$commande, &$TImport, $comment) {
-global $langs, $db, $conf;
+
+    global $langs, $db, $conf;
 
 	llxHeader();
 
@@ -703,7 +704,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 			}
 
 			$sql = "SELECT l.fk_product, SUM(l.qty * l.subprice) / SUM(l.qty) AS subprice, SUM(l.qty * l.remise_percent) / SUM(l.qty) AS remise_percent, SUM(l.qty) as qty,";
-			$sql.= " p.ref, p.label, pe.type_asset";
+			$sql.= " p.ref, p.label, pe.type_asset, p.fk_default_warehouse";
 
 			if(DOL_VERSION>=3.8) {
 				$sql.=", p.tobatch";
@@ -868,11 +869,11 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 					if (count($formproduct->cache_warehouses)>1)
 					{
-						print $formproduct->selectWarehouses(($TOrderLine[$objp->fk_product]) ? $TOrderLine[$objp->fk_product]['entrepot'] : '', 'TOrderLine['.$objp->fk_product.'][entrepot]','',1,0,$objp->fk_product,'',0,1);
+						print $formproduct->selectWarehouses(($objp->fk_default_warehouse) ? $objp->fk_default_warehouse : '', 'TOrderLine['.$objp->fk_product.'][entrepot]','',1,0,$objp->fk_product,'',0,1);
 					}
 					elseif  (count($formproduct->cache_warehouses)==1)
 					{
-						print $formproduct->selectWarehouses(($TOrderLine[$objp->fk_product]) ? $TOrderLine[$objp->fk_product]['entrepot'] : '', 'TOrderLine['.$objp->fk_product.'][entrepot]','',0,0,$objp->fk_product,'',0,1);
+						print $formproduct->selectWarehouses(($objp->fk_default_warehouse) ? $objp->fk_default_warehouse : '', 'TOrderLine['.$objp->fk_product.'][entrepot]','',0,0,$objp->fk_product,'',0,1);
 					}
 					else
 					{
