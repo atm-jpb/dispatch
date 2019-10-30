@@ -237,7 +237,7 @@ function tabImport(&$TImport,&$expedition)
 
 	$PDOdb=new TPDOdb;
 	
-	print $langs->trans('DispatchItemCountDispatch', count($TImport)); // équipement(s) dans votre expédition //  //
+	print load_fiche_titre($langs->trans('DispatchItemCountDispatch', count($TImport)), '', '');
 
 	$fullColspan = 4;
 	if(! empty($conf->global->USE_LOT_IN_OF)) $fullColspan++;

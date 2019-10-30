@@ -1153,7 +1153,7 @@ global $langs, $db, $conf, $hookmanager;
 
 	_show_product_ventil($TImport,$commande,$form);
 
-	print $langs->trans("DispatchItemCountReception", count($TImport));
+	print load_fiche_titre($langs->trans("DispatchItemCountReception", count($TImport)), '', '');
 
 	?>
 	<script type="text/javascript">
