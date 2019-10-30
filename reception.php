@@ -483,7 +483,7 @@
         $commandefourn->statut = $status;
         if(method_exists($commandefourn, 'log')) $commandefourn->log($user, $status, time()); // removed in 4.0
 
-        setEventMessage('Equipements créés / produits ventilés');
+        setEventMessage($langs->transnoentities('DispatchMsgAssetGen'));
 
 	}
 
@@ -738,8 +738,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 					print '<td align="right">'.$langs->trans("QtyOrdered").'</td>';
 					print '<td align="right">'.$langs->trans("QtyDispatchedShort").'</td>';
-					print '<td align="right" rel="QtyToDispatchShort">'.$langs->trans("QtyToDispatchShort");
-					print '</td>';
+					print '<td align="right" rel="QtyToDispatchShort">'.$langs->trans("QtyToDispatchShort").'</td>';
 
 					$formproduct=new FormProduct($db);
 					$formproduct->loadWarehouses();
@@ -887,7 +886,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 					if($remaintodispatch==0) {
 						print $langs->trans('Yes').img_info('SerializedProductInfo');
 					} elseif($objp->type_asset > 0){
-						 print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']').img_info($langs->trans('SerializeThisProductInfo'));
+						 print $form->btsubmit($langs->trans('SerializeThisProduct'), 'ToDispatch['.$objp->fk_product.']', '', 'butAction').img_info($langs->trans('SerializeThisProductInfo'));
 					}
 
 					print $form->hidden('TOrderLine['.$objp->fk_product.'][fk_product]', $objp->fk_product);
@@ -1178,10 +1177,10 @@ global $langs, $db, $conf, $hookmanager;
 			?>
 			<td><?php print $langs->trans('Quantity'); ?></td>
 			<?php
-			if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) echo '<td>Unité</td>';
-
-
-			}
+				 if ( ! empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION) ) {
+					 echo '<td>' . $langs->trans('Unit') . '</td>';
+				 }
+            }
 			if($conf->global->clinomadic->enabled){
 				?>
 				<td>IMEI</td>
@@ -1378,7 +1377,7 @@ global $langs, $db, $conf, $hookmanager;
 	if($commande->statut < 5 || $warning_asset){
 
 		if($commande->statut < 5 ) {
-			echo '<div class="tabsAction">'.$form->btsubmit('Enregistrer', 'bt_save').'</div>';
+			echo '<div class="tabsAction">'.$form->btsubmit($langs->transnoentities('Save'), 'bt_save', '', 'butAction').'</div>';
 		}
 
 
@@ -1391,7 +1390,7 @@ global $langs, $db, $conf, $hookmanager;
 
 		echo ' - '.$langs->trans("Comment").' : '.$form->texte('', 'comment', !empty($comment)?$comment:$langs->trans("DispatchSupplierOrder",$commande->ref), 60,128);
 
-		echo ' '.$form->btsubmit($langs->trans('AssetVentil'), 'bt_create');
+		echo ' '.$form->btsubmit($langs->trans('AssetVentil'), 'bt_create', '', 'butAction');
 		echo '</div>';
 	}
 

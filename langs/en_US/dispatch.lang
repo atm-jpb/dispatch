@@ -46,8 +46,8 @@ createNumSerieOnTheFly=Creation of the serial number %s on the fly
 DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION=Allocate the quantity
 DISPATCH_SHOW_UNIT_RECEPTION=Display the unit on the reception screen
 
-QtyDispatchedShort=Already shipped
-QtyToDispatchShort=Quantity to be shipped
+QtyDispatchedShort=Already received
+QtyToDispatchShort=Awaited
 
 DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_FROM_FIRST_INPUT=Enable asset creation with automatic serial numbers when dispatching, from the first input serial number for a product
 CalculateFollowingSerialNumbers=Calculate the others

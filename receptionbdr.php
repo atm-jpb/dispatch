@@ -468,11 +468,11 @@
     					break;
     				}
     			}
-    
+
     			//$bdr->setStatus($user, $status);
     			$bdr->statut = $status;
-    
-    			setEventMessage('Equipements créés / produits ventilés');
+
+    			setEventMessage($langs->transnoentities('DispatchMsgAssetGen'));
     		}
     //		$PDOdb->rollBack(); $db->rollback();
     	}
