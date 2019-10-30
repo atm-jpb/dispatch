@@ -1,0 +1,101 @@
+Module104970Name=Dispatch
+Module104970Desc=Verwaltung der Bewegung von Waren beim Empfang, Versand, ...
+
+DispatchInterfaceDesc=Trigger des spezifischen Latoxan-Versandmoduls
+
+DispatchMenuTitle="Ready to Ship"
+
+DispatchSetup=Administration of the Dispatch module
+DispatchSetupTitle=Management of Receipt/Shipment details
+
+UseImportFile=Use file import to create shipping/receiving details
+DispatchRecepAutoQuantity=Automatically fill in the quantity ordered when a product is received
+DispatchDLUOByDefault=Automatically enter the DLUO with current date + X (X being the addition of day, month or year in sql format ex: +1 year)
+SUPPLIER_ORDER_RECEPTION=Supplier order reception
+
+ShippingDetailsTab=Lieferdetails
+ManualReceptionTab=Manueller Wareneingang
+EquipmentDetailsTab=Warendetails
+ReceptionTab=Wareneingang
+
+SerializedProduct=Serialisiertes Produkt
+SerializeThisProductInfo=Produkt empfangen
+SerializedProductInfo=This product is in serialized reception. To receive this product as standard, delete the appropriate lines from the equipment
+SerializeThisProduct=Seriennummern erfassen
+SerialNumberNeeded=Seriennummer erforderlich!
+AssetVentil=Wareneingang quittieren
+ProductsSent=Products shipped
+ProductsReceived=Products received
+
+
+ErrorSupplierTarif=Quantity price and Total price (if checked)
+ErrorSupplierTarifNoConf=Total price
+
+SupplierQtyPrice=Mini quantity for price
+TotalPriceOrdered=Total price payed
+GenerateSupplierTarif=Create new price
+
+DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION=Update Supplier Order prices at products reception
+DISPATCH_CREATE_SUPPLIER_PRICE=Create supplier price at products reception to stock
+DISPATCH_HIDE_DLUO_PDF=Hide DLUO on shipping PDFs
+
+SaveBeforeVentil=Save your changes before starting the shipment
+DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_IF_LOT=Allows you to create equipment with automatic serial number upon receipt if the batch is entered
+createNumSerieOnTheFly=Creation of the serial number %s on the fly
+
+DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION=Allocate the quantity
+DISPATCH_SHOW_UNIT_RECEPTION=Display the unit on the reception screen
+
+QtyDispatchedShort=Bereits eingegangen
+QtyToDispatchShort=Erwartet
+
+DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_FROM_FIRST_INPUT=Enable asset creation with automatic serial numbers when dispatching, from the first input serial number for a product
+CalculateFollowingSerialNumbers=Calculate the others
+
+DISPATCH_CAN_LINK_ASSET_TO_OBJECT_IN_ANY_STATUS=Enable linking/unlinking assets to objects (order, contrat, etc.) regardless of their status
+
+NoAssetCreated=No asset created in database
+AssetAlreadyLinked=Asset already linked to this shipment
+
+DISPATCH_SHIPPING_VALIDATE_ALERT_IF_NO_DETAIL=When validating an expedition, display an alert if no asset detail has been set
+DispatchExpeditionNoDetail=No asset detail has been set for this shipment
+
+DISPATCH_SHIPPING_LINES_CAN_BE_CHECKED_PREPARED=Assets in the shipments can be marked as "Prepared"
+DISPATCH_BLOCK_SHIPPING_CLOSING_IF_PRODUCTS_NOT_PREPARED=Block shipment closing if there are assets not marked as "Prepared"
+AssetMarkedAsPrepared=Line marked as "Prepared"
+AssetMarkedAsNotPrepared=Line marked as "Not prepared"
+AssetsMarkedAsPrepared=All lines marked as "Prepared"
+AssetsMarkedAsNotPrepared=All lines marked as "Not prepared"
+NAssetsMarkedCouldNotBeMarked=%s line(s) unmodified
+NoShipmentAssetDetail=There are no assets in this shipment
+ShipmentCannotBeClosed=This shipment can't be closed :
+ShipmentCannotBeClosedAssetsNotPrepared=All assets have not been prepared
+ShipmentCannotBeClosedSerializedLinesHaveNoDetail=Some serialized lines don't have assets
+ShipmentCannotBeClosedQtyDoesntMatch=The quantity of assets linked to one or more lines is lower than the line's quantity
+
+NoBDRAssetDetail=No asset in this return voucher
+DispatchBonderetour=Receipt of the return form %s
+ReceivingForSameBDR=Receipts for this return form
+StockMovementAssetStockTransfered=Equipment return %s on return slip %s
+BDRCalculateAuto=The shipment is done automatically at the %s of the return slip
+BDRValidate=Validate
+BDRClose=Close
+
+DISPATCH_RESET_ASSET_WAREHOUSE_ON_SHIPMENT=Removing the warehouse from the equipment upon shipment validation
+DISPATCH_SKIP_SERVICES=Ignoring services
+DISPATCH_STOCK_MOVEMENT_BY_ASSET=When there is more than one piece of equipment for the same product upon receipt, ensure that there is one goods movement per piece of equipment, rather than one overall goods movement containing all the equipment
+
+# Expedition Card
+colDispatch=Serial number / batch
+
+LIST_SHIPMENTS_TO_PREPARE=List of shipments to be prepared
+LIST_NO_SHIPMENTS=No shipments to display
+COUNT_REL_EQUIPMENT=%s related equipments
+AFFECTED_ROW=Affected row
+DispatchSelectProduct=Produkt auswählen
+DispatchItemCountDispatch=%s Artikel in dieser Sendung
+DispatchItemCountReception=%s Artikel in dieser Lieferung
+DispatchSerialNumber=Seriennummer
+DispatchBatchNumber=Chargennummer
+DispatchDateReception=Datum des Wareneingangs
+DispatchMsgAssetGen=Asset erstellt / Produkt empfangen
