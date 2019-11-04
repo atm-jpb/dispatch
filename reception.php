@@ -483,7 +483,7 @@
         $commandefourn->statut = $status;
         if(method_exists($commandefourn, 'log')) $commandefourn->log($user, $status, time()); // removed in 4.0
 
-        setEventMessage('Equipements créés / produits ventilés');
+        setEventMessage($langs->transnoentities('DispatchMsgAssetGen'));
 
 	}
 
@@ -628,7 +628,7 @@ function fiche(&$commande, &$TImport, $comment) {
 
     global $langs, $db, $conf;
 
-	llxHeader();
+	llxHeader( '', $langs->transnoentities('ReceptionTab').' | '.$commande->ref);
 
 	$head = ordersupplier_prepare_head($commande);
 
@@ -739,8 +739,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 					print '<td align="right">'.$langs->trans("QtyOrdered").'</td>';
 					print '<td align="right">'.$langs->trans("QtyDispatchedShort").'</td>';
-					print '<td align="right" rel="QtyToDispatchShort">'.$langs->trans("QtyToDispatchShort");
-					print '</td>';
+					print '<td align="right" rel="QtyToDispatchShort">'.$langs->trans("QtyToDispatchShort").'</td>';
 
 					$formproduct=new FormProduct($db);
 					$formproduct->loadWarehouses();
@@ -888,7 +887,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 					if($remaintodispatch==0) {
 						print $langs->trans('Yes').img_info('SerializedProductInfo');
 					} elseif($objp->type_asset > 0){
-						 print $form->btsubmit($langs->trans('SerializeThisProduct'),'ToDispatch['.$objp->fk_product.']').img_info($langs->trans('SerializeThisProductInfo'));
+						 print $form->btsubmit($langs->trans('SerializeThisProduct'), 'ToDispatch['.$objp->fk_product.']', '', 'butAction').img_info($langs->trans('SerializeThisProductInfo'));
 					}
 
 					print $form->hidden('TOrderLine['.$objp->fk_product.'][fk_product]', $objp->fk_product);
@@ -993,7 +992,7 @@ $(document).ready(function() {
 }
 
 function _list_already_dispatched(&$commande) {
-	global $db, $langs, $conf;
+	global $db, $langs, $conf, $user;
 
 	// List of lines already dispatched
 		$sql = "SELECT p.ref, p.label,";
@@ -1154,7 +1153,7 @@ global $langs, $db, $conf, $hookmanager;
 
 	_show_product_ventil($TImport,$commande,$form);
 
-	print count($TImport).' équipement(s) dans votre réception';
+	print load_fiche_titre($langs->trans("DispatchItemCountReception", count($TImport)), '', '');
 
 	?>
 	<script type="text/javascript">
@@ -1167,9 +1166,9 @@ global $langs, $db, $conf, $hookmanager;
 	<table width="100%" class="noborder" id="dispatchAsset">
 		<tr class="liste_titre">
 			<td><?php echo $langs->trans('Product') ?></td>
-			<td>Numéro de Série</td>
+			<td><?php print $langs->trans('DispatchSerialNumber'); ?></td>
 <?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
-			<td>Numéro de Lot</td>
+			<td><?php print $langs->trans('DispatchBatchNumber'); ?></td>
 <?php } ?>
 			<td><?php echo $langs->trans('Warehouse'); ?></td>
 			<?php if($conf->global->ASSET_SHOW_DLUO){ ?>
@@ -1177,12 +1176,12 @@ global $langs, $db, $conf, $hookmanager;
 			<?php }
 			 if(empty($conf->global->DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION)) {
 			?>
-			<td>Quantité</td>
+			<td><?php print $langs->trans('Quantity'); ?></td>
 			<?php
-			if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) echo '<td>Unité</td>';
-
-
-			}
+				 if ( ! empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION) ) {
+					 echo '<td>' . $langs->trans('Unit') . '</td>';
+				 }
+            }
 			if($conf->global->clinomadic->enabled){
 				?>
 				<td>IMEI</td>
@@ -1303,7 +1302,7 @@ global $langs, $db, $conf, $hookmanager;
 
 		if($commande->statut < 5 && $commande->statut>2){
 
-			$TProducts = array('Sélectionnez un produit');
+			$TProducts = array($langs->transnoentities('DispatchSelectProduct'));
 			foreach($commande->lines as $line){
 				if($line->fk_product) $TProducts[$line->fk_product] = $line->product_ref." - ".$line->product_label;
 			}
@@ -1379,7 +1378,7 @@ global $langs, $db, $conf, $hookmanager;
 	if($commande->statut < 5 || $warning_asset){
 
 		if($commande->statut < 5 ) {
-			echo '<div class="tabsAction">'.$form->btsubmit('Enregistrer', 'bt_save').'</div>';
+			echo '<div class="tabsAction">'.$form->btsubmit($langs->transnoentities('Save'), 'bt_save', '', 'butAction').'</div>';
 		}
 
 
@@ -1388,11 +1387,11 @@ global $langs, $db, $conf, $hookmanager;
 		<hr />
 		<?php
 		echo '<div id="actionVentilation">';
-		echo 'Date de réception : '.$form->calendrier('', 'date_recep', time());
+		echo $langs->trans("DispatchDateReception").' : '.$form->calendrier('', 'date_recep', time());
 
 		echo ' - '.$langs->trans("Comment").' : '.$form->texte('', 'comment', !empty($comment)?$comment:$langs->trans("DispatchSupplierOrder",$commande->ref), 60,128);
 
-		echo ' '.$form->btsubmit($langs->trans('AssetVentil'), 'bt_create');
+		echo ' '.$form->btsubmit($langs->trans('AssetVentil'), 'bt_create', '', 'butAction');
 		echo '</div>';
 	}
 
@@ -1463,12 +1462,12 @@ function entetecmd(&$commande)
 		print '</td>';
 		print '</tr>';
 
-		// Fournisseur
+		// Supplier/ThirdParty
 		print '<tr><td>'.$langs->trans("Supplier")."</td>";
 		print '<td colspan="2">' . $commande->thirdparty->getNomUrl(1, 'supplier') . '</td>';
 		print '</tr>';
 
-		// Statut
+		// Status
 		print '<tr>';
 		print '<td>'.$langs->trans("Status").'</td>';
 		print '<td colspan="2">';
@@ -1487,11 +1486,11 @@ function entetecmd(&$commande)
 
 		if ($commande->methode_commande)
 		{
-			print '<tr><td>' . $langs->trans("Method") . '</td><td colspan="2">' . $commande->methode_commande . '</td></tr>';
+			print '<tr><td>' . $langs->trans("Method") . '</td><td colspan="2">' . $commande->getInputMethod() . '</td></tr>';
 		}
 	}
 
-	// Auteur
+	// Author
 	print '<tr><td>' . $langs->trans("AuthorRequest") . '</td>';
 	print '<td colspan="2">' . $author->getNomUrl(1) . '</td>';
 	print '</tr>';

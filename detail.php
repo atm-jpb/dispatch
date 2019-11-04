@@ -237,7 +237,7 @@ function tabImport(&$TImport,&$expedition)
 
 	$PDOdb=new TPDOdb;
 	
-	print count($TImport).' équipement(s) dans votre expédition';
+	print load_fiche_titre($langs->trans('DispatchItemCountDispatch', count($TImport)), '', '');
 
 	$fullColspan = 4;
 	if(! empty($conf->global->USE_LOT_IN_OF)) $fullColspan++;
@@ -246,12 +246,12 @@ function tabImport(&$TImport,&$expedition)
 	<br>
 	<table width="100%" class="noborder">
 		<tr class="liste_titre">
-			<td>Produit</td>
+			<td><?php print $langs->trans('Product'); ?></td>
 <?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
-			<td>Numéro de Lot</td>
+			<td><?php print $langs->trans('DispatchBatchNumber'); ?></td>
 <?php } ?>
-			<td>Numéro de série</td>
-			<td>Quantité</td>
+			<td><?php print $langs->trans('DispatchSerialNumber'); ?></td>
+			<td><?php print $langs->trans('Quantity'); ?></td>
 <?php if(! empty($conf->global->DISPATCH_SHIPPING_LINES_CAN_BE_CHECKED_PREPARED)) { ?>
 			<td><?php echo $form->checkbox1('', 'allPrepared', 1, false, '','allPreparedCheckbox'); ?> Préparé</td>
 <?php }

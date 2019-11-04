@@ -1,29 +1,29 @@
 Module104970Name=Dispatch
-Module104970Desc=Management of the movement of equipment on receipt, shipment, ...
+Module104970Desc=Verwaltung der Bewegung von Waren beim Empfang, Versand, ...
 
-DispatchInterfaceDesc=Trigger of the specific Latoxan shipping moduls
+DispatchInterfaceDesc=Trigger des spezifischen Latoxan-Versandmoduls
 
-DispatchMenuTitle=Shipment to be prepared
+DispatchMenuTitle="Ready to Ship"
 
 DispatchSetup=Administration of the Dispatch module
 DispatchSetupTitle=Management of Receipt/Shipment details
 
 UseImportFile=Use file import to create shipping/receiving details
 DispatchRecepAutoQuantity=Automatically fill in the quantity ordered when a product is received
-DispatchDLUOByDefault=Automatically enter the BBD with current date + X (X being the addition of day, month or year in sql format ex: +1 year)
+DispatchDLUOByDefault=Automatically enter the DLUO with current date + X (X being the addition of day, month or year in sql format ex: +1 year)
 SUPPLIER_ORDER_RECEPTION=Supplier order reception
 
-ShippingDetailsTab=Shipping details
-ManualReceptionTab=Manual reception
-EquipmentDetailsTab=Equipment details
-ReceptionTab=Reception of equipment/products
+ShippingDetailsTab=Lieferdetails
+ManualReceptionTab=Manueller Wareneingang
+EquipmentDetailsTab=Warendetails
+ReceptionTab=Wareneingang
 
-SerializedProduct=Serialized product
-SerializeThisProductInfo=Receive equipment of this product
+SerializedProduct=Serialisiertes Produkt
+SerializeThisProductInfo=Produkt empfangen
 SerializedProductInfo=This product is in serialized reception. To receive this product as standard, delete the appropriate lines from the equipment
-SerializeThisProduct=Serialize this row
-SerialNumberNeeded=Serial number required
-AssetVentil=Ship products and create equipment
+SerializeThisProduct=Seriennummern erfassen
+SerialNumberNeeded=Seriennummer erforderlich!
+AssetVentil=Wareneingang quittieren
 ProductsSent=Products shipped
 ProductsReceived=Products received
 
@@ -37,7 +37,7 @@ GenerateSupplierTarif=Create new price
 
 DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION=Update Supplier Order prices at products reception
 DISPATCH_CREATE_SUPPLIER_PRICE=Create supplier price at products reception to stock
-DISPATCH_HIDE_DLUO_PDF=Hide BBD on shipping PDFs
+DISPATCH_HIDE_DLUO_PDF=Hide DLUO on shipping PDFs
 
 SaveBeforeVentil=Save your changes before starting the shipment
 DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_IF_LOT=Allows you to create equipment with automatic serial number upon receipt if the batch is entered
@@ -46,8 +46,8 @@ createNumSerieOnTheFly=Creation of the serial number %s on the fly
 DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION=Allocate the quantity
 DISPATCH_SHOW_UNIT_RECEPTION=Display the unit on the reception screen
 
-QtyDispatchedShort=Already received
-QtyToDispatchShort=Awaited
+QtyDispatchedShort=Bereits eingegangen
+QtyToDispatchShort=Erwartet
 
 DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_FROM_FIRST_INPUT=Enable asset creation with automatic serial numbers when dispatching, from the first input serial number for a product
 CalculateFollowingSerialNumbers=Calculate the others
@@ -92,9 +92,10 @@ LIST_SHIPMENTS_TO_PREPARE=List of shipments to be prepared
 LIST_NO_SHIPMENTS=No shipments to display
 COUNT_REL_EQUIPMENT=%s related equipments
 AFFECTED_ROW=Affected row
-DispatchSelectProduct=Select a product
-DispatchItemCountDispatch=%s item(s) in this delivery
-DispatchItemCountReception=%s item(s) in this shipment
-DispatchSerialNumber=Serial number
-DispatchBatchNumber=Batch number
-DispatchDateReception=Date of incoming delivery
+DispatchSelectProduct=Produkt auswählen
+DispatchItemCountDispatch=%s Artikel in dieser Sendung
+DispatchItemCountReception=%s Artikel in dieser Lieferung
+DispatchSerialNumber=Seriennummer
+DispatchBatchNumber=Chargennummer
+DispatchDateReception=Datum des Wareneingangs
+DispatchMsgAssetGen=Asset erstellt / Produkt empfangen
