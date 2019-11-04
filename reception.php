@@ -1451,52 +1451,69 @@ function entetecmd(&$commande)
 	/*
 	 *	Commande
 	 */
-	print '<table class="noborder" width="100%">';
+	print '<div class="fichecenter">';
+	    print '<div class="fichehalfleft">';
+	        print '<div class="underbanner clearboth"></div>';
 
-	if(! function_exists('dol_banner_tab'))
-	{
-		// Ref
-		print '<tr><td>'.$langs->trans("Ref").'</td>';
-		print '<td colspan="2">';
-		print $form->showrefnav($commande,'ref','',1,'ref','ref');
-		print '</td>';
-		print '</tr>';
+	        print '<table class="border tableforfield centpercent">';
 
-		// Supplier/ThirdParty
-		print '<tr><td>'.$langs->trans("Supplier")."</td>";
-		print '<td colspan="2">' . $commande->thirdparty->getNomUrl(1, 'supplier') . '</td>';
-		print '</tr>';
+            if(! function_exists('dol_banner_tab'))
+            {
+                // Ref
+                print '<tr><td>'.$langs->trans("Ref").'</td>';
+                print '<td colspan="2">';
+                print $form->showrefnav($commande,'ref','',1,'ref','ref');
+                print '</td>';
+                print '</tr>';
 
-		// Status
-		print '<tr>';
-		print '<td>'.$langs->trans("Status").'</td>';
-		print '<td colspan="2">';
-		print $commande->getLibStatut(4);
-		print "</td></tr>";
-	}
+                // Supplier/ThirdParty
+                print '<tr><td>'.$langs->trans("Supplier")."</td>";
+                print '<td colspan="2">' . $commande->thirdparty->getNomUrl(1, 'supplier') . '</td>';
+                print '</tr>';
 
-	// Date
-	if ($commande->methode_commande_id > 0)
-	{
-		print '<tr><td class="titlefield">' . $langs->trans("Date") . '</td><td colspan="2">';
-		if ($commande->date_commande) {
-			print dol_print_date($commande->date_commande, "dayhourtext") . "\n";
-		}
-		print "</td></tr>";
+                // Status
+                print '<tr>';
+                print '<td>'.$langs->trans("Status").'</td>';
+                print '<td colspan="2">';
+                print $commande->getLibStatut(4);
+                print "</td></tr>";
+            }
 
-		if ($commande->methode_commande)
-		{
-			print '<tr><td>' . $langs->trans("Method") . '</td><td colspan="2">' . $commande->getInputMethod() . '</td></tr>';
-		}
-	}
+            // Date
+            if ($commande->methode_commande_id > 0)
+            {
+                print '<tr><td class="titlefield">' . $langs->trans("Date") . '</td><td colspan="2">';
+                if ($commande->date_commande) {
+                    print dol_print_date($commande->date_commande, "dayhour") . "\n";
+                }
+                print "</td></tr>";
 
-	// Author
-	print '<tr><td>' . $langs->trans("AuthorRequest") . '</td>';
-	print '<td colspan="2">' . $author->getNomUrl(1) . '</td>';
-	print '</tr>';
+                if ($commande->methode_commande)
+                {
+                    print '<tr><td>' . $langs->trans("Method") . '</td><td colspan="2">' . $commande->getInputMethod() . '</td></tr>';
+                }
+            }
 
-	print "</table>";
+                // Author
+                print '<tr><td>' . $langs->trans("AuthorRequest") . '</td>';
+                print '<td colspan="2">' . $author->getNomUrl(1) . '</td>';
+                print '</tr>';
+
+            print '</table>';
+
+	    print '</div>';
+	    print '<div class="fichehalfright">';
+	        print '<div class="ficheaddleft">';
+	            print '<div class="underbanner clearboth"></div>';
+
+	            // print '<table class="border tableforfield centpercent">';
+                // print '</table>';
+
+	        print '</div>'; // .ficheaddleft
+	    print '</div>'; // .fichehalfright
+	print '</div>'; // .fichecenter
+
+	print '<div class="clearboth"></div><br>';
 
 	//if ($mesg) print $mesg;
-	print '<br>';
 }
