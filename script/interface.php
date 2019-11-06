@@ -105,7 +105,7 @@ function _autocomplete_asset(&$PDOdb, $lot_number, $productid, $expeditionID, $e
     if(!empty($expeditionID)) {
         $exp->fetch($expeditionID);
         if($exp->statut == Expedition::STATUS_DRAFT || $exp->statut == Expedition::STATUS_VALIDATED ) {
-            $sql.= " AND a.rowid NOT IN (SELECT fk_asset FROM ".MAIN_DB_PREFIX . "expeditiondet_asset)";
+            $sql.= " AND a.rowid NOT IN (SELECT eda2.fk_asset FROM ".MAIN_DB_PREFIX."expeditiondet_asset as eda2 LEFT JOIN ".MAIN_DB_PREFIX."expeditiondet as ed2 ON (ed2.rowid = eda2.fk_expeditiondet) LEFT JOIN ".MAIN_DB_PREFIX."expedition as e2 ON (e2.rowid = ed2.fk_expedition) WHERE e2.fk_statut < 2)";
         }
     }
 	if(! empty($societe->id))
@@ -126,6 +126,8 @@ function _autocomplete_asset(&$PDOdb, $lot_number, $productid, $expeditionID, $e
 	$sql.= "
 			GROUP BY a.rowid
 			HAVING NOT(GROUP_CONCAT(e.rowid) IS NOT NULL AND GROUP_CONCAT(e.rowid, ',') REGEXP '(^|\,)" . $expeditionID .  "(\,|$)')";
+
+//echo $sql;
 
 	$PDOdb->Execute($sql);
 	$TAssetIds = $PDOdb->Get_All();
