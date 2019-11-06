@@ -4,7 +4,7 @@ dol_include_once('/core/lib/product.lib.php');
 
 $langs->load("other");
 
-llxHeader('','Liste des expéditions à préparer','','');
+llxHeader('',$langs->trans("LIST_SHIPMENTS_TO_PREPARE"),'','');
 
 $ATMdb = new TPDOdb;
 
@@ -42,20 +42,20 @@ echo $r->render($ATMdb, $sql, array(
 	,'hide'=>array('soc_id', 'expe_id', 'comm_id', 'prod_id')
 	,'type'=>array('tarif_poids'=>'number','qty'=>'number')
 	,'liste'=>array(
-		'titre'=>'Liste des expéditions à préparer'
+		'titre'=>$langs->trans("LIST_SHIPMENTS_TO_PREPARE")
 		,'image'=>img_picto('','title.png', '', 0)
 		,'picto_precedent'=>img_picto('','back.png', '', 0)
 		,'picto_suivant'=>img_picto('','next.png', '', 0)
 		,'noheader'=> (int)isset($_REQUEST['fk_soc']) | (int)isset($_REQUEST['fk_product'])
-		,'messageNothing'=>"Il n'y a aucunes expédition à afficher"
+		,'messageNothing'=>$langs->trans("LIST_NO_SHIPMENTS")
 		,'picto_search'=>img_picto('','search.png', '', 0)
 	)
 	,'title'=>array(
-		'soc_nom'=>'Client'
+		'soc_nom'=>$langs->trans('Client')
 		,'expe_ref'=>'Expédition'
 		,'comm_ref'=>'Commande'
-		,'prod_ref'=>'Produit'
-		,'qty'=>'Quantité'
+		,'prod_ref'=>$langs->trans('Product')
+		,'qty'=>$langs->trans('Quantity')
 		,'tarif_poids'=>'Poids'
 		,'asset_lot'=>'Lot'
 	)

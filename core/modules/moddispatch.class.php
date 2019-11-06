@@ -44,6 +44,7 @@ class moddispatch extends DolibarrModules
 
         $this->db = $db;
 		$this->editor_name = 'ATM-Consulting';
+		$this->editor_url = 'https://www.atm-consulting.fr';
 		// Id for module (must be unique).
 		// Use here a free id (See in Home -> System information -> Dolibarr for list of used modules id).
 		$this->numero = 104970;
@@ -128,14 +129,14 @@ class moddispatch extends DolibarrModules
 		}
 
         $this->tabs = array(
-        	'delivery:+dispatch:Détail expédition:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/detail.php?id=__ID__'
-        	,'bonderetour:+recepasset:Réception manuelle:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/receptionbdr.php?id=__ID__'
-        	,'contract:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=contrat'
-        	,'intervention:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=intervention'
-        	,'ticketsup:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=ticketsup'
+        	'delivery:+dispatch:ShippingDetailsTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/detail.php?id=__ID__'
+        	,'bonderetour:+recepasset:ManualReceptionTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/receptionbdr.php?id=__ID__'
+        	,'contract:+dispatchAsset:EquipmentDetailsTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=contrat'
+        	,'intervention:+dispatchAsset:EquipmentDetailsTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=intervention'
+        	,'ticketsup:+dispatchAsset:EquipmentDetailsTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=ticketsup'
         	,'supplier_order:+recepasset:ReceptionTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/reception.php?id=__ID__'
         	,'supplier_order:-dispatch'
-        	,'order:+dispatchAsset:Détail équipement:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=commande'
+        	,'order:+dispatchAsset:EquipmentDetailsTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=commande'
 		);
         
 		// where objecttype can be
@@ -239,7 +240,7 @@ class moddispatch extends DolibarrModules
 		// $r++;
 		$this->menu[$r]=array(	'fk_menu'=>'fk_mainmenu=products,fk_leftmenu=sendings',		    // Use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
 									'type'=>'left',			                // This is a Left menu entry
-									'titre'=>'Expédition à préparer',
+									'titre'=> $langs->transnoentities( 'DispatchMenuTitle' ),
 									'mainmenu'=>'products',
 									'leftmenu'=>'sendings',
 									'url'=>'/dispatch/liste_expedition_todo.php?leftmenu=sendings',

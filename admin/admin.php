@@ -30,12 +30,10 @@
 	}
 	
 
-	llxHeader('','Gestion des détails Réception/Expédidion, à propos', '');
+	llxHeader('', $langs->trans("DispatchSetupTitle"), '');
 	
-	//$head = assetPrepareHead();
 	$linkback = '<a href="'.DOL_URL_ROOT.'/admin/modules.php">'.$langs->trans("BackToModuleList").'</a>';
-	dol_fiche_head($head, 1, $langs->trans("Dispatch"), 0, '');
-	print_fiche_titre($langs->trans("DispatchSetup"),$linkback);
+	print load_fiche_titre( $langs->trans("DispatchSetup"), $linkback );
 	
 	print '<table class="noborder" width="100%">';
 	print '<tr class="liste_titre">';
@@ -70,7 +68,7 @@
 	$form=new TFormCore;
 	
 	print '<tr class="liste_titre">';
-	print '<td>'.$langs->trans("Réception commande fournisseur").'</td>'."\n";
+	print '<td>'.$langs->trans("SUPPLIER_ORDER_RECEPTION").'</td>'."\n";
 	print '<td align="center" width="20">&nbsp;</td>';
 	print '<td align="center" width="100">'.$langs->trans("Value").'</td>'."\n";
 	print '<tr>';
