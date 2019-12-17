@@ -412,9 +412,17 @@ class InterfaceDispatchWorkflow
 
 							$asset->save($PDOdb, $user, $langs->trans($event."InDolibarr",$object->ref), $qty, false, 0, true);
 
+							//dernier mouvement de stock standard dolibarr créé
+							$sql = "SELECT MAX(rowid) as rowid FROM " .MAIN_DB_PREFIX. "stock_mouvement";
+							$resql = $db->query($sql);
+
+							if($obj = $db->fetch_object($resql)){
+							    $last_moov = $obj->rowid;
+                            }
+
 							// Destockage équipement
 							$stock = new TAssetStock;
-							$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $qty, $langs->trans($event."InDolibarr",$object->ref), $detail->fk_bonderetourdet);
+							$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $qty, $langs->trans($event."InDolibarr",$object->ref), $detail->fk_bonderetourdet, $last_moov);
 						}
 					}
 				}
