@@ -1164,6 +1164,24 @@ global $langs, $db, $conf, $hookmanager;
 			$("#dispatchAsset").change(function() {
 				$("#actionVentilation").addClass("error").html("<?php echo $langs->trans('SaveBeforeVentil') ?>");
 			});
+			$("#new_line_fk_product").change(function() {
+				let fk_product = $(this).val();
+				if(fk_product > 0) {
+					$.ajax({
+						url:"script/interface.php"
+						,dataType:"html"
+						,data:{
+							'fk_product': fk_product
+							,'get':'select-warehouse-default'
+						}
+
+					}).done(function(data) {
+						let parentTd = $("select[name='TLine[-1][entrepot]']").closest('td');
+						$("select[name='TLine[-1][entrepot]']").remove();
+						parentTd.append(data)
+					});
+				}
+			});
 		});
 	</script>
 	<table width="100%" class="noborder" id="dispatchAsset">
