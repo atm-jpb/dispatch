@@ -33,10 +33,9 @@
 	$action = GETPOST('action');
 	$comment = GETPOST('comment');
 	$TImport = _loadDetail($PDOdb,$commandefourn);
-	
 	$parameters=array();
 	$hookmanager->executeHooks('doAction',$parameters, $commandefourn, $action);
-//var_dump($TImport);exit;
+
 
 	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
 		$f1  =file($_FILES['file1']['tmp_name']);
@@ -47,7 +46,6 @@
 				$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$ref,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo,null,null,$comment);
 			}
 		}
-
 	}
 	else if($action=='DELETE_LINE') {
 		$k = (int)GETPOST('k');
@@ -84,7 +82,7 @@
 				if ($fk_product > 0) {
 					$product = new Product($db);
 					$product->fetch($fk_product);
-	
+
 					//On vérifie que le produit est bien présent dans la commande
 					$find = false;
 					foreach ($commandefourn->lines as $key => $l) {
@@ -92,7 +90,7 @@
 							$find = true; break;
 						}
 					}
-	
+
 					if (!$find) {
 						setEventMessage('Référence produit ('.$fk_product.') non présente dans la commande', 'errors');
 					}
@@ -105,7 +103,7 @@
 				}
 			}
 			// Si un produit est renseigné, on sauvegarde
-			
+
 
 			$fk_product = -1; // Reset de la variable contenant la référence produit
 
@@ -151,7 +149,6 @@
         }
 	}
 	elseif(isset($_POST['bt_create'])) {
-
 		$PDOdb=new TPDOdb;
 
 		$time_date_recep = Tools::get_time($_POST['date_recep']);
@@ -161,38 +158,40 @@
 
 		$TAssetVentil=array();
         $TAssetCreated = array();
-        
+
 		//Use to calculated corrected order status at the end of dispatch/serialize process
 		$TQtyDispatch=array();
 		$TQtyWished=array();
 //var_dump($TImport);
 		$commandefourn->fetch_thirdparty();
-		
-		foreach($TImport as $k=>&$line) {
 
+		foreach($TImport as $k=>&$line) {
 			$asset =new TAsset;
+			$receptDetailLine = new TRecepDetail;
+			$receptDetailLine->load($PDOdb, $line['commande_fournisseurdet_asset']);
+			if(!empty($receptDetailLine->already_dispatch)) continue;
 
 			if(!empty($conf->global->DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_IF_LOT) && empty($line['numserie']) && !empty($line['lot_number'])) {
-				
+
 				$product=new Product($db);
 				$product->fetch($line['fk_product']);
-				
+
 				$asset->fk_asset_type = $product->array_options['options_type_asset'];
 				if($asset->fk_asset_type>0) {
 					$asset->load_asset_type($PDOdb);
 					$line['numserie'] = $asset->getNextValue($PDOdb,$commandefourn->thirdparty);
-					setEventMessage( $langs->trans('createNumSerieOnTheFly', $line['numserie']),"warning");	
-					
+					setEventMessage( $langs->trans('createNumSerieOnTheFly', $line['numserie']),"warning");
+
 					$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : 1,$line['quantity_unit'],$line['dluo'], $k, $line['entrepot'], $comment);
 				}
-				
-			
+
+
 			}
 
 			if(empty($line['numserie'])) {
 				setEventMessage("Pas de numéro de série : impossible de créer l'équipement pour ".$line['ref'].". Si vous ne voulez pas sérialiser ce produit, supprimez les lignes de numéro de série et faites une réception simple. ","errors");
 			}
-			else if(!$asset->loadReference($PDOdb, $line['numserie'], $line['fk_product'])) {
+			else if(!$asset->loadReference($PDOdb, $line['numserie'], $line['fk_product']) || !empty($conf->global->DISPATCH_ALLOW_DISPATCHING_EXISTING_ASSET)) {
 				// si inexistant
 				//Seulement si nouvelle ligne
 
@@ -211,8 +210,11 @@
 				$asset->fk_product = $line['fk_product'];
 				$asset->serial_number = ($line['numserie']) ? $line['numserie'] : $asset->getNextValue($PDOdb);
 				$asset->lot_number =$line['lot_number'];
-				$asset->contenance_value =($line['quantity']) ? $line['quantity'] : 1;
-				$asset->contenancereel_value =($line['quantity']) ? $line['quantity'] : 1 ;
+				if(empty($asset->contenance_value)) $asset->contenance_value = ($line['quantity']) ? $line['quantity'] : 1;
+
+				if(!empty($asset->id)) $asset->contenancereel_value += ($line['quantity']) ? $line['quantity'] : 1;
+				else $asset->contenancereel_value = ($line['quantity']) ? $line['quantity'] : 1;
+
 				$asset->contenancereel_units =($line['quantity_unit']) ? $line['quantity_unit'] : 0;
 				$asset->contenance_units =($line['quantity_unit']) ? $line['quantity_unit'] : 0;
 				$asset->lot_number =$line['lot_number'];
@@ -273,12 +275,10 @@
 				$stock = new TAssetStock;
 				$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $asset->contenancereel_value, $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $commandefourn->id);
 	*/
-				if($asset->serial_number != $line['numserie']){
-					$receptDetailLine = new TRecepDetail;
-					$receptDetailLine->load($PDOdb, $line['commande_fournisseurdet_asset']);
-					$receptDetailLine->numserie = $receptDetailLine->serial_number = $asset->serial_number;
-					$receptDetailLine->save($PDOdb);
-				}
+
+				if($asset->serial_number != $line['numserie'])	$receptDetailLine->numserie = $receptDetailLine->serial_number = $asset->serial_number;
+				$receptDetailLine->already_dispatch = 1;
+				$receptDetailLine->save($PDOdb);
 
 				//Compteur pour chaque produit : 1 équipement = 1 quantité de produit ventilé
 			//	$TProdVentil[$asset->fk_product]['qty'] += ($line['quantity']) ? $line['quantity'] : 1;
@@ -300,7 +300,7 @@
 
 					if($ret > 0 && !empty($conf->stock->enabled)
 						&& !empty($conf->global->STOCK_CALCULATE_ON_SUPPLIER_DISPATCH_ORDER)
-						&& !empty($conf->global->DISPATCH_LINK_ASSET_TO_STOCK_MOVEMENT) // conf cachée
+						&& !empty($conf->global->ASSET_MAKE_STOCK_MOVEMENTS_AT_CREATION_DELETION)
 						&& !empty($TAssetCreated[$fk_product]))
 					{
 						// lier les asset créés au mouvement de stock pour en récupérer le prix
@@ -323,14 +323,16 @@
 									$lastStockMouvement = $obj->id;
 
 									TAsset::set_element_element($asset_id, 'TAssetOFLine', $lastStockMouvement, 'DolStockMouv');
-									$stock = new TAssetStock;
-									$stock->mouvement_stock($PDOdb, $user, $asset_id, $TDispatchEntrepot[$asset_id]['qty'], $TDispatchEntrepot[$asset_id]['comment'], $asset->rowid, $lastStockMouvement);
+									if($TDispatchEntrepot[$asset_id]['qty'] != 0) {
+										$stock = new TAssetStock;
+										$stock->mouvement_stock($PDOdb, $user, $asset_id, $TDispatchEntrepot[$asset_id]['qty'], $TDispatchEntrepot[$asset_id]['comment'], $asset->rowid, $lastStockMouvement);
+									}
 								}
 							}
 						}
 					}
 					elseif(!empty($conf->global->DISPATCH_STOCK_MOVEMENT_BY_ASSET)) $ret = $commandefourn->dispatchProduct($user,$fk_product, $qty, $fk_entrepot, $unitPrice, $comment);
-					
+
                 	//Build array with quantity serialze by product
                 	$TQtyDispatch[$fk_product]+=$qty;
 				}
@@ -341,32 +343,33 @@
 		$TOrderLine=GETPOST('TOrderLine');
 
 		if(!empty($TOrderLine)) {
-
 			foreach($TOrderLine as &$line) {
+				$checkingProduct = new Product($db);
+				$checkingProduct->fetch($line['fk_product']);
+				if($checkingProduct->array_options['options_type_asset'] == 0) { //On ne fait des mouvements de stock que pour les produits non sérialisables
 
-				if(!isset($TProdVentil[$line['fk_product']])) $TProdVentil[$line['fk_product']]['qty'] = 0;
-				$TProdVentil[$line['fk_product']]['price'] = $line['subprice'];
-				// Si serialisé on ne prend pas la quantité déjà calculé plus haut.
-				if(empty($line['serialized'] )) $TProdVentil[$line['fk_product']]['qty']+=$line['qty'];
+					if(!isset($TProdVentil[$line['fk_product']])) $TProdVentil[$line['fk_product']]['qty'] = 0;
+					$TProdVentil[$line['fk_product']]['price'] = $line['subprice'];
+					// Si serialisé on ne prend pas la quantité déjà calculé plus haut.
+					if(empty($line['serialized'])) $TProdVentil[$line['fk_product']]['qty'] += $line['qty'];
 
-				if(!empty($line['entrepot']) && $line['entrepot']>0) {
-					$TProdVentil[$line['fk_product']]['entrepot'] = $line['entrepot'];
-				}
+					if(!empty($line['entrepot']) && $line['entrepot'] > 0) {
+						$TProdVentil[$line['fk_product']]['entrepot'] = $line['entrepot'];
+					}
 
-				if($conf->global->DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION)
-				{
-					$TProdVentil[$line['fk_product']]['supplier_price']=$line['supplier_price'];
-				}
+					if($conf->global->DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION) {
+						$TProdVentil[$line['fk_product']]['supplier_price'] = $line['supplier_price'];
+					}
 
-				if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE)
-				{
-					$TProdVentil[$line['fk_product']]['supplier_qty']=$line['supplier_qty'];
-					$TProdVentil[$line['fk_product']]['generate_supplier_tarif']=$line['generate_supplier_tarif'];
-				}
+					if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE) {
+						$TProdVentil[$line['fk_product']]['supplier_qty'] = $line['supplier_qty'];
+						$TProdVentil[$line['fk_product']]['generate_supplier_tarif'] = $line['generate_supplier_tarif'];
+					}
 
-				//Build array with quantity wished by product
-				if (array_key_exists('fk_product', $line) && !empty($line['fk_product']) && !array_key_exists($line['fk_product'], $TQtyDispatch)) {
-					$TQtyDispatch[$line['fk_product']]+=$line['qty'];
+					//Build array with quantity wished by product
+					if(array_key_exists('fk_product', $line) && !empty($line['fk_product']) && !array_key_exists($line['fk_product'], $TQtyDispatch)) {
+						$TQtyDispatch[$line['fk_product']] += $line['qty'];
+					}
 				}
 
 			}
@@ -484,27 +487,28 @@
         if(method_exists($commandefourn, 'log')) $commandefourn->log($user, $status, time()); // removed in 4.0
 
         setEventMessage($langs->transnoentities('DispatchMsgAssetGen'));
+		$TImport = _loadDetail($PDOdb,$commandefourn);
 
 	}
-
+//var_dump($TImport);exit;
 	//if(is_array($TImport)) usort($TImport,'_by_ref');
 
 	fiche($commandefourn, $TImport, $comment);
 
 function _loadDetail(&$PDOdb,&$commandefourn){
-    
+
     $TImport = array();
-    
+
     foreach($commandefourn->lines as $line){
-        
-        $sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.fk_warehouse, ca.imei, ca.firmware,ca.lot_number,ca.weight_reel,ca.weight_reel_unit, ca.dluo
+
+        $sql = "SELECT ca.rowid as idline,ca.serial_number,p.ref,p.rowid, ca.fk_commandedet, ca.fk_warehouse, ca.imei, ca.firmware,ca.lot_number,ca.weight_reel,ca.weight_reel_unit, ca.dluo, ca.already_dispatch
 			FROM ".MAIN_DB_PREFIX."commande_fournisseurdet_asset as ca
 				LEFT JOIN ".MAIN_DB_PREFIX."product as p ON (p.rowid = ca.fk_product)
 			WHERE ca.fk_commandedet = ".$line->id."
 				ORDER BY ca.rang ASC";
-        
+
         $PDOdb->Execute($sql);
-        
+
         while ($PDOdb->Get_line()) {
             $TImport[] =array(
                 'ref'=>$PDOdb->Get_field('ref')
@@ -517,11 +521,12 @@ function _loadDetail(&$PDOdb,&$commandefourn){
                 ,'fk_product'=>$PDOdb->Get_field('rowid')
                 ,'fk_warehouse'=>$PDOdb->Get_field('fk_warehouse')
                 ,'dluo'=>$PDOdb->Get_field('dluo')
+                ,'already_dispatch'=>$PDOdb->Get_field('already_dispatch')
                 ,'commande_fournisseurdet_asset'=>$PDOdb->Get_field('idline')
             );
         }
     }
-    
+
     return $TImport;
 }
 
@@ -531,7 +536,7 @@ function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$nums
     //Charge le produit associé à l'équipement
     $prodAsset = new Product($db);
     $prodAsset->fetch('',$refproduit);
-    
+
     //TODO incompréhensible - Cette notion est dispo depuis la 3.9 mettre à jour
     //Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
     foreach($commandefourn->lines as $commandeline){
@@ -539,7 +544,7 @@ function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$nums
             $fk_line = $commandeline->id;
         }
     }
-    
+
     if (!empty($_POST['TLine'][$k])) {
         if ($numserie != $_POST['TLine'][$k]['numserie']) {
             $line_update = true;
@@ -547,9 +552,9 @@ function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$nums
     }
     //Sauvegarde (ajout/MAJ) des lignes de détail d'expédition
     $recepdetail = new TRecepDetail;
-    
+
     //pre($TImport,true);
-    
+
     $fk_line_receipt = !empty($_POST['TLine'][$k]['commande_fournisseurdet_asset']) ? (int)$_POST['TLine'][$k]['commande_fournisseurdet_asset'] : 0;
     if($fk_line_receipt>0){
         $recepdetail->load($PDOdb, $fk_line_receipt);
@@ -558,30 +563,30 @@ function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$nums
     else {
         $lineFound = false;
     }
-    
+
     $keys = array_keys($TImport);
     $rang = $keys[count($keys)-1];
-    
-    $recepdetail->fk_commandedet = $fk_line;
-    $recepdetail->fk_product = $prodAsset->id;
-    $recepdetail->rang = $rang + 1;
-    $recepdetail->set_date('dluo', ($dluo) ? $dluo : date('Y-m-d H:i:s'));
-    $recepdetail->lot_number = $lot_number;
-    $recepdetail->weight_reel = $quantity;
-    $recepdetail->weight = $quantity;
-    $recepdetail->weight_unit = $quantity_unit;
-    $recepdetail->weight_reel_unit = $quantity_unit;
-    $recepdetail->serial_number = $numserie;
-    $recepdetail->imei = $imei;
-    $recepdetail->firmware = $firmware;
-    $recepdetail->fk_warehouse = $entrepot;
-    /*$recepdetail->weight = 1;
-     $recepdetail->weight_reel = 1;
-     $recepdetail->weight_unit = 0;
-     $recepdetail->weight_reel_unit = 0;*/
-    
-    $recepdetail->save($PDOdb);
-    
+    if(!$lineFound || ($lineFound && empty($recepdetail->already_dispatch))) {
+		$recepdetail->fk_commandedet = $fk_line;
+		$recepdetail->fk_product = $prodAsset->id;
+		$recepdetail->rang = $rang + 1;
+		$recepdetail->set_date('dluo', ($dluo) ? $dluo : date('Y-m-d H:i:s'));
+		$recepdetail->lot_number = $lot_number;
+		$recepdetail->weight_reel = $quantity;
+		$recepdetail->weight = $quantity;
+		$recepdetail->weight_unit = $quantity_unit;
+		$recepdetail->weight_reel_unit = $quantity_unit;
+		$recepdetail->serial_number = $numserie;
+		$recepdetail->imei = $imei;
+		$recepdetail->firmware = $firmware;
+		$recepdetail->fk_warehouse = $entrepot;
+		/*$recepdetail->weight = 1;
+		 $recepdetail->weight_reel = 1;
+		 $recepdetail->weight_unit = 0;
+		 $recepdetail->weight_reel_unit = 0;*/
+
+		$recepdetail->save($PDOdb);
+	}
     $currentLine = array(
         'ref'=>$prodAsset->ref
         ,'numserie'=>$numserie
@@ -595,12 +600,12 @@ function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$nums
         ,'dluo'=>$recepdetail->get_date('dluo','Y-m-d H:i:s')
         ,'commande_fournisseurdet_asset'=>$recepdetail->getId()
     );
-    
+
     //Rempli le tableau utilisé pour l'affichage des lignes
     ($lineFound) ? $TImport[$k] = $currentLine : $TImport[] =$currentLine ;
-    
+
     return $TImport;
-    
+
 }
 
 function searchProductInCommandeLine($array, $idprod)
@@ -905,10 +910,10 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 			{
 				dol_print_error($db);
 			}
-			
+
 			$parameters=array('colspan'=>' colspan="4" ');
 			$hookmanager->executeHooks('formObjectOptions',$parameters, $commande, $action);
-	
+
 			print "</table>\n";
 			print "<br/>\n";
 
@@ -1144,8 +1149,6 @@ global $langs, $db, $conf, $hookmanager;
 	$formDoli =	new Form($db);
 	$formproduct=new FormProduct($db);
 
-	if($commande->statut >= 5 || $commande->statut<=2) $form->type_aff = "view";
-
 	if ($commande->statut <= 2 || $commande->statut >= 6)
 	{
 		print $langs->trans("OrderStatusNotReadyToDispatch");
@@ -1160,6 +1163,24 @@ global $langs, $db, $conf, $hookmanager;
 		$(document).ready(function() {
 			$("#dispatchAsset").change(function() {
 				$("#actionVentilation").addClass("error").html("<?php echo $langs->trans('SaveBeforeVentil') ?>");
+			});
+			$("#new_line_fk_product").change(function() {
+				let fk_product = $(this).val();
+				if(fk_product > 0) {
+					$.ajax({
+						url:"script/interface.php"
+						,dataType:"html"
+						,data:{
+							'fk_product': fk_product
+							,'get':'select-warehouse-default'
+						}
+
+					}).done(function(data) {
+						let parentTd = $("select[name='TLine[-1][entrepot]']").closest('td');
+						$("select[name='TLine[-1][entrepot]']").remove();
+						parentTd.append(data);
+					});
+				}
 			});
 		});
 	</script>
@@ -1204,7 +1225,8 @@ global $langs, $db, $conf, $hookmanager;
 
 		if(is_array($TImport)){
 			foreach ($TImport as $k=>$line) {
-
+				if($commande->statut >= 5 || $commande->statut<=2 || !empty($line['already_dispatch'])) $form->type_aff = "view";
+				else $form->type_aff = "edit";
 				if($prod->id==0 || $line['ref']!= $prod->ref) {
 					if(empty($line['fk_product']) === false) {
 						$prod->fetch($line['fk_product']);
@@ -1225,10 +1247,12 @@ global $langs, $db, $conf, $hookmanager;
 							$warning_asset = true;
 						}
 						else if($asset->loadReference($PDOdb, $line['numserie'], $line['fk_product'])) {
-							if($commande->statut >= 5 || $commande->statut<=2) {
+							if($commande->statut >= 5 || $commande->statut<=2 || !empty($line['already_dispatch'])) {
 								echo $asset->getNomUrl(1);
 							} else {
-								echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('AssetAlreadyLinked'), 'warning.png');
+								if(!empty($conf->global->DISPATCH_ALLOW_DISPATCHING_EXISTING_ASSET)) {
+									echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.$asset->getNomUrl(1).' '.img_picto($langs->trans('AssetAlreadyLinked'), 'info.png');
+								} else echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('AssetAlreadyLinked'), 'warning.png');
 							}
 						}
 						else {
@@ -1248,11 +1272,13 @@ global $langs, $db, $conf, $hookmanager;
 
 						if (count($formproduct->cache_warehouses)>1)
 						{
-							print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',0,1);
+							if($commande->statut >= 5 || $commande->statut<=2 || !empty($line['already_dispatch'])) print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',1,1,$prod->id,'',0,1);
+							else print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',0,1);
 						}
 						elseif  (count($formproduct->cache_warehouses)==1)
 						{
-							print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
+							if($commande->statut >= 5 || $commande->statut<=2 || !empty($line['already_dispatch'])) print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',0,1,$prod->id,'',0,1);
+							else print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
 						}
 						else
 						{
@@ -1269,7 +1295,9 @@ global $langs, $db, $conf, $hookmanager;
 						<td><?php echo $form->texte('','TLine['.$k.'][quantity]', $line['quantity'], 10);   ?></td><?php
 
 						if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) {
-							echo '<td>'. ($commande->statut < 5) ? $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']) : measuring_units_string($line['quantity_unit'],'weight').'</td>';
+							?> <td><?php if($commande->statut < 5 && empty($line['already_dispatch'])) {
+								$formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']);
+							} else echo measuring_units_string(0,'weight',$line['quantity_unit']);?></td><?php
 						}
 					}
 					else{
@@ -1301,7 +1329,7 @@ global $langs, $db, $conf, $hookmanager;
 		}
 
 		if($commande->statut < 5 && $commande->statut>2){
-
+			$form->type_aff = "edit";
 			$TProducts = array($langs->transnoentities('DispatchSelectProduct'));
 			foreach($commande->lines as $line){
 				if($line->fk_product) $TProducts[$line->fk_product] = $line->product_ref." - ".$line->product_label;
@@ -1348,7 +1376,9 @@ global $langs, $db, $conf, $hookmanager;
 					<td><?php echo $form->texte('','TLine[-1][quantity]', '', 10);   ?></td><?php
 
 						if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) {
-							echo '<td>'.$formproduct->select_measuring_units('TLine[-1][quantity_unit]','weight').'</td>';
+							echo '<td>';
+							$formproduct->select_measuring_units('TLine[-1][quantity_unit]','weight');
+							echo '</td>';
 						}
 
 					}

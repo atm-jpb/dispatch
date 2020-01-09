@@ -8,6 +8,8 @@ require('../config.php');
 //dol_include_once('/' . ATM_ASSET_NAME . '/config.php');
 dol_include_once('/' . ATM_ASSET_NAME . '/lib/asset.lib.php');
 dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
+dol_include_once('/product/class/product.class.php');
+dol_include_once('/product/class/html.formproduct.class.php');
 
 //Interface qui renvoie les emprunts de ressources d'un utilisateur
 $PDOdb=new TPDOdb;
@@ -24,6 +26,10 @@ _put($PDOdb, $put);
 function _get(&$PDOdb, $get) {
 
 	switch ($get) {
+		case 'select-warehouse-default':
+
+			print _getSelectWarehouseWithDefaultSelected(GETPOST('fk_product'));
+			break;
 		case 'serial_number':
 
 			__out(_serial_number($PDOdb, GETPOST('term')),'json');
@@ -52,6 +58,14 @@ function _put(TPDOdb &$PDOdb, $put)
 			__out(_set_all_lines_is_prepared($PDOdb, GETPOST('fk_expedition', 'int'), GETPOST('is_prepared', 'int')), 'json');
 			break;
 	}
+}
+
+function _getSelectWarehouseWithDefaultSelected($fk_product) {
+	global $db;
+	$formproduct = new FormProduct($db);
+	$prod = new Product($db);
+	$prod->fetch($fk_product);
+	return $formproduct->selectWarehouses($prod->fk_default_warehouse,'TLine[-1][entrepot]','',1,0,$prod->id,'',0,1);
 }
 
 function _serial_number(&$PDOdb, $sn) {
