@@ -1178,7 +1178,7 @@ global $langs, $db, $conf, $hookmanager;
 					}).done(function(data) {
 						let parentTd = $("select[name='TLine[-1][entrepot]']").closest('td');
 						$("select[name='TLine[-1][entrepot]']").remove();
-						parentTd.append(data)
+						parentTd.append(data);
 					});
 				}
 			});
