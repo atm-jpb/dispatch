@@ -1279,7 +1279,7 @@ global $langs, $db, $conf, $hookmanager;
 						if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) {
 							?> <td><?php if($commande->statut < 5 && empty($line['already_dispatch'])) {
 								$formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']);
-							} else echo measuring_units_string($line['quantity_unit'],'weight');?></td><?php
+							} else echo measuring_units_string(0,'weight',$line['quantity_unit']);?></td><?php
 						}
 					}
 					else{
