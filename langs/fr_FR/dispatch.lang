@@ -43,7 +43,7 @@ SaveBeforeVentil=Sauvegardez vos modifications avant de lancer la ventilation
 DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_IF_LOT=Permettre de créer les équipements avec numéro de série automatique lors d'une réception si le lot est saisi
 createNumSerieOnTheFly=Création du numéro de série %s à la volée
 
-DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION=Pouvoir ventiler la quantité
+DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION=Ne pas autoriser la saisie de la quantité lors de la ventilation (quantité auto attribuée = 1)
 DISPATCH_SHOW_UNIT_RECEPTION=Afficher l'unité sur l'écran de récéption
 
 QtyDispatchedShort=Déjà ventilé
