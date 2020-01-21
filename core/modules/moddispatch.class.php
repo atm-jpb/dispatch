@@ -59,7 +59,7 @@ class moddispatch extends DolibarrModules
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
 		$this->description = "Module104970Desc";
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '3.0.0';
+		$this->version = '3.0.1';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -108,7 +108,7 @@ class moddispatch extends DolibarrModules
 		$this->phpmin = array(5,0);					// Minimum version of PHP required by module
 		$this->need_dolibarr_version = array(3,0);	// Minimum version of Dolibarr required by module
 		$this->langfiles = array("dispatch@dispatch");
-		
+
 		$this->config_page_url = array("admin.php@dispatch");
 		// Constants
 		// List of particular constants to add when module is enabled (key, 'chaine', value, desc, visible, 'current' or 'allentities', deleteonunactive)
@@ -138,7 +138,7 @@ class moddispatch extends DolibarrModules
         	,'supplier_order:-dispatch'
         	,'order:+dispatchAsset:EquipmentDetailsTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=commande'
 		);
-        
+
 		// where objecttype can be
 		// 'thirdparty'       to add a tab in third party view
 		// 'intervention'     to add a tab in intervention view
@@ -287,7 +287,7 @@ class moddispatch extends DolibarrModules
 		define('INC_FROM_DOLIBARR',true);
         dol_include_once('/dispatch/config.php');
 		dol_include_once("/dispatch/script/create-maj-base.php");
-		
+
 		return $this->_init($sql, $options);
 	}
 
