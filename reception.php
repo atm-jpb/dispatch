@@ -655,6 +655,18 @@ function fiche(&$commande, &$TImport, $comment) {
 	tabImport($TImport,$commande,$comment);
 
 	$form->end();
+	//Blocage touche entrée car déclenche plusieurs actions du form
+	print '<script type="text/javascript">
+				$(document).ready(function(){
+				   $(\'#formrecept\').on(\'keyup keypress\', function(e) {
+					  var keyCode = e.keyCode || e.which;
+					  if (keyCode === 13) {
+						e.preventDefault();
+						return false;
+					  }
+					});
+				});
+			</script>';
 	_list_already_dispatched($commande);
 
 	dol_fiche_end($notab);
