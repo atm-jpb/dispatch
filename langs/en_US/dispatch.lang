@@ -98,3 +98,4 @@ DispatchItemCountReception=%s item(s) in this shipment
 DispatchSerialNumber=Serial number
 DispatchBatchNumber=Batch number
 DispatchDateReception=Date of incoming delivery
+DispatchMsgAssetGen=Equipment created / Ventilated products
