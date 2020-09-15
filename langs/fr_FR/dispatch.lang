@@ -99,3 +99,12 @@ DispatchSerialNumber=Numéro de série
 DispatchBatchNumber=Numéro de Lot
 DispatchDateReception=Date de réception
 DispatchMsgAssetGen=Equipements créés / produits ventilés
+
+
+#
+# T2476
+#
+ShipmentsList = Liste des expéditions non traitées
+SelectShipment = Expédition à ventiler
+supplierOrderLinkedShipment = Expédition liée à la commande fournisseur
+SelectExpe = Traiter cette expédition

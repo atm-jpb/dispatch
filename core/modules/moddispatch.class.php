@@ -92,7 +92,8 @@ class moddispatch extends DolibarrModules
 		//$this->module_parts = array('hooks'=>array('ordersuppliercard','propalcard', 'ordercard', 'invoicecard'),'triggers' => 1);
 		$this->module_parts = array(
 			'triggers' => 1
-			, 'hooks' => array('expeditioncard', 'ordersuppliercard', 'pdfgeneration', 'bonderetourcard')
+			, 'hooks' => array('expeditioncard', 'ordersuppliercard', 'pdfgeneration', 'bonderetourcard','receptionstockcard')
+			,'js' => array('/dispatch/js/dispatch.js.php'),
 		);
 
 		// Data directories to create when module is enabled.

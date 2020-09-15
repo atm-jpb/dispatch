@@ -39,7 +39,6 @@ function _get(&$PDOdb, $get) {
 
 }
 
-
 function _put(TPDOdb &$PDOdb, $put)
 {
 	switch($put)

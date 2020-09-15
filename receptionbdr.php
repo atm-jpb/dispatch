@@ -1004,25 +1004,25 @@ function setSerialNumberListener(fkProduct, TElemTR) {
 
 $(document).ready(function() {
 
-	var TProducts = [];
+		var TProducts = [];
 
-	$('table#dispatchAsset tr.dispatchAssetLine').each(function() {
-		var fkProduct = parseInt($(this).data('fk-product'));
+		$('table#dispatchAsset tr.dispatchAssetLine').each(function() {
+			var fkProduct = parseInt($(this).data('fk-product'));
 
-		if(! TProducts.includes(fkProduct)) {
-			TProducts.push(fkProduct);
+			if(! TProducts.includes(fkProduct)) {
+				TProducts.push(fkProduct);
+			}
+		});
+
+		for(var fkProduct of TProducts) { // Equivalent JS de foreach($TProducts as $fkProduct) en PHP
+
+			var TElemTR = $('table#dispatchAsset tr[data-fk-product='+fkProduct+']');
+
+			if(TElemTR.length > 1) { // Si au moins 2 équipements à dispatcher issus du même produit
+				setSerialNumberListener(fkProduct, TElemTR);
+			}
 		}
 	});
-
-	for(var fkProduct of TProducts) { // Equivalent JS de foreach($TProducts as $fkProduct) en PHP
-
-		var TElemTR = $('table#dispatchAsset tr[data-fk-product='+fkProduct+']');
-
-		if(TElemTR.length > 1) { // Si au moins 2 équipements à dispatcher issus du même produit
-			setSerialNumberListener(fkProduct, TElemTR);
-		}
-	}
-});
 </script>
 
 <?php

@@ -2,6 +2,49 @@
 class ActionsDispatch
 {
 	/**
+	 * @param $parameters
+	 * @param $object
+	 * @param $action
+	 * @param $hookmanager
+	 */
+	function doAction($parameters, &$object, &$action, $hookmanager)
+	{
+		global $conf, $db;
+		dol_include_once('/commande/class/commande.class.php' );
+		dol_include_once('/expedition/class/expedition.class.php' );
+
+		$sql = "SELECT c.rowid FROM llx_commande AS c, llx_commandedet AS cd WHERE c.ref_client = '".$object->ref. "' AND c.rowid = cd.fk_commande ORDER BY cd.rowid";
+		$resultSetSupplierOrder = $db->query($sql);
+		$resql = $db->fetch_object($resultSetSupplierOrder);
+
+		$orderFromSupplierOrder = new Commande($db);
+		$orderFromSupplierOrder->fetch($resql->rowid);
+
+		$shipmentsSql = "SELECT * FROM llx_commande AS c, llx_expedition AS e WHERE c.ref = '".$orderFromSupplierOrder->ref. "' AND c.ref_client = e.ref_customer";
+		$resultSetShipments = $db->query($shipmentsSql);
+
+		$TShipments = array();
+		$num = $db->num_rows($resultSetShipments);
+		$i = 0;
+		While ($i < $num){
+			$TShipments[] = $db->fetch_object($resultSetShipments);
+			$i++;
+		}
+
+		$object->orderFromSupplierOrder = $orderFromSupplierOrder;
+		$object->shipmentsFromSupplier = $TShipments;
+
+		//var_dump($object->orderFromSupplierOrder);
+		//var_dump($object->shipmentsFromSupplier);
+
+		return 0;
+	}
+
+	function formObjectOptions($parameters, &$object, &$action, $hookmanager){
+		//var_dump($object->orderFromSupplierOrder);
+		//var_dump($object->shipmentsFromSupplier);
+	}
+	/**
 	 * Overloading the doActions function : replacing the parent's function with the one below
 	 *
 	 * @param   array()         $parameters     Hook metadatas (context, etc...)
@@ -15,7 +58,7 @@ class ActionsDispatch
 		global $conf;
 
 		$TContexts = explode(':', $parameters['context']);
-
+		//var_dump("dump dispatch action");
 		if(in_array('bonderetourcard', $TContexts))
 		{
 //			var_dump($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE, $conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE);
