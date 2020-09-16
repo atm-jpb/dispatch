@@ -11,7 +11,8 @@ dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
 dol_include_once('/expedition/class/expedition.class.php' );
 //Interface qui renvoie les emprunts de ressources d'un utilisateur
 $PDOdb=new TPDOdb;
-global $langs;
+// Load traductions files requiredby by page
+$langs->loadLangs(array("dispatch@dispatch", "other", 'main'));
 
 header('Content-Type: application/json');
 
@@ -19,46 +20,16 @@ header('Content-Type: application/json');
 $idexpe = dol_htmlentitiesbr(GETPOST('idexpe'));
 $refexpe = dol_htmlentitiesbr(GETPOST('refexpe'));
 $action = dol_htmlentitiesbr(GETPOST('action'));
+$JsonOutput = new stdClass();
 
-//var_dump($refexpe,$idexpe);
 
-// on a une expedition
 
-// on récupère les expeditiondet
-//$sql = "SELECT * FROM ".MAIN_DB_PREFIX."expedition AS e,".MAIN_DB_PREFIX."expeditiondet AS ed WHERE e.rowid = ".$idexpe." AND e.rowid = ed.fk_expedition";
-//var_dump($sql);
 
-$currentExp = new Expedition($db);
-$currentExp->fetch($idexpe);
-//var_dump($currentExp);
 
-foreach ($currentExp->lines as $currentLineExp) {
-	//var_dump($currentLineExp);
 
-	// $currentLineExp donne les infos suivantes :   product id // qty // qty shiped  // label
 
-	// on remonte les equipements si le produit en possède ...
-	$sql = "SELECT * FROM ".MAIN_DB_PREFIX."expeditiondet_asset AS ea, ".MAIN_DB_PREFIX."assetatm AS AT WHERE fk_expeditiondet = ".$currentLineExp->id." AND ea.fk_asset = AT.rowid" ;
-	//var_dump($sql);
 
-	$resultsetEquipments = $db->query($sql);
-	$num = $db->num_rows($resultsetEquipments);
-	//var_dump('here :' . $num);
-	$i = 0;
-	$objs = array();
-	while( $i < $num){
-		$objs[$i]['obj'] = $db->fetch_object($resultsetEquipments);
-		$objs[$i]['sql'] = $sql;
-		$objs[$i]['num'] = $num;
-		$i++;
-	}
-	// on ajoute les lignes d'infos équipements présents
-	$currentLineExp->equipement = $objs;
 
-}
-
-//print json_encode($currentExp);
-print json_encode($currentExp->lines);
 
 // on genere l'UI autoCompletée avec le bouton enregistrer
 
@@ -69,11 +40,463 @@ print json_encode($currentExp->lines);
 
 
 // LoadLinesExpedition
-if (isset($action) && $action == ''){
+if (isset($action) && $action == 'loadExpeLines'){
 
+	$currentExp = new Expedition($db);
+	$currentExp->fetch($idexpe);
+
+	$output  = load_fiche_titre($langs->trans("NbItemCountInReception", count($currentExp->lines)));
+
+	$JsonOutput->html = $output;
+	getEquipmentsFromSupplier($currentExp);
+	$JsonOutput->html .= formatDisplayTableProductsHeader();
+	$JsonOutput->html .= formatDisplayTableProducts($currentExp);
+}
+print json_encode($JsonOutput);
+/**
+ * la commande client générée automatiquement chez (Entité A)
+ * depuis une commande fournisseur passée par entité B (pour son founisseur Entité A)
+ * ne possède pas le descriptif des equipements.
+ * nous devons le loader pour exploitation  de l'expedition courante
+ * @param $currentExpe
+ *
+ */
+function getEquipmentsFromSupplier(&$currentExpe){
+	global $langs,$db;
+
+
+	foreach ($currentExpe->lines as $currentLineExp) {
+
+		// $currentLineExp donne les infos suivantes :   product id // qty // qty shiped  // label
+
+		// on remonte les equipements si l'expedition en possède ...
+		$sql = "SELECT * FROM ".MAIN_DB_PREFIX."expeditiondet_asset AS ea, ".MAIN_DB_PREFIX."assetatm AS AT WHERE fk_expeditiondet = ".$currentLineExp->id." AND ea.fk_asset = AT.rowid" ;
+
+
+		$resultsetEquipments = $db->query($sql);
+		$num = $db->num_rows($resultsetEquipments);
+
+		$i = 0;
+		$objs = array();
+		while( $i < $num){
+			$objs[$i]['obj'] = $db->fetch_object($resultsetEquipments);
+			$objs[$i]['sql'] = $sql;
+			$objs[$i]['num'] = $num;
+			$i++;
+		}
+		// on ajoute les lignes d'infos équipements présents
+		$currentLineExp->equipement = $objs;
+	}
 
 }
 
+
+function formatDisplayTableProductsHeader(){
+	global $conf, $langs,$db;
+
+	$output = "";
+	$output .= "<table width='100%' class='noborder' id='dispatchAsset'>";
+	$output .='<tr class="liste_titre">';
+	$output .='<td>'.$langs->trans('Product') .'</td>';
+	$output .='<td>'.$langs->trans('DispatchSerialNumber').'</td>';
+	if(! empty($conf->global->USE_LOT_IN_OF)) {
+		$output .='<td>'.$langs->trans('DispatchBatchNumber').'</td>';
+	}
+	$output .='<td>'.$langs->trans('Warehouse').'</td>';
+	if($conf->global->ASSET_SHOW_DLUO){
+		$output .='<td>DLUO</td>';
+	}
+	if(empty($conf->global->DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION)) {
+		$output .='<td>'.$langs->trans('Quantity').'</td>';
+		if ( ! empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION) ) {
+			$output .= '<td>' . $langs->trans('Unit') . '</td>';
+		}
+	}
+	if($conf->global->clinomadic->enabled){
+		$output .='<td>IMEI</td>';
+		$output .='<td>Firmware</td>';
+	}
+
+	//$parameters=array('commande'=>$commande);
+	//$reshook=$hookmanager->executeHooks('printFieldListTitle',$parameters);    // Note that $action and $object may have been modified by hook
+	//print $hookmanager->resPrint;
+
+	$output .='<td>&nbsp;</td>';
+	$output .='</tr>';
+
+return $output;
+
+}
+function formatDisplayTableProducts(&$currentExp){
+	global $conf, $langs,$db;
+	dol_include_once('/core/class/html.form.class.php');
+	$form = new TFormCore($db);
+	$output = '';
+
+
+
+	$prod = new Product($db);
+
+	foreach ($currentExp->lines as $k=>$line) {
+
+
+
+		if ($line->equipement){
+
+			foreach ($line->equipement as $eq){
+				// equipements
+				//var_dump($eq['obj']->serial_number);
+				$asset=new TAsset;
+				//$asset->fetch('',$eq->)
+				$prod->fetch($line->fk_product);
+				$output .="<tr class='dispatchAssetLine oddeven' id='dispatchAssetLine'".$k."' data-fk-product='".$prod->id."'>";
+				$output .="<td>".$prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref)." - ".$prod->label."</td>";
+				$output .='<td>';
+				//var_dump($eq->serial_number);
+				$output .=$form->texte('','TLine['.$k.'][numserie]', $eq['obj']->serial_number, 30);
+				$warning_asset = true;
+
+				//$output .= $form->hidden('TLine['.$k.'][commande_fournisseurdet_asset]', $line->commande_fournisseurdet_asset, 30);
+				$output .= '</td>';
+
+			}
+
+		}else{
+			// product
+
+		}
+
+
+
+
+
+
+
+
+
+			if(! empty($conf->global->USE_LOT_IN_OF)) {
+			 $output .= "<td>".$form->texte('','TLine['.$k.'][lot_number]', $line->lot_number, 30)."</td>";
+			}
+			$output .='<td rel="entrepotChild" fk_product="'.$prod->id.'">';
+			dol_include_once('/product/class/html.formproduct.class.php');
+			$formproduct=new FormProduct($db);
+			$formproduct->loadWarehouses();
+
+			if (count($formproduct->cache_warehouses)>1)
+					{
+					$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',0,1);
+					}
+					elseif  (count($formproduct->cache_warehouses)==1)
+					{
+						$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
+					}
+					else
+					{
+						$output .= $langs->trans("NoWarehouseDefined");
+					}
+
+					$output .='</td>';
+
+			if(!empty($conf->global->ASSET_SHOW_DLUO)){
+					//$output .='<td>'.$form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo']))).'</td>';
+			}
+
+			if(empty($conf->global->DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION)) {
+
+			//$output .='<td>'.$form->texte('','TLine['.$k.'][quantity]', $line->quantity, 10).'</td>';
+
+//					if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) {
+//						echo '<td>'. ($commande->statut < 5) ? $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']) : measuring_units_string($line['quantity_unit'],'weight').'</td>';
+//					}
+			}
+			else{
+					$output .= $form->hidden('TLine['.$k.'][quantity]', $line->quantity);
+					$output .=$form->hidden('TLine['.$k.'][quantity_unit]',$line->quantity_unit);
+				}
+
+			if($conf->global->clinomadic->enabled){
+
+				$output .='<td>'.$form->texte('','TLine['.$k.'][imei]', $line->imei, 30).'</td>';
+				$output .='<td>'.$form->texte('','TLine['.$k.'][firmware]', $line->firmware, 30).'</td>';
+			}
+//		$parameters=array('line' => $line, 'prod' => $prod, 'k' => $k);
+//		$reshook=$hookmanager->executeHooks('printFieldListValue',$parameters);    // Note that $action and $object may have been modified by hook
+//		print $hookmanager->resPrint;
+
+		$output .='<td>';
+
+//					if($commande->statut < 5 && $line['commande_fournisseurdet_asset'] > 0){
+//						echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$commande->id.'&rowid='.$line['commande_fournisseurdet_asset'].'">'.img_delete().'</a>';
+//					}
+
+		$output .='</td>';
+		$output .='</tr>';
+
+	}
+
+
+	return $output;
+	$warning_asset = false;
+	/*
+
+				<tr class="dispatchAssetLine oddeven" id="dispatchAssetLine<?php print $k; ?>" data-fk-product="<?php print $prod->id; ?>">
+				<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref)." - ".$prod->label; ?></td>
+				<td><?php
+						$asset=new TAsset;
+
+						if(empty($line['numserie'])) {
+							echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('SerialNumberNeeded'), 'warning.png');
+							$warning_asset = true;
+						}
+						else if($asset->loadReference($PDOdb, $line['numserie'], $line['fk_product'])) {
+							if($commande->statut >= 5 || $commande->statut<=2) {
+								echo $asset->getNomUrl(1);
+							} else {
+								echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('AssetAlreadyLinked'), 'warning.png');
+							}
+						}
+						else {
+							echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('NoAssetCreated'), 'info.png');
+							$warning_asset = true;
+						}
+						echo $form->hidden('TLine['.$k.'][commande_fournisseurdet_asset]', $line['commande_fournisseurdet_asset'], 30)
+						?>
+					</td>
+					<?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
+						<td><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30);   ?></td>
+					<?php } ?>
+					<td rel="entrepotChild" fk_product="<?php echo $prod->id ?>"><?php
+
+						$formproduct=new FormProduct($db);
+						$formproduct->loadWarehouses();
+
+						if (count($formproduct->cache_warehouses)>1)
+						{
+							print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',0,1);
+						}
+						elseif  (count($formproduct->cache_warehouses)==1)
+						{
+							print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
+						}
+						else
+						{
+							print $langs->trans("NoWarehouseDefined");
+						}
+
+						?></td>
+					<?php if(!empty($conf->global->ASSET_SHOW_DLUO)){ ?>
+						<td><?php echo $form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo'])));   ?></td>
+					<?php }
+
+					if(empty($conf->global->DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION)) {
+						?>
+						<td><?php echo $form->texte('','TLine['.$k.'][quantity]', $line['quantity'], 10);   ?></td><?php
+
+						if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) {
+							echo '<td>'. ($commande->statut < 5) ? $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']) : measuring_units_string($line['quantity_unit'],'weight').'</td>';
+						}
+					}
+					else{
+						echo $form->hidden('TLine['.$k.'][quantity]', $line['quantity']);
+						echo $form->hidden('TLine['.$k.'][quantity_unit]',$line['quantity_unit']);
+					}
+
+					if($conf->global->clinomadic->enabled){
+						?>
+						<td><?php echo $form->texte('','TLine['.$k.'][imei]', $line['imei'], 30)   ?></td>
+						<td><?php echo $form->texte('','TLine['.$k.'][firmware]', $line['firmware'], 30)   ?></td>
+						<?php
+					}
+					$parameters=array('line' => $line, 'prod' => $prod, 'k' => $k);
+					$reshook=$hookmanager->executeHooks('printFieldListValue',$parameters);    // Note that $action and $object may have been modified by hook
+					print $hookmanager->resPrint;
+					?>
+					<td>test
+						<?php
+						if($commande->statut < 5 && $line['commande_fournisseurdet_asset'] > 0){
+							echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$commande->id.'&rowid='.$line['commande_fournisseurdet_asset'].'">'.img_delete().'</a>';
+						}
+						?>
+					</td>
+					</tr>
+					<?php
+
+				}
+			}
+
+		if($commande->statut < 5 && $commande->statut>2){
+
+				$TProducts = array($langs->transnoentities('DispatchSelectProduct'));
+				foreach($commande->lines as $line){
+					if($line->fk_product) $TProducts[$line->fk_product] = $line->product_ref." - ".$line->product_label;
+				}
+
+				$defaultDLUO = '';
+				if($conf->global->DISPATCH_DLUO_BY_DEFAULT){
+					$defaultDLUO = date('d/m/Y',strtotime(date('Y-m-d')." ".$conf->global->DISPATCH_DLUO_BY_DEFAULT));
+				}
+
+				echo $defaultDLUO;
+
+				?><tr style="background-color: lightblue;">
+				<td><?php print $form->combo('', 'new_line_fk_product', $TProducts, ''); ?></td>
+				<td><?php echo $form->texte('','TLine[-1][numserie]', '', 30); ?></td>
+				<?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
+					<td><?php echo $form->texte('','TLine[-1][lot_number]', '', 30);   ?></td>
+				<?php } ?>
+				<td><?php
+
+					$formproduct=new FormProduct($db);
+					$formproduct->loadWarehouses();
+
+					if (count($formproduct->cache_warehouses)>1)
+					{
+						print $formproduct->selectWarehouses('', 'TLine[-1][entrepot]','',1,0,$prod->id,'',0,1);
+					}
+					elseif  (count($formproduct->cache_warehouses)==1)
+					{
+						print $formproduct->selectWarehouses('', 'TLine[-1][entrepot]','',0,0,$prod->id,'',0,1);
+					}
+					else
+					{
+						print $langs->trans("NoWarehouseDefined");
+					}
+
+					?></td>
+				<?php if(!empty($conf->global->ASSET_SHOW_DLUO)){ ?>
+					<td><?php echo $form->calendrier('','TLine[-1][dluo]',$defaultDLUO);  ?></td>
+				<?php }
+
+				if(empty($conf->global->DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION)) {
+					?>
+					<td><?php echo $form->texte('','TLine[-1][quantity]', '', 10);   ?></td><?php
+
+					if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) {
+						echo '<td>'.$formproduct->select_measuring_units('TLine[-1][quantity_unit]','weight').'</td>';
+					}
+
+				}
+
+				if($conf->global->clinomadic->enabled){
+					?>
+					<td><?php echo $form->texte('','TLine[-1][imei]', '', 30);   ?></td>
+					<td><?php echo $form->texte('','TLine[-1][firmware]', '', 30);   ?></td>
+					<?php
+				}
+
+				$parameters=array('line' => $line, 'prod' => $prod, 'k' => -1);
+				$reshook=$hookmanager->executeHooks('printFieldListValue',$parameters);    // Note that $action and $object may have been modified by hook
+				print $hookmanager->resPrint;
+
+				?>
+				<td>Nouveau
+				</td>
+				</tr>
+				<?php
+			}
+
+
+
+		</table>
+		if(is_array($TImport)){
+			foreach ($TImport as $k=>$line) {
+
+				if($prod->id==0 || $line['ref']!= $prod->ref) {
+					if(empty($line['fk_product']) === false) {
+						$prod->fetch($line['fk_product']);
+					} else if (empty($line['ref']) === false) {
+						$prod->fetch('', $line['ref']);
+					} else {
+						continue;
+					}
+				}
+
+				?><tr class="dispatchAssetLine oddeven" id="dispatchAssetLine<?php print $k; ?>" data-fk-product="<?php print $prod->id; ?>">
+				<td><?php echo $prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref)." - ".$prod->label; ?></td>
+				<td><?php
+					$asset=new TAsset;
+
+					if(empty($line['numserie'])) {
+						echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('SerialNumberNeeded'), 'warning.png');
+						$warning_asset = true;
+					}
+					else if($asset->loadReference($PDOdb, $line['numserie'], $line['fk_product'])) {
+						if($commande->statut >= 5 || $commande->statut<=2) {
+							echo $asset->getNomUrl(1);
+						} else {
+							echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('AssetAlreadyLinked'), 'warning.png');
+						}
+					}
+					else {
+						echo $form->texte('','TLine['.$k.'][numserie]', $line['numserie'], 30).' '.img_picto($langs->trans('NoAssetCreated'), 'info.png');
+						$warning_asset = true;
+					}
+					echo $form->hidden('TLine['.$k.'][commande_fournisseurdet_asset]', $line['commande_fournisseurdet_asset'], 30)
+					?>
+				</td>
+				<?php if(! empty($conf->global->USE_LOT_IN_OF)) { ?>
+					<td><?php echo $form->texte('','TLine['.$k.'][lot_number]', $line['lot_number'], 30);   ?></td>
+				<?php } ?>
+				<td rel="entrepotChild" fk_product="<?php echo $prod->id ?>"><?php
+
+					$formproduct=new FormProduct($db);
+					$formproduct->loadWarehouses();
+
+					if (count($formproduct->cache_warehouses)>1)
+					{
+						print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',0,1);
+					}
+					elseif  (count($formproduct->cache_warehouses)==1)
+					{
+						print $formproduct->selectWarehouses($line['fk_warehouse'], 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
+					}
+					else
+					{
+						print $langs->trans("NoWarehouseDefined");
+					}
+
+					?></td>
+				<?php if(!empty($conf->global->ASSET_SHOW_DLUO)){ ?>
+					<td><?php echo $form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo'])));   ?></td>
+				<?php }
+
+				if(empty($conf->global->DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION)) {
+					?>
+					<td><?php echo $form->texte('','TLine['.$k.'][quantity]', $line['quantity'], 10);   ?></td><?php
+
+					if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) {
+						echo '<td>'. ($commande->statut < 5) ? $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']) : measuring_units_string($line['quantity_unit'],'weight').'</td>';
+					}
+				}
+				else{
+					echo $form->hidden('TLine['.$k.'][quantity]', $line['quantity']);
+					echo $form->hidden('TLine['.$k.'][quantity_unit]',$line['quantity_unit']);
+				}
+
+				if($conf->global->clinomadic->enabled){
+					?>
+					<td><?php echo $form->texte('','TLine['.$k.'][imei]', $line['imei'], 30)   ?></td>
+					<td><?php echo $form->texte('','TLine['.$k.'][firmware]', $line['firmware'], 30)   ?></td>
+					<?php
+				}
+				$parameters=array('line' => $line, 'prod' => $prod, 'k' => $k);
+				$reshook=$hookmanager->executeHooks('printFieldListValue',$parameters);    // Note that $action and $object may have been modified by hook
+				print $hookmanager->resPrint;
+				?>
+				<td>test
+					<?php
+					if($commande->statut < 5 && $line['commande_fournisseurdet_asset'] > 0){
+						echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$commande->id.'&rowid='.$line['commande_fournisseurdet_asset'].'">'.img_delete().'</a>';
+					}
+					?>
+				</td>
+				</tr>
+				<?php
+
+			}
+		} */
+
+}
 function printLine() {
 
 	global $langs,$conf;

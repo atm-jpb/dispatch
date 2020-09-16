@@ -108,3 +108,6 @@ ShipmentsList = Liste des expéditions non traitées
 SelectShipment = Expédition à ventiler
 supplierOrderLinkedShipment = Expédition liée à la commande fournisseur
 SelectExpe = Traiter cette expédition
+NbItemCountInReception = Détail de l'expédition
+Warehouse = Entrepôt
+Product = Produit

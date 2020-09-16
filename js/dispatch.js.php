@@ -67,7 +67,7 @@ $(document).ready(function() {
 console.log('ok');
 	$(document).on("click", ".ventileBtn", function (e) {
 
-
+		var	self= $(this);
 		let expeid = $(this).attr('data-shipment-id');
 		let experef = $(this).attr('data-shipment-ref');
 		let data = {
@@ -82,13 +82,17 @@ console.log('ok');
 			dataType: "json",
 			data: data,
 			success: function (data) {
+				console.log("Success !!!");
 				console.log(data);
+
 				if(!data.error) {
+					$(".tabBar").append(data.html);
 					//self.css("background-color", "green");
 					//self.blur();
 					//setTimeout(function () {
 					//	self.css("background-color", '#fff');
 					//}, 800);
+					self
 				}else {
 					//matrixSetMessage(data.error, "error");
 				}
