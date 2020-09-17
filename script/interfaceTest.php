@@ -21,6 +21,8 @@ $idexpe = dol_htmlentitiesbr(GETPOST('idexpe'));
 $refexpe = dol_htmlentitiesbr(GETPOST('refexpe'));
 $entity = dol_htmlentitiesbr(GETPOST('entity'));
 $action = dol_htmlentitiesbr(GETPOST('action'));
+$idCommand = dol_htmlentitiesbr(GETPOST('comFourn'));
+
 $JsonOutput = new stdClass();
 
 // on genere l'UI autoCompletée avec le bouton enregistrer
@@ -39,8 +41,10 @@ if (isset($action) && $action == 'loadExpeLines'){
 
 	$JsonOutput->html = $output;
 	getEquipmentsFromSupplier($currentExp);
+	$JsonOutput->html .= '<form action='.dol_buildpath('dispatch/reception.php?id='.$idCommand, 1).' method="POST" name="products-dispatch">';
 	$JsonOutput->html .= formatDisplayTableProductsHeader();
-	$JsonOutput->html .= formatDisplayTableProducts($currentExp,$entity);
+	$JsonOutput->html .= formatDisplayTableProducts($currentExp,$entity, $idCommand);
+	$JsonOutput->html .= '</form>';
 }
 print json_encode($JsonOutput);
 /**
@@ -117,15 +121,12 @@ function formatDisplayTableProductsHeader(){
 return $output;
 
 }
-function formatDisplayTableProducts(&$currentExp,$entity){
+function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
-	global $conf, $langs,$db;
+	global $conf, $langs, $db;
 	dol_include_once('/core/class/html.form.class.php');
-	$form = new TFormCore($db);
-	$output = '';
 
-
-	//var_dump($currentExp);
+	$form = new TFormCore();
 	$prod = new Product($db);
 
 	foreach ($currentExp->lines as $k=>$line) {
@@ -209,18 +210,10 @@ function formatDisplayTableProducts(&$currentExp,$entity){
 		}
 
 
-
-
-
-
-
-
 		//LOTS
 		if(! empty($conf->global->USE_LOT_IN_OF)) {
 			 $output .= "<td>".$form->texte('','TLine['.$k.'][lot_number]', $line->lot_number, 30)."</td>";
 		}
-
-
 
 			//dluo
 			if(!empty($conf->global->ASSET_SHOW_DLUO)){
@@ -270,10 +263,11 @@ function formatDisplayTableProducts(&$currentExp,$entity){
 	$output .=  '<tr><td colspan="4"><div id="actionVentilation">';
 	$output .=  $langs->trans("DispatchDateReception").' : '.$form->calendrier('', 'date_recep', time());
 
-	$output .=  ' - '.$langs->trans("Comment").' : '.$form->texte('', 'comment', !empty($comment)?$comment:$langs->trans("DispatchSupplierOrder",$commande->ref), 60,128);
+	$output .=  $langs->trans("Comment").' : '.$form->texte('', 'comment', !empty($comment)?$comment:$langs->trans("DispatchSupplierOrder",$commande->ref), 60,128);
 
-	$output .=  ' '.$form->btsubmit($langs->trans('AssetVentil'), 'bt_create', '', 'butAction');
+	$output .=  $form->btsubmit($langs->trans('AssetVentil'), 'bt_create', '', 'butAction butValidateVentilation');
 	$output .=  '</td></tr></div>';
+
 
 	return $output;
 	$warning_asset = false;

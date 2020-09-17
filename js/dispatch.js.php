@@ -64,7 +64,6 @@ $langs->loadLangs(array("dispatch@dispatch","other"));
 /* Javascript library of module dispatch */
 $(document).ready(function() {
 
-
 	$(document).on("click", ".butActionDelete", function (e) {
 		e.preventDefault();
 		$(".shipment-details").remove();
@@ -73,12 +72,11 @@ $(document).ready(function() {
 	});
 
 	$(document).on("click", ".ventileBtn", function (e) {
-
-
 		$('.ventileBtn').removeClass('butActionRefused');
 		$(this).addClass('butActionRefused');
 
 		var	self= $(this);
+		let comFourn = $(this).attr('data-commandFourn-id');
 		let expeid = $(this).attr('data-shipment-id');
 		let experef = $(this).attr('data-shipment-ref');
 		let entity = $(this).attr('data-shipment-entity');
@@ -94,6 +92,7 @@ $(document).ready(function() {
 		}
 
 		let data = {
+				comFourn : comFourn,
 				idexpe: expeid,
 				refexpe: experef,
 				entity : entity,
