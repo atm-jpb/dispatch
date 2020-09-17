@@ -160,7 +160,7 @@ function formatDisplayTableProducts(&$currentExp,$entity){
 							  //$formproduct->selectWarehouses($lines[$i]->entrepot_id, 'entl'.$line_id, '', 1, 0, $lines[$i]->fk_product, '', 1)
 					$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',1);
 				} elseif  (count($formproduct->cache_warehouses)==1) {
-					$output .='coucou == 1  ' . $formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
+					$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
 				} else {
 					$output .= $langs->trans("NoWarehouseDefined");
 				}
@@ -191,7 +191,7 @@ function formatDisplayTableProducts(&$currentExp,$entity){
 
 				$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',0,1);
 			} elseif  (count($formproduct->cache_warehouses)==1) {
-				$output .='coucou == 1  ' . $formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
+			    $formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
 			} else {
 				$output .= $langs->trans("NoWarehouseDefined");
 			}
