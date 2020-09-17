@@ -19,17 +19,9 @@ header('Content-Type: application/json');
 // $idexpe = GETPOST('idexpe');
 $idexpe = dol_htmlentitiesbr(GETPOST('idexpe'));
 $refexpe = dol_htmlentitiesbr(GETPOST('refexpe'));
+$entity = dol_htmlentitiesbr(GETPOST('entity'));
 $action = dol_htmlentitiesbr(GETPOST('action'));
 $JsonOutput = new stdClass();
-
-
-
-
-
-
-
-
-
 
 // on genere l'UI autoCompletée avec le bouton enregistrer
 
@@ -37,20 +29,18 @@ $JsonOutput = new stdClass();
 
 // le client reload la page  et affiche les expé non traité.
 
-
-
 // LoadLinesExpedition
 if (isset($action) && $action == 'loadExpeLines'){
 
 	$currentExp = new Expedition($db);
 	$currentExp->fetch($idexpe);
 
-	$output  = load_fiche_titre($langs->trans("NbItemCountInReception", count($currentExp->lines)));
+	$output  = load_fiche_titre($langs->trans("NbItemCountInReception" ). ' '.$currentExp->ref);
 
 	$JsonOutput->html = $output;
 	getEquipmentsFromSupplier($currentExp);
 	$JsonOutput->html .= formatDisplayTableProductsHeader();
-	$JsonOutput->html .= formatDisplayTableProducts($currentExp);
+	$JsonOutput->html .= formatDisplayTableProducts($currentExp,$entity);
 }
 print json_encode($JsonOutput);
 /**
@@ -127,42 +117,94 @@ function formatDisplayTableProductsHeader(){
 return $output;
 
 }
-function formatDisplayTableProducts(&$currentExp){
+function formatDisplayTableProducts(&$currentExp,$entity){
+
 	global $conf, $langs,$db;
 	dol_include_once('/core/class/html.form.class.php');
 	$form = new TFormCore($db);
 	$output = '';
 
 
-
+	//var_dump($currentExp);
 	$prod = new Product($db);
 
 	foreach ($currentExp->lines as $k=>$line) {
-
-
-
+		$prod->fetch($line->fk_product);
+		//print_r ($line);
 		if ($line->equipement){
 
 			foreach ($line->equipement as $eq){
 				// equipements
-				//var_dump($eq['obj']->serial_number);
-				$asset=new TAsset;
-				//$asset->fetch('',$eq->)
-				$prod->fetch($line->fk_product);
+
+				// $asset=new TAsset;
 				$output .="<tr class='dispatchAssetLine oddeven' id='dispatchAssetLine'".$k."' data-fk-product='".$prod->id."'>";
 				$output .="<td>".$prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref)." - ".$prod->label."</td>";
 				$output .='<td>';
-				//var_dump($eq->serial_number);
-				$output .=$form->texte('','TLine['.$k.'][numserie]', $eq['obj']->serial_number, 30);
-				$warning_asset = true;
 
+				$output .=$form->texte('','TLine['.$k.'][numserie]', $eq['obj']->serial_number, 30);
+				//$warning_asset = true;
 				//$output .= $form->hidden('TLine['.$k.'][commande_fournisseurdet_asset]', $line->commande_fournisseurdet_asset, 30);
 				$output .= '</td>';
 
+				// ENTREPOT
+				$output .='<td rel="entrepotChild" fk_product="'.$prod->id.'">';
+				dol_include_once('/product/class/html.formproduct.class.php');
+
+				$formproduct=new FormProduct($db);
+				$backupEntity = $conf->entity;
+
+				$conf->entity = $entity;
+				$formproduct->loadWarehouses();
+
+				if (count($formproduct->cache_warehouses) > 1) {
+							  //$formproduct->selectWarehouses($lines[$i]->entrepot_id, 'entl'.$line_id, '', 1, 0, $lines[$i]->fk_product, '', 1)
+					$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',1);
+				} elseif  (count($formproduct->cache_warehouses)==1) {
+					$output .='coucou == 1  ' . $formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
+				} else {
+					$output .= $langs->trans("NoWarehouseDefined");
+				}
+
+				$output .='</td>';
+
+				// qty
+				$output .='<td>1</td>';
 			}
 
 		}else{
 			// product
+			$output .="<tr class='dispatchAssetLine oddeven' id='dispatchAssetLine'".$k."' data-fk-product='".$prod->id."'>";
+			$output .="<td>".$prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref)." - ".$prod->label."</td>";
+			$output .='<td></td>';
+
+			// ENTREPOT
+			$output .='<td rel="entrepotChild" fk_product="'.$prod->id.'">';
+			dol_include_once('/product/class/html.formproduct.class.php');
+
+			$formproduct=new FormProduct($db);
+			$backupEntity = $conf->entity;
+
+			$conf->entity = $entity;
+			$formproduct->loadWarehouses();
+
+			if (count($formproduct->cache_warehouses) > 1) {
+
+				$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',0,1);
+			} elseif  (count($formproduct->cache_warehouses)==1) {
+				$output .='coucou == 1  ' . $formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
+			} else {
+				$output .= $langs->trans("NoWarehouseDefined");
+			}
+
+			$output .='</td>';
+
+
+
+
+			// qty
+			$output .='<td>'.$line->qty_shipped.'</td>';
+
+			//$output .= $form->hidden('TLine['.$k.'][commande_fournisseurdet_asset]', $line->commande_fournisseurdet_asset, 30);
 
 		}
 
@@ -173,30 +215,14 @@ function formatDisplayTableProducts(&$currentExp){
 
 
 
-
-			if(! empty($conf->global->USE_LOT_IN_OF)) {
+		//LOTS
+		if(! empty($conf->global->USE_LOT_IN_OF)) {
 			 $output .= "<td>".$form->texte('','TLine['.$k.'][lot_number]', $line->lot_number, 30)."</td>";
-			}
-			$output .='<td rel="entrepotChild" fk_product="'.$prod->id.'">';
-			dol_include_once('/product/class/html.formproduct.class.php');
-			$formproduct=new FormProduct($db);
-			$formproduct->loadWarehouses();
+		}
 
-			if (count($formproduct->cache_warehouses)>1)
-					{
-					$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',0,1);
-					}
-					elseif  (count($formproduct->cache_warehouses)==1)
-					{
-						$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
-					}
-					else
-					{
-						$output .= $langs->trans("NoWarehouseDefined");
-					}
 
-					$output .='</td>';
 
+			//dluo
 			if(!empty($conf->global->ASSET_SHOW_DLUO)){
 					//$output .='<td>'.$form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo']))).'</td>';
 			}
@@ -231,9 +257,23 @@ function formatDisplayTableProducts(&$currentExp){
 
 		$output .='</td>';
 		$output .='</tr>';
-
+		$conf->entity =  $backupEntity;
 	}
 
+
+	$output .= '<tr><td></td><td></td>';
+	$output .= '<td></td><br/>';
+	$output .= '<td><a class="butActionDelete pull-right " >'.$langs->trans("Annuler").'</a></td><br/>';
+	$output .= '</tr>';
+
+
+	$output .=  '<tr><td colspan="4"><div id="actionVentilation">';
+	$output .=  $langs->trans("DispatchDateReception").' : '.$form->calendrier('', 'date_recep', time());
+
+	$output .=  ' - '.$langs->trans("Comment").' : '.$form->texte('', 'comment', !empty($comment)?$comment:$langs->trans("DispatchSupplierOrder",$commande->ref), 60,128);
+
+	$output .=  ' '.$form->btsubmit($langs->trans('AssetVentil'), 'bt_create', '', 'butAction');
+	$output .=  '</td></tr></div>';
 
 	return $output;
 	$warning_asset = false;

@@ -11,6 +11,7 @@
 	dol_include_once('/core/lib/fourn.lib.php' );
 	dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
 	dol_include_once('/fourn/class/fournisseur.commande.class.php' );
+	dol_include_once('/expedition/class/expedition.class.php' );
 
 	$PDOdb = new TPDOdb;
 
@@ -37,7 +38,7 @@
 	
 	$parameters=array();
 	$hookmanager->executeHooks('doAction',$parameters, $commandefourn, $action);
-//var_dump($TImport);exit;
+	//var_dump($TImport);exit;
 
 	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
 		$f1  =file($_FILES['file1']['tmp_name']);
@@ -535,7 +536,7 @@ function fiche(&$commande, &$TImport, $comment) {
 	//tabImport($TImport,$commande,$comment);
 
 	$form->end();
-	//var_dump($commande);
+
 	_list_shipments_untreated($commande->shipmentsFromSupplier,$commande->id);
 	//_list_already_dispatched($commande);
 
@@ -559,12 +560,12 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 	print '<tr class="liste_titre">';
 	print '<td>'.$langs->trans("SelectShipment").'</td>';
 
-//	if (! empty($conf->productbatch->enabled) && (float) DOL_VERSION > 3.7)
-//	{
-//		print '<td>'.$langs->trans("batch_number").'</td>';
-//		print '<td>'.$langs->trans("l_eatby").'</td>';
-//		print '<td>'.$langs->trans("l_sellby").'</td>';
-//	}
+	if (! empty($conf->productbatch->enabled) && (float) DOL_VERSION > 3.7)
+	{
+		print '<td>'.$langs->trans("batch_number").'</td>';
+		print '<td>'.$langs->trans("l_eatby").'</td>';
+		print '<td>'.$langs->trans("l_sellby").'</td>';
+	}
 	//print '<td align="right">'.$langs->trans("QtyDispatched").'</td>';
 	print '<td></td>';
 	//print '<td>'.$langs->trans("Warehouse").'</td>';
@@ -580,18 +581,34 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 
 	foreach ($shipments as $shipment) {
 		$current_cmdFourn = new CommandeFournisseur($db);
+
 		$current_cmdFourn->fetch($idCmdFourn);
 
 
-		print '<td>'.  $current_cmdFourn->getNomUrl() .'  ->   <span class="classfortooltip" title="'.$langs->trans("supplierOrderLinkedShipment").'">' .$shipment->ref.' </span></td>';
-		print '<td></td>';
 
-		$form=new TFormCore;
-		//$formDoli =	new Form($db);
-		print '<td><button type="submit" data-shipment-id="'.$shipment->rowid.'" data-shipment-ref="'.$shipment->ref.'" class="ventileBtn button --ventilate-button" >'.$langs->trans("SelectExpe").'</button></td><hr><br/>';
-		//print '<td><div class="tabsAction">'.$form->btsubmit($langs->transnoentities('SelectExpe'), 'bt_save', '', 'butAction').'</div></td>';
-		//$form->btsubmit($langs->trans('SerializeThisProduct'), 'ToDispatch['.$objp->fk_product.']', '', 'butAction').img_info($langs->trans('SerializeThisProductInfo'));
+		$backupConfEntity = $conf->entity;
+		$conf->entity = $shipment->entity;
 
+		$currentExp = new Expedition($db);
+
+		$extra = new ExtraFields($db);
+		$extra->fetch_name_optionals_label($currentExp->table_element);
+		//$res = $currentExp->fetch($shipment->rowid);
+		$currentExp->fetch($shipment->rowid);
+		//$currentExp->fetch_optionals($shipment->rowid);
+		//var_dump(array($res, $currentExp->error, $currentExp->errors));
+		//var_dump($currentExp);
+		$conf->entity = $backupConfEntity;
+
+
+		// on remonte l'extrafield caché de l'état de traitement de l'expédition.
+		if ($currentExp->array_options['options_customer_treated_shipment'] == "0"){
+
+			print '<td>'.  $current_cmdFourn->getNomUrl() .'  ->   <span class="classfortooltip" title="'.$langs->trans("supplierOrderLinkedShipment").'">' .$shipment->ref.' </span></td>';
+			print '<td></td>';
+			$form=new TFormCore;
+			print '<td><a class="butAction ventileBtn button --ventilate-button" type="submit"  data-shipment-entity="'.$current_cmdFourn->entity.'" data-shipment-id="'.$shipment->rowid.'" data-shipment-ref="'.$shipment->ref.'"  >'.$langs->trans("SelectExpe").'</a></td><hr><br/>';
+		}
 	}
 
 //	while ($i < $num)

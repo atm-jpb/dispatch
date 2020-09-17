@@ -64,15 +64,39 @@ $langs->loadLangs(array("dispatch@dispatch","other"));
 /* Javascript library of module dispatch */
 $(document).ready(function() {
 
-console.log('ok');
+
+	$(document).on("click", ".butActionDelete", function (e) {
+		e.preventDefault();
+		$(".shipment-details").remove();
+		$('.ventileBtn').removeClass('butActionRefused');
+
+	});
+
 	$(document).on("click", ".ventileBtn", function (e) {
+
+
+		$('.ventileBtn').removeClass('butActionRefused');
+		$(this).addClass('butActionRefused');
 
 		var	self= $(this);
 		let expeid = $(this).attr('data-shipment-id');
 		let experef = $(this).attr('data-shipment-ref');
+		let entity = $(this).attr('data-shipment-entity');
+
+		var className = "shipment-details";
+		console.log(document.getElementsByClassName(className).length == 0);
+		if (document.getElementsByClassName(className).length == 0) {
+			d = document.createElement("div");
+			d.className = className;
+			console.log(d);
+
+			$(".tabBar").append(d);
+		}
+
 		let data = {
 				idexpe: expeid,
 				refexpe: experef,
+				entity : entity,
 				action: "loadExpeLines"
 			};
 
@@ -86,19 +110,15 @@ console.log('ok');
 				console.log(data);
 
 				if(!data.error) {
-					$(".tabBar").append(data.html);
-					//self.css("background-color", "green");
-					//self.blur();
-					//setTimeout(function () {
-					//	self.css("background-color", '#fff');
-					//}, 800);
+					$(".shipment-details").html(data.html);
+
 					self
 				}else {
-					//matrixSetMessage(data.error, "error");
+
 				}
 			},
 			error: function (err) {
-				//matrixSetMessage(err.responseText, "error");
+
 			}
 		})
 	});
