@@ -263,7 +263,7 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 	$output .=  '<tr><td colspan="4"><div id="actionVentilation">';
 	$output .=  $langs->trans("DispatchDateReception").' : '.$form->calendrier('', 'date_recep', time());
 
-	$output .=  $langs->trans("Comment").' : '.$form->texte('', 'comment', !empty($comment)?$comment:$langs->trans("DispatchSupplierOrder",$commande->ref), 60,128);
+	$output .=  $langs->trans("Comment").' : '.$form->texte('', 'comment', !empty($comment)?$comment:'', 60,128);
 
 	$output .=  $form->btsubmit($langs->trans('AssetVentil'), 'bt_create', '', 'butAction butValidateVentilation');
 	$output .=  '</td></tr></div>';

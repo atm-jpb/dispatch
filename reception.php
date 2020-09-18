@@ -40,8 +40,6 @@
 	$hookmanager->executeHooks('doAction',$parameters, $commandefourn, $action);
 
 
-	var_dump($_POST);
-
 	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
 		$f1  =file($_FILES['file1']['tmp_name']);
 
