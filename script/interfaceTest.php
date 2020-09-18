@@ -134,15 +134,15 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 		//print_r ($line);
 		if ($line->equipement){
 
-			foreach ($line->equipement as $eq){
+			foreach ($line->equipement as $key=>$eq){
 				// equipements
 
 				// $asset=new TAsset;
-				$output .="<tr class='dispatchAssetLine oddeven' id='dispatchAssetLine'".$k."' data-fk-product='".$prod->id."'>";
-				$output .="<td>".$prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref)." - ".$prod->label."</td>";
+				$output .="<tr class='dispatchAssetLine oddeven' id='dispatchAssetLine'".$key."' data-fk-product='".$prod->id."'>";
+				$output .="<td>".$prod->getNomUrl(1).$form->hidden('TLine['.$key.'][fk_product]', $prod->id).$form->hidden('TLine['.$key.'][ref]', $prod->ref)." - ".$prod->label."</td>";
 				$output .='<td>';
 
-				$output .=$form->texte('','TLine['.$k.'][numserie]', $eq['obj']->serial_number, 30);
+				$output .=$form->texte('','TLine['.$key.'][numserie]', $eq['obj']->serial_number, 30);
 				//$warning_asset = true;
 				//$output .= $form->hidden('TLine['.$k.'][commande_fournisseurdet_asset]', $line->commande_fournisseurdet_asset, 30);
 				$output .= '</td>';
@@ -159,9 +159,9 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
 				if (count($formproduct->cache_warehouses) > 1) {
 							  //$formproduct->selectWarehouses($lines[$i]->entrepot_id, 'entl'.$line_id, '', 1, 0, $lines[$i]->fk_product, '', 1)
-					$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',1);
+					$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$key.'][entrepot]','',1,0,$prod->id,'',1);
 				} elseif  (count($formproduct->cache_warehouses)==1) {
-					$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',0,1);
+					$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$key.'][entrepot]','',0,0,$prod->id,'',0,1);
 				} else {
 					$output .= $langs->trans("NoWarehouseDefined");
 				}
