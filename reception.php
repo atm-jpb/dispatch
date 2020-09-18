@@ -158,8 +158,6 @@
 	}
 	elseif(isset($post_create_ventilation_expe) && !empty($post_create_ventilation_expe)) {
 
-		var_dump($_POST);
-
 		$PDOdb=new TPDOdb;
 		$time_date_recep = Tools::get_time($_POST['date_recep']);
 
@@ -182,7 +180,6 @@
 
 //
 //		foreach($TImport as $k=>&$line) {
-//			var_dump('tttt');
 //			$asset =new TAsset;
 //
 //			if(!empty($conf->global->DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_IF_LOT) && empty($line['numserie']) && !empty($line['lot_number'])) {
