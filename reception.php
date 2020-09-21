@@ -5,6 +5,7 @@
 	dol_include_once('/fourn/class/fournisseur.commande.class.php' );
 	dol_include_once('/fourn/class/fournisseur.product.class.php' );
 	dol_include_once('/dispatch/class/dispatchdetail.class.php' );
+
 	dol_include_once('/product/class/html.formproduct.class.php' );
 	dol_include_once('/product/stock/class/entrepot.class.php' );
 	dol_include_once('/core/lib/product.lib.php' );
@@ -32,6 +33,13 @@
 	$commandefourn = new CommandeFournisseur($db);
 	$commandefourn->fetch($id, $ref);
 
+	// chekc if fournisseur linked multiSoc
+
+	$sql = "SELECT DISTINCT te.rowid , te.fk_soc , te.entity , te.fk_entity FROM ".MAIN_DB_PREFIX."societe as s , ".MAIN_DB_PREFIX."thirdparty_entity as te WHERE ";
+	$sql .= "te.entity=".$conf->entity;
+	$sql .= " AND te.fk_soc =".$commandefourn->socid;
+ 	$resultset = $db->query($sql);
+
 	$action = GETPOST('action');
 	$comment = GETPOST('comment');
 	$TImport = _loadDetail($PDOdb,$commandefourn);
@@ -42,6 +50,8 @@
 
 	$parameters=array();
 	$hookmanager->executeHooks('doAction',$parameters, $commandefourn, $action);
+
+
 
 
 	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
@@ -156,6 +166,7 @@
 		    exit;
         }
 	}
+
 	elseif(isset($post_create_ventilation_expe) && !empty($post_create_ventilation_expe)) {
 
 		$PDOdb=new TPDOdb;
@@ -175,9 +186,12 @@
 
 		$commandefourn->fetch_thirdparty();
 
+        setEventMessage($langs->transnoentities('DispatchMsgAssetGen'));
+
+	}
 
 
-
+		// if not linked entity
 //
 //		foreach($TImport as $k=>&$line) {
 //			$asset =new TAsset;
@@ -491,11 +505,6 @@
 //        $commandefourn->setStatus($user, $status);
 //        $commandefourn->statut = $status;
 //        if(method_exists($commandefourn, 'log')) $commandefourn->log($user, $status, time()); // removed in 4.0
-
-        setEventMessage($langs->transnoentities('DispatchMsgAssetGen'));
-
-	}
-
 	//if(is_array($TImport)) usort($TImport,'_by_ref');
 
 	fiche($commandefourn, $TImport, $comment);
@@ -539,13 +548,26 @@ function fiche(&$commande, &$TImport, $comment) {
 		echo $form->fichier('Fichier à importer','file1','',80);
 		echo $form->btsubmit('Envoyer', 'btsend');
 	}
-	// details expedition selectionnée
-	//tabImport($TImport,$commande,$comment);
+
+
 
 	$form->end();
 
-	_list_shipments_untreated($commande->shipmentsFromSupplier,$commande->id);
-	//_list_already_dispatched($commande);
+	// ICI SWITCH SI FOURNISSEUR LINKÉ
+	if (is_supplier_Linked($conf->entity,$commande->socid)){
+
+		_list_shipments_untreated($commande->shipmentsFromSupplier,$commande->id);
+
+	}else{
+
+		dol_include_once('/dispatch/class/receptionbdr.php' );
+		// details expedition selectionnée
+		tabImport($TImport,$commande,$comment);
+
+		_list_already_dispatched($commande);
+
+	}
+
 
 	dol_fiche_end($notab);
 	llxFooter();
@@ -1514,4 +1536,113 @@ function printJSSerialNumberAutoDeduce() {
 	</script>
 
 	<?php
+}
+
+function is_supplier_Linked($entity,$socid){
+	global $db;
+
+	$sql = "SELECT DISTINCT te.rowid , te.fk_soc , te.entity , te.fk_entity FROM ".MAIN_DB_PREFIX."societe as s , ".MAIN_DB_PREFIX."thirdparty_entity as te WHERE ";
+	$sql .= "te.entity=".$entity;
+	$sql .= " AND te.fk_soc =".$socid;
+
+	return  !is_null($db->fetch_object($db->query($sql)));
+}
+
+/**
+ * copyed from receptionBdr.
+ * @param $bdr
+ */
+function _list_already_dispatched(&$bdr) {
+	global $db, $langs, $bc, $conf;
+
+	// List of lines already dispatched
+	$sql = "SELECT p.ref, p.label,";
+	if ((float) DOL_VERSION <= 6.0) $sql.= " e.rowid as warehouse_id, e.label as entrepot,";
+	else $sql.= " e.rowid as warehouse_id, e.ref as entrepot,";
+	$sql.= " brd.rowid as dispatchlineid, brd.fk_product, brd.qty";
+	if ((float) DOL_VERSION > 3.7) $sql .= ", brd.eatby, brd.sellby, brd.batch, brd.comment";
+	$sql.= " FROM ".MAIN_DB_PREFIX."product as p,";
+	$sql.= " ".MAIN_DB_PREFIX."bonderetour_dispatch as brd";
+	$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."entrepot as e ON brd.fk_entrepot = e.rowid";
+	$sql.= " WHERE brd.fk_bonderetour = ".$bdr->id;
+	$sql.= " AND brd.fk_product = p.rowid";
+	$sql.= " ORDER BY brd.rowid ASC";
+
+	$resql = $db->query($sql);
+	if ($resql)
+	{
+		$num = $db->num_rows($resql);
+		$i = 0;
+
+		if ($num > 0)
+		{
+			print "<br/>\n";
+
+			print load_fiche_titre($langs->trans("ReceivingForSameBDR"));
+
+			print '<table class="noborder" width="100%">';
+
+			print '<tr class="liste_titre">';
+			print '<td>'.$langs->trans("Description").'</td>';
+			if (! empty($conf->productbatch->enabled) && (float) DOL_VERSION > 3.7)
+			{
+				print '<td>'.$langs->trans("batch_number").'</td>';
+				print '<td>'.$langs->trans("l_eatby").'</td>';
+				print '<td>'.$langs->trans("l_sellby").'</td>';
+			}
+			print '<td align="right">'.$langs->trans("QtyDispatched").'</td>';
+			print '<td></td>';
+			print '<td>'.$langs->trans("Warehouse").'</td>';
+			print '<td>'.$langs->trans("Comment").'</td>';
+
+			print "</tr>\n";
+
+			$var=false;
+
+			while ($i < $num)
+			{
+				$objp = $db->fetch_object($resql);
+
+				print "<tr ".$bc[$var].">";
+				print '<td>';
+				print '<a href="'.DOL_URL_ROOT.'/product/fournisseurs.php?id='.$objp->fk_product.'">'.img_object($langs->trans("ShowProduct"),'product').' '.$objp->ref.'</a>';
+				print ' - '.$objp->label;
+				print "</td>\n";
+
+				if (! empty($conf->productbatch->enabled) && (float) DOL_VERSION > 3.7)
+				{
+					print '<td>'.$objp->batch.'</td>';
+					print '<td>'.dol_print_date($db->jdate($objp->eatby),'day').'</td>';
+					print '<td>'.dol_print_date($db->jdate($objp->sellby),'day').'</td>';
+				}
+
+				// Qty
+				print '<td align="right">'.$objp->qty.'</td>';
+				print '<td>&nbsp;</td>';
+
+				// Warehouse
+				print '<td>';
+				$warehouse_static = new Entrepot($db);
+				$warehouse_static->id=$objp->warehouse_id;
+				$warehouse_static->libelle=$objp->entrepot;
+				print $warehouse_static->getNomUrl(1);
+				print '</td>';
+
+				// Comment
+				print '<td>'.dol_trunc($objp->comment).'</td>';
+
+				print "</tr>\n";
+
+				$i++;
+				$var=!$var;
+			}
+			$db->free($resql);
+
+			print "</table>\n";
+		}
+	}
+	else
+	{
+		dol_print_error($db);
+	}
 }
