@@ -128,6 +128,7 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
 	$form = new TFormCore();
 	$prod = new Product($db);
+	$output = '';
 
 	foreach ($currentExp->lines as $k=>$line) {
 		$prod->fetch($line->fk_product);
@@ -136,6 +137,8 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
 			foreach ($line->equipement as $key=>$eq){
 				// equipements
+				var_dump($eq);
+				exit;
 
 				// $asset=new TAsset;
 				$output .="<tr class='dispatchAssetLine oddeven' id='dispatchAssetLine'".$key."' data-fk-product='".$prod->id."'>";
@@ -211,7 +214,7 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
 
 		//LOTS
-		if(! empty(Head$conf->global->USE_LOT_IN_OF)) {
+		if(! empty($conf->global->USE_LOT_IN_OF)) {
 			 $output .= "<td>".$form->texte('','TLine['.$k.'][lot_number]', $line->lot_number, 30)."</td>";
 		}
 
