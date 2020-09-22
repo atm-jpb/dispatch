@@ -135,8 +135,8 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
 			foreach ($line->equipement as $key=>$eq){
 				// equipements
-				var_dump($eq);
-				exit;
+				//var_dump($eq);
+				//exit;
 
 				// $asset=new TAsset;
 				$output .="<tr class='dispatchAssetLine oddeven' id='dispatchAssetLine'".$key."' data-fk-product='".$prod->id."'>";
