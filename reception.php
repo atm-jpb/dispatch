@@ -24,25 +24,27 @@
 	$langs->load('stocks');
 	$langs->load('dispatch@dispatch');
 
-	$id = GETPOST('id');
-	$ref = GETPOST('ref');
-
 	$hookmanager->initHooks(array('receptionstockcard'));
 
-	$commandefourn = new CommandeFournisseur($db);
-	$commandefourn->fetch($id, $ref);
-
+	$id = GETPOST('id');
+	$ref = GETPOST('ref');
 	$action = GETPOST('action');
 	$comment = GETPOST('comment');
-	$TImport = _loadDetail($PDOdb,$commandefourn);
 	$post_create_ventilation_expe = GETPOST('bt_create');
 	$TLine = GETPOST('TLine');
 	$date_recep  = GETPOST('date_recep');
 	$comment  = GETPOST('comment');
+	$btSave = GETPOST('bt_save');
+	$toDispatch = GETPOST('ToDispatch');
+	$newLineFkProduct = GETPOST('new_line_fk_product');
+	$tOrderLine = GETPOST('TOrderLine');
+
+	$commandefourn = new CommandeFournisseur($db);
+	$commandefourn->fetch($id, $ref);
+	$TImport = _loadDetail($PDOdb,$commandefourn);
 
 	$parameters=array();
 	$hookmanager->executeHooks('doAction',$parameters, $commandefourn, $action);
-
 
 	if(isset($_FILES['file1']) && $_FILES['file1']['name']!='') {
 		$f1  =file($_FILES['file1']['tmp_name']);
@@ -70,7 +72,10 @@
 		setEventMessage('Ligne supprimée');
 
 	}
-	elseif(isset($_POST['bt_save']) || $_POST['ToDispatch']) {
+
+	////////// GESTION DE OFSOM ///////////
+	// Not linked supplier "OFSOM"
+	elseif(!empty($btSave) || $toDispatch) {
 
 		foreach($TLine as $k=>$line) {
 			//unset($TImport[(int)$k]); //AA mais à quoi ça sert
@@ -78,8 +83,8 @@
 			// Modification
 			if (!empty($line['fk_product']) ) {
 				$fk_product = $line['fk_product'];
-			} else if (!empty($_POST['new_line_fk_product']) ) { // Ajout
-				$fk_product = $_POST['new_line_fk_product'];
+			} else if (!empty($newLineFkProduct) ) { // Ajout
+				$fk_product = $newLineFkProduct;
 			}
 
 			// Si aucun produit renseigné mais numéro de série renseigné
@@ -121,17 +126,16 @@
 			setEventMessage('Modifications enregistrées');
 		}
 
-		if ($_POST['ToDispatch']) {
-			$ToDispatch = GETPOST('ToDispatch');
-			if(!empty($ToDispatch)) {
-				foreach($ToDispatch as $fk_product=>$dummy) {
+		if ($toDispatch) {
+			if(!empty($toDispatch)) {
+				foreach($toDispatch as $fk_product=>$dummy) {
 
 					$product = new Product($db);
 					$product->fetch($fk_product);
 
 
-					$qty = (int)$_POST['TOrderLine'][$fk_product]['qty'];
-					$fk_warehouse =(int) empty($_POST['TOrderLine'][$fk_product]['entrepot']) ? GETPOST('id_entrepot') : $_POST['TOrderLine'][$fk_product]['entrepot'];
+					$qty = (int)$tOrderLine[$fk_product]['qty'];
+					$fk_warehouse =(int) empty($tOrderLine[$fk_product]['entrepot']) ? GETPOST('id_entrepot') : $tOrderLine[$fk_product]['entrepot'];
 
 					for($ii = 0; $ii < $qty; $ii++) {
 						$TImport[] =array(
@@ -156,34 +160,36 @@
 		    exit;
         }
 	}
+	// In this case = linked supplier "OFSOM"
 	elseif(isset($post_create_ventilation_expe) && !empty($post_create_ventilation_expe)) {
 
 		$PDOdb=new TPDOdb;
-		$time_date_recep = Tools::get_time($_POST['date_recep']);
+		$time_date_recep = Tools::get_time($date_recep);
 
-		//Tableau provisoir qui permettra la ventilation standard Dolibarr après la création des équipements
+		// Tableau provisoire qui permettra la ventilation standard Dolibarr après la création des équipements
 		$TProdVentil = array();
-
 		$TAssetVentil=array();
-
         $TAssetCreated = array();
 
-        $asset = new TAsset($db);
+        $asset = new TAsset();
 
 		//Use to calculated corrected order status at the end of dispatch/serialize process
 		$TQtyDispatch=array();
-
 		$TQtyWished=array();
 
 		$commandefourn->fetch_thirdparty();
 
-
 		$Tlength = count($TLine);
-		foreach($TImport as $k=>&$line) {
+		for ($i = 0; $i < $Tlength; $i++){
+			$TImport[$i]['numserie'] = $TLine[$i]['numserie'];
+			$TImport[$i]['ref'] = $TLine[$i]['ref'];
+			$TImport[$i]['fk_product'] = $TLine[$i]['fk_product'];
+			$TImport[$i]['fk_entrepot'] = $TLine[$i]['entrepot'];
+			$TImport[$i]['fk_warehouse'] = $TLine[$i]['entrepot'];
+			$TImport[$i]['quantity'] = $TLine[$i]['quantity'];
+		}
 
-			for ($i = 0; $i < $Tlength; $i++){
-				$TImport[$i]['numserie'] = $TLine[$i]['numserie'];
-			}
+		foreach($TImport as $k=>&$line) {
 
 			// Dans le cas où on gère des lots et non des numéros de série
 			if(!empty($conf->global->DISPATCH_CREATE_NUMSERIE_ON_RECEPTION_IF_LOT) && empty($line['numserie']) && !empty($line['lot_number'])) {
@@ -206,11 +212,10 @@
 				setEventMessage("Pas de numéro de série : impossible de créer l'équipement pour ".$line['ref'].". Si vous ne voulez pas sérialiser ce produit, supprimez les lignes de numéro de série et faites une réception simple. ","errors");
 			}
 
-			// On vérifie qu'on a des équipements déjà crées chez nous
+			// On vérifie qu'on a pas d'équipements déjà créés chez nous avec ce numéro de série
 			else if(!$asset->loadReference($PDOdb, $line['numserie'], $line['fk_product'])) {
-
 				// si inexistant
-				//Seulement si nouvelle ligne
+				// Seulement si nouvelle ligne
 
 				if($k == -1){
 					_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware'],$line['lot_number'],$line['quantity'],$line['quantity_unit'],null,null,$line['fk_warehouse'], $comment);
@@ -273,16 +278,16 @@
 				//pre($asset,true);exit;
 				// Le destockage dans Dolibarr est fait par la fonction de ventilation plus loin, donc désactivation du mouvement créé par l'équipement.
 //				$asset->save($PDOdb, $user,$langs->trans("Asset").' '.$asset->serial_number.' '. $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $line['quantity'], false, $line['fk_product'], false,$fk_entrepot);
-				$TAssetCreated[$asset->fk_product][] = $asset->save($PDOdb, $user, '', 0, false, 0, true,$fk_entrepot);
+//				$TAssetCreated[$asset->fk_product][] = $asset->save($PDOdb, $user, '', 0, false, 0, true,$fk_entrepot);
 
 
-
+				var_dump($line);
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot]['qty']+=$line['quantity'];
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot]['price']+=$line['quantity']*$asset->prix_achat;
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['qty']=$line['quantity'];
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['price']=$line['quantity']*$asset->prix_achat;
 @				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['comment']=$comment;
-
+				var_dump($TAssetVentil);
 
 /*				$TImport[$k]['numserie'] = $asset->serial_number;
 
@@ -556,8 +561,6 @@ function fiche(&$commande, &$TImport, $comment) {
 		_list_shipments_untreated($commande->shipmentsFromSupplier,$commande->id);
 
 	}else{
-
-		dol_include_once('/dispatch/class/receptionbdr.php' );
 		// details expedition selectionnée
 		tabImport($TImport,$commande,$comment);
 
@@ -1074,6 +1077,13 @@ function entetecmd(&$commande)
 	//if ($mesg) print $mesg;
 }
 
+
+/**
+ * Remonte les informations des équipements liées aux lignes de la commande fournisseur
+ * @param $PDOdb
+ * @param $commandefourn
+ * @return array  tableau d'import des équipements
+ */
 function _loadDetail(&$PDOdb,&$commandefourn){
 
 	$TImport = array();
@@ -1091,16 +1101,16 @@ function _loadDetail(&$PDOdb,&$commandefourn){
 		while ($PDOdb->Get_line()) {
 			$TImport[] =array(
 					'ref'=>$PDOdb->Get_field('ref')
-			,'numserie'=>$PDOdb->Get_field('serial_number')
-			,'lot_number'=>$PDOdb->Get_field('lot_number')
-			,'quantity'=>$PDOdb->Get_field('weight_reel')
-			,'quantity_unit'=>$PDOdb->Get_field('weight_reel_unit')
-			,'imei'=>$PDOdb->Get_field('imei')
-			,'firmware'=>$PDOdb->Get_field('firmware')
-			,'fk_product'=>$PDOdb->Get_field('rowid')
-			,'fk_warehouse'=>$PDOdb->Get_field('fk_warehouse')
-			,'dluo'=>$PDOdb->Get_field('dluo')
-			,'commande_fournisseurdet_asset'=>$PDOdb->Get_field('idline')
+					,'numserie'=>$PDOdb->Get_field('serial_number')
+					,'lot_number'=>$PDOdb->Get_field('lot_number')
+					,'quantity'=>$PDOdb->Get_field('weight_reel')
+					,'quantity_unit'=>$PDOdb->Get_field('weight_reel_unit')
+					,'imei'=>$PDOdb->Get_field('imei')
+					,'firmware'=>$PDOdb->Get_field('firmware')
+					,'fk_product'=>$PDOdb->Get_field('rowid')
+					,'fk_warehouse'=>$PDOdb->Get_field('fk_warehouse')
+					,'dluo'=>$PDOdb->Get_field('dluo')
+					,'commande_fournisseurdet_asset'=>$PDOdb->Get_field('idline')
 			);
 		}
 	}
@@ -1110,13 +1120,12 @@ function _loadDetail(&$PDOdb,&$commandefourn){
 
 function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null,$comment=''){
 	global $db, $conf, $user;
-	//var_dump($TLine);exit;
 	//Charge le produit associé à l'équipement
 	$prodAsset = new Product($db);
 	$prodAsset->fetch('',$refproduit);
 
 	//TODO incompréhensible - Cette notion est dispo depuis la 3.9 mettre à jour
-	//Récupération de l'indentifiant de la ligne d'expédition concerné par le produit
+	//Récupération de l'identifiant de la ligne d'expédition concernée par le produit
 	foreach($commandefourn->lines as $commandeline){
 		if($commandeline->fk_product == $prodAsset->id){
 			$fk_line = $commandeline->id;
@@ -1167,17 +1176,17 @@ function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$nums
 
 	$currentLine = array(
 			'ref'=>$prodAsset->ref
-	,'numserie'=>$numserie
-	,'lot_number'=>$lot_number
-	,'quantity'=>$quantity
-	,'quantity_unit'=>$quantity_unit
-	,'fk_product'=>$prodAsset->id
-	,'fk_warehouse'=>$entrepot
-	,'imei'=>$imei
-	,'firmware'=>$firmware
-	,'dluo'=>$recepdetail->get_date('dluo','Y-m-d H:i:s')
-	,'commande_fournisseurdet_asset'=>$recepdetail->getId()
-	);
+			,'numserie'=>$numserie
+			,'lot_number'=>$lot_number
+			,'quantity'=>$quantity
+			,'quantity_unit'=>$quantity_unit
+			,'fk_product'=>$prodAsset->id
+			,'fk_warehouse'=>$entrepot
+			,'imei'=>$imei
+			,'firmware'=>$firmware
+			,'dluo'=>$recepdetail->get_date('dluo','Y-m-d H:i:s')
+			,'commande_fournisseurdet_asset'=>$recepdetail->getId()
+			);
 
 	//Rempli le tableau utilisé pour l'affichage des lignes
 	($lineFound) ? $TImport[$k] = $currentLine : $TImport[] =$currentLine ;
