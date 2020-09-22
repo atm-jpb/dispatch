@@ -207,15 +207,15 @@
 				}
 
 			}
-
-			if(empty($line['numserie'])) {
+			// Si on a une fk_asset, cela veut dire qu'on est un équipement et donc qu'on attend d'avoir un numéro de série afin d'être créé
+			// Si fk_asset = null, cela veut dire qu'on est un produit "non sérialisé"
+			if(empty($line['numserie']) && (!is_null($line['fk_asset']))) {
 				setEventMessage("Pas de numéro de série : impossible de créer l'équipement pour ".$line['ref'].". Si vous ne voulez pas sérialiser ce produit, supprimez les lignes de numéro de série et faites une réception simple. ","errors");
 			}
-
-			// On vérifie qu'on a pas d'équipements déjà créés chez nous avec ce numéro de série
-			else if(!$asset->loadReference($PDOdb, $line['numserie'], $line['fk_product'])) {
-				// si inexistant
-				// Seulement si nouvelle ligne
+			// Ici, on a un fk_asset et un numéro de série renseigné
+			// Mais on vérifie que cet équipement n'est pas déjà créé chez nous
+			else if(!$asset->loadReference($PDOdb, $line['numserie'], $line['fk_product']) && (!is_null($line['fk_asset']))) {
+				var_dump($line['ref']);
 
 				if($k == -1){
 					_addCommandedetLine($PDOdb,$TImport,$commandefourn,$line['ref'],$line['numserie'],$line['$imei'],$line['$firmware'],$line['lot_number'],$line['quantity'],$line['quantity_unit'],null,null,$line['fk_warehouse'], $comment);
@@ -262,6 +262,7 @@
 					}
 				}
 
+				// OPTIONS DE GARANTIE
 				$nb_year_garantie+=$prod->array_options['options_duree_garantie_fournisseur'];
 
 				$asset->date_fin_garantie_fourn = strtotime('+'.$nb_year_garantie.'year', $time_date_recep);
@@ -278,22 +279,21 @@
 				//pre($asset,true);exit;
 				// Le destockage dans Dolibarr est fait par la fonction de ventilation plus loin, donc désactivation du mouvement créé par l'équipement.
 //				$asset->save($PDOdb, $user,$langs->trans("Asset").' '.$asset->serial_number.' '. $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $line['quantity'], false, $line['fk_product'], false,$fk_entrepot);
-//				$TAssetCreated[$asset->fk_product][] = $asset->save($PDOdb, $user, '', 0, false, 0, true,$fk_entrepot);
+				$TAssetCreated[$asset->fk_product][] = $asset->save($PDOdb, $user, '', 0, false, 0, true,$fk_entrepot);
 
 
-				var_dump($line);
-@				$TAssetVentil[$line['fk_product']][$fk_entrepot]['qty']+=$line['quantity'];
-@				$TAssetVentil[$line['fk_product']][$fk_entrepot]['price']+=$line['quantity']*$asset->prix_achat;
-@				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['qty']=$line['quantity'];
-@				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['price']=$line['quantity']*$asset->prix_achat;
-@				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['comment']=$comment;
-				var_dump($TAssetVentil);
+				$TAssetVentil[$line['fk_product']][$fk_entrepot]['qty']+=$line['quantity'];
+				$TAssetVentil[$line['fk_product']][$fk_entrepot]['price']+=$line['quantity']*$asset->prix_achat;
+				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['qty']=$line['quantity'];
+				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['price']=$line['quantity']*$asset->prix_achat;
+				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['comment']=$comment;
 
 /*				$TImport[$k]['numserie'] = $asset->serial_number;
 
 				$stock = new TAssetStock;
 				$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $asset->contenancereel_value, $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $commandefourn->id);
 	*/
+				//TODO /!\ à modifier... (remonter l'info dans interfaceTest)
 				if($asset->serial_number != $line['numserie']){
 					$receptDetailLine = new TRecepDetail;
 					$receptDetailLine->load($PDOdb, $line['commande_fournisseurdet_asset']);
@@ -301,14 +301,13 @@
 					$receptDetailLine->save($PDOdb);
 				}
 
-				//Compteur pour chaque produit : 1 équipement = 1 quantité de produit ventilé
-			//	$TProdVentil[$asset->fk_product]['qty'] += ($line['quantity']) ? $line['quantity'] : 1;
+				// Compteur pour chaque produit : 1 équipement = 1 quantité de produit ventilé
+				// Deprecated >>
+				//	$TProdVentil[$asset->fk_product]['qty'] += ($line['quantity']) ? $line['quantity'] : 1;
 			}
-			else
-			{
+			else {
 				setEventMessage($langs->trans('AssetAlreadyLinked') . ' : ' . $line['numserie'], 'errors');
 			}
-
 		}
 
 

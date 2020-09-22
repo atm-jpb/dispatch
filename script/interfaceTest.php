@@ -25,11 +25,6 @@ $idCommand = dol_htmlentitiesbr(GETPOST('comFourn'));
 
 $JsonOutput = new stdClass();
 
-// on genere l'UI autoCompletée avec le bouton enregistrer
-
-// on flag l'expedition à traitée
-
-// le client reload la page  et affiche les expé non traité.
 
 // LoadLinesExpedition
 if (isset($action) && $action == 'loadExpeLines'){
@@ -47,6 +42,8 @@ if (isset($action) && $action == 'loadExpeLines'){
 	$JsonOutput->html .= '</form>';
 }
 print json_encode($JsonOutput);
+
+
 /**
  * la commande client générée automatiquement chez (Entité A)
  * depuis une commande fournisseur passée par entité B (pour son founisseur Entité A)
@@ -81,8 +78,6 @@ function getEquipmentsFromSupplier(&$currentExpe){
 	}
 
 }
-
-
 function formatDisplayTableProductsHeader(){
 	global $conf, $langs,$db;
 
@@ -147,17 +142,26 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 	$TAllProductsAndAssets = array_merge($TEquipements, $TStandard);
 
 	foreach ($TAllProductsAndAssets as $key=>$line) {
-		$prod->fetch($line->fk_product);
+		if (is_array($line)) {
+			$fk_asset = $line['obj']->fk_asset;
+		}else {$fk_asset = null;}
+
+		is_array($line) ? $prod->fetch($line['obj']->fk_product) : $prod->fetch($line->fk_product);
 
 		$output .="<tr class='dispatchAssetLine oddeven' id='dispatchAssetLine'".$key."' data-fk-product='".$prod->id."'>";
-		$output .="<td>".$prod->getNomUrl(1).$form->hidden('TLine['.$key.'][fk_product]', $prod->id).$form->hidden('TLine['.$key.'][ref]', $prod->ref)." - ".$prod->label."</td>";
+		$output .="<td>".
+				$prod->getNomUrl(1).
+				$form->hidden('TLine['.$key.'][fk_product]', $prod->id).
+				$form->hidden('TLine['.$key.'][ref]', $prod->ref)." - ".
+				$prod->label.
+				$form->hidden('TLine['.$key.'][fk_asset]', $fk_asset).
+				"</td>";
 		$output .='<td>';
 
 		if (is_array($line)) {
-			$output .= $form->texte('', 'TLine[' . $key . '][numserie]', $eq['obj']->serial_number, 30);
+			$output .= $form->texte('', 'TLine[' . $key . '][numserie]', $line['obj']->serial_number, 30);
 		}
 		$output .= '</td>';
-
 
 		// ENTREPOT
 		$output .='<td rel="entrepotChild" fk_product="'.$prod->id.'">';
@@ -182,7 +186,7 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
 		// QTY
 		if (is_array($line)) {
-			$output .= "<td>" . $form->hidden('TLine[' . $key . '][qty]', 1) . "1</td>";
+			$output .= "<td>" . $form->hidden('TLine['.$key.'][quantity]', 1) . "1</td>";
 		}
 		else {
 			$output .='<td>'.$line->qty_shipped.'</td>';
@@ -190,7 +194,7 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
 		//LOTS
 		if(! empty($conf->global->USE_LOT_IN_OF)) {
-			 $output .= "<td>".$form->texte('','TLine['.$k.'][lot_number]', $line->lot_number, 30)."</td>";
+			 $output .= "<td>".$form->texte('','TLine['.$key.'][lot_number]', $line->lot_number, 30)."</td>";
 		}
 
 		//DLUO
