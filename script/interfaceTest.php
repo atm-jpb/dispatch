@@ -128,125 +128,95 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 	$prod = new Product($db);
 	$output = '';
 
+	$TEquipements = array();
+	$TStandard = array();
+
 	foreach ($currentExp->lines as $k=>$line) {
+		if ($line->equipement) {
+			foreach ($line->equipement as $key => $eq) {
+				$eq['obj']->ref = $line->ref;
+				$eq['obj']->qty = 1;
+				$TEquipements[] = $eq;
+			}
+		}
+		else{
+			$TStandard[] = $line;
+		}
+	}
+
+	$TAllProductsAndAssets = array_merge($TEquipements, $TStandard);
+
+	foreach ($TAllProductsAndAssets as $key=>$line) {
 		$prod->fetch($line->fk_product);
-		//print_r ($line);
-		if ($line->equipement){
 
-			foreach ($line->equipement as $key=>$eq){
-				// equipements
+		$output .="<tr class='dispatchAssetLine oddeven' id='dispatchAssetLine'".$key."' data-fk-product='".$prod->id."'>";
+		$output .="<td>".$prod->getNomUrl(1).$form->hidden('TLine['.$key.'][fk_product]', $prod->id).$form->hidden('TLine['.$key.'][ref]', $prod->ref)." - ".$prod->label."</td>";
+		$output .='<td>';
 
-				// $asset=new TAsset;
-				$output .="<tr class='dispatchAssetLine oddeven' id='dispatchAssetLine'".$key."' data-fk-product='".$prod->id."'>";
-				$output .="<td>".$prod->getNomUrl(1).$form->hidden('TLine['.$key.'][fk_product]', $prod->id).$form->hidden('TLine['.$key.'][ref]', $prod->ref)." - ".$prod->label."</td>";
-				$output .='<td>';
-
-				$output .=$form->texte('','TLine['.$key.'][numserie]', $eq['obj']->serial_number, 30);
-				//$warning_asset = true;
-				//$output .= $form->hidden('TLine['.$k.'][commande_fournisseurdet_asset]', $line->commande_fournisseurdet_asset, 30);
-				$output .= '</td>';
-
-				// ENTREPOT
-				$output .='<td rel="entrepotChild" fk_product="'.$prod->id.'">';
-				dol_include_once('/product/class/html.formproduct.class.php');
-
-				$formproduct=new FormProduct($db);
-				$backupEntity = $conf->entity;
-
-				$conf->entity = $entity;
-				$formproduct->loadWarehouses();
-
-				if (count($formproduct->cache_warehouses) > 1) {
-							  //$formproduct->selectWarehouses($lines[$i]->entrepot_id, 'entl'.$line_id, '', 1, 0, $lines[$i]->fk_product, '', 1)
-					$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$key.'][entrepot]','',1,0,$prod->id,'',1);
-				} elseif  (count($formproduct->cache_warehouses)==1) {
-					$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$key.'][entrepot]','',0,0,$prod->id,'',0,1);
-				} else {
-					$output .= $langs->trans("NoWarehouseDefined");
-				}
-
-				$output .='</td>';
-
-				// qty
-				$output .='<td>1</td>';
-			}
-
-		}else{
-			// product
-			$output .="<tr class='dispatchAssetLine oddeven' id='dispatchAssetLine'".$k."' data-fk-product='".$prod->id."'>";
-			$output .="<td>".$prod->getNomUrl(1).$form->hidden('TLine['.$k.'][fk_product]', $prod->id).$form->hidden('TLine['.$k.'][ref]', $prod->ref)." - ".$prod->label."</td>";
-			$output .='<td></td>';
-
-			// ENTREPOT
-			$output .='<td rel="entrepotChild" fk_product="'.$prod->id.'">';
-			dol_include_once('/product/class/html.formproduct.class.php');
-
-			$formproduct=new FormProduct($db);
-			$backupEntity = $conf->entity;
-
-			$conf->entity = $entity;
-			$formproduct->loadWarehouses();
-
-			if (count($formproduct->cache_warehouses) > 1) {
-
-				$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',1,0,$prod->id,'',1);
-			} elseif  (count($formproduct->cache_warehouses)==1) {
-			    $formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$k.'][entrepot]','',0,0,$prod->id,'',1);
-			} else {
-				$output .= $langs->trans("NoWarehouseDefined");
-			}
-
-			$output .='</td>';
+		if (is_array($line)) {
+			$output .= $form->texte('', 'TLine[' . $key . '][numserie]', $eq['obj']->serial_number, 30);
+		}
+		$output .= '</td>';
 
 
+		// ENTREPOT
+		$output .='<td rel="entrepotChild" fk_product="'.$prod->id.'">';
+		dol_include_once('/product/class/html.formproduct.class.php');
 
+		$formproduct=new FormProduct($db);
+		$backupEntity = $conf->entity;
 
-			// qty
-			$output .='<td>'.$line->qty_shipped.'</td>';
+		$conf->entity = $entity;
+		$formproduct->loadWarehouses();
 
-			//$output .= $form->hidden('TLine['.$k.'][commande_fournisseurdet_asset]', $line->commande_fournisseurdet_asset, 30);
+		if (count($formproduct->cache_warehouses) > 1) {
 
+			$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$key.'][entrepot]','',1,0,$prod->id,'',1);
+		} elseif  (count($formproduct->cache_warehouses)==1) {
+			$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$key.'][entrepot]','',0,0,$prod->id,'',0,1);
+		} else {
+			$output .= $langs->trans("NoWarehouseDefined");
 		}
 
+		$output .='</td>';
+
+		// QTY
+		if (is_array($line)) {
+			$output .= "<td>" . $form->hidden('TLine[' . $key . '][qty]', 1) . "1</td>";
+		}
+		else {
+			$output .='<td>'.$line->qty_shipped.'</td>';
+		}
 
 		//LOTS
 		if(! empty($conf->global->USE_LOT_IN_OF)) {
 			 $output .= "<td>".$form->texte('','TLine['.$k.'][lot_number]', $line->lot_number, 30)."</td>";
 		}
 
-			//dluo
-			if(!empty($conf->global->ASSET_SHOW_DLUO)){
-					//$output .='<td>'.$form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo']))).'</td>';
-			}
+		//DLUO
+		if(!empty($conf->global->ASSET_SHOW_DLUO)){
+				//$output .='<td>'.$form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo']))).'</td>';
+		}
 
-			if(empty($conf->global->DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION)) {
-
-			//$output .='<td>'.$form->texte('','TLine['.$k.'][quantity]', $line->quantity, 10).'</td>';
+		if(empty($conf->global->DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION)) {
+		//$output .='<td>'.$form->texte('','TLine['.$k.'][quantity]', $line->quantity, 10).'</td>';
 
 //					if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) {
 //						echo '<td>'. ($commande->statut < 5) ? $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']) : measuring_units_string($line['quantity_unit'],'weight').'</td>';
 //					}
+		}
+		else{
+				$output .= $form->hidden('TLine['.$key.'][quantity]', $line->quantity);
+				$output .=$form->hidden('TLine['.$key.'][quantity_unit]',$line->quantity_unit);
 			}
-			else{
-					$output .= $form->hidden('TLine['.$k.'][quantity]', $line->quantity);
-					$output .=$form->hidden('TLine['.$k.'][quantity_unit]',$line->quantity_unit);
-				}
 
-			if($conf->global->clinomadic->enabled){
+		if($conf->global->clinomadic->enabled){
 
-				$output .='<td>'.$form->texte('','TLine['.$k.'][imei]', $line->imei, 30).'</td>';
-				$output .='<td>'.$form->texte('','TLine['.$k.'][firmware]', $line->firmware, 30).'</td>';
-			}
-//		$parameters=array('line' => $line, 'prod' => $prod, 'k' => $k);
-//		$reshook=$hookmanager->executeHooks('printFieldListValue',$parameters);    // Note that $action and $object may have been modified by hook
-//		print $hookmanager->resPrint;
+			$output .='<td>'.$form->texte('','TLine['.$key.'][imei]', $line->imei, 30).'</td>';
+			$output .='<td>'.$form->texte('','TLine['.$key.'][firmware]', $line->firmware, 30).'</td>';
+		}
 
 		$output .='<td>';
-
-//					if($commande->statut < 5 && $line['commande_fournisseurdet_asset'] > 0){
-//						echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$commande->id.'&rowid='.$line['commande_fournisseurdet_asset'].'">'.img_delete().'</a>';
-//					}
-
 		$output .='</td>';
 		$output .='</tr>';
 		$conf->entity =  $backupEntity;
