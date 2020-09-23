@@ -157,6 +157,12 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 				$form->hidden('TLine['.$key.'][fk_asset]', $fk_asset).
 				"</td>";
 		$output .='<td>';
+		if (is_object($line)) {
+			$output .= $form->hidden('TLine['.$key.'][subprice]', $line->subprice);
+			$output .= $form->hidden('TLine['.$key.'][supplier_price]', $line->supplier_price);
+			$output .= $form->hidden('TLine['.$key.'][supplier_qty]', $line->supplier_qty);
+			$output .= $form->hidden('TLine['.$key.'][generate_supplier_tarif]', $line->generate_supplier_tarif);
+		}
 
 		if (is_array($line)) {
 			$output .= $form->texte('', 'TLine[' . $key . '][numserie]', $line['obj']->serial_number, 30);
@@ -189,7 +195,7 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 			$output .= "<td>" . $form->hidden('TLine['.$key.'][quantity]', 1) . "1</td>";
 		}
 		else {
-			$output .='<td>'.$line->qty_shipped.'</td>';
+			$output .='<td>'. $form->hidden('TLine['.$key.'][quantity]', $line->qty_shipped). $line->qty_shipped.'</td>';
 		}
 
 		//LOTS

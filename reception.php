@@ -361,46 +361,38 @@
 		}
 
 		// PRISE EN COMPTE DES LIGNES NON VENTILÉES EN RÉCEPTION SIMPLE
-		$TOrderLine=GETPOST('TOrderLine');
 
-		if(!empty($TOrderLine)) {
+		if(!empty($TLine)) {
 
-			foreach($TOrderLine as &$line) {
+			foreach($TLine as &$line) {
 
-				if(!isset($TProdVentil[$line['fk_product']])) $TProdVentil[$line['fk_product']]['qty'] = 0;
-				$TProdVentil[$line['fk_product']]['price'] = $line['subprice'];
-				// Si serialisé on ne prend pas la quantité déjà calculé plus haut.
-				if(empty($line['serialized'] )) $TProdVentil[$line['fk_product']]['qty']+=$line['qty'];
+				if($line['fk_asset'] == 'standardProduct') {
 
-				if(!empty($line['entrepot']) && $line['entrepot']>0) {
-					$TProdVentil[$line['fk_product']]['entrepot'] = $line['entrepot'];
-				}
+					$TProdVentil[$line['fk_product']]['qty'] = $line['quantity'];
+					$TProdVentil[$line['fk_product']]['price'] = $line['subprice'];
 
-				if($conf->global->DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION)
-				{
-					$TProdVentil[$line['fk_product']]['supplier_price']=$line['supplier_price'];
-				}
+					if (!empty($line['entrepot']) && $line['entrepot'] > 0) {
+						$TProdVentil[$line['fk_product']]['entrepot'] = $line['entrepot'];
+					}
 
-				if($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE)
-				{
-					$TProdVentil[$line['fk_product']]['supplier_qty']=$line['supplier_qty'];
-					$TProdVentil[$line['fk_product']]['generate_supplier_tarif']=$line['generate_supplier_tarif'];
-				}
+					if ($conf->global->DISPATCH_UPDATE_ORDER_PRICE_ON_RECEPTION) {
+						$TProdVentil[$line['fk_product']]['supplier_price'] = $line['supplier_price'];
+					}
 
-				//Build array with quantity wished by product
-				if (array_key_exists('fk_product', $line) && !empty($line['fk_product']) && !array_key_exists($line['fk_product'], $TQtyDispatch)) {
-					$TQtyDispatch[$line['fk_product']]+=$line['qty'];
+					if ($conf->global->DISPATCH_CREATE_SUPPLIER_PRICE) {
+						$TProdVentil[$line['fk_product']]['supplier_qty'] = $line['supplier_qty'];
+						$TProdVentil[$line['fk_product']]['generate_supplier_tarif'] = $line['generate_supplier_tarif'];
+					}
+
+					// Build array with quantity wished by product
+					if (array_key_exists('fk_product', $line) && !empty($line['fk_product']) && !array_key_exists($line['fk_product'], $TQtyDispatch)) {
+						$TQtyDispatch[$line['fk_product']] += $line['quantity'];
+					}
 				}
 
 			}
 
 		}
-
-		$TProdVentil = array_filter($TProdVentil, function($line)
-		{
-			return $line['qty'] > 0;
-		});
-
 
 		dol_syslog(__METHOD__.' $TProdVentil='.var_export($TProdVentil,true), LOG_DEBUG);
 
