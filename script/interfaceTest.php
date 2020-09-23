@@ -144,7 +144,7 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 	foreach ($TAllProductsAndAssets as $key=>$line) {
 		if (is_array($line)) {
 			$fk_asset = $line['obj']->fk_asset;
-		}else {$fk_asset = null;}
+		}else {$fk_asset = "standardProduct";}
 
 		is_array($line) ? $prod->fetch($line['obj']->fk_product) : $prod->fetch($line->fk_product);
 
