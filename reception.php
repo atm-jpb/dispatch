@@ -69,7 +69,7 @@
 
 		$TImport = _loadDetail($PDOdb,$commandefourn);
 
-		setEventMessage('Ligne supprimée');
+		setEventMessage($langs->trans('DeletedLine'));
 
 	}
 
@@ -78,8 +78,6 @@
 	elseif(!empty($btSave) || $toDispatch) {
 
 		foreach($TLine as $k=>$line) {
-			//unset($TImport[(int)$k]); //AA mais à quoi ça sert
-
 			// Modification
 			if (!empty($line['fk_product']) ) {
 				$fk_product = $line['fk_product'];
@@ -89,7 +87,7 @@
 
 			// Si aucun produit renseigné mais numéro de série renseigné
 			if ($k == -1 && $fk_product <0 && !empty($line['numserie']) ) {
-				setEventMessage('Veuillez sélectioner un produit pour '.$line['numserie'].'.', 'errors');
+				setEventMessage($langs->trans('SelectAProduct').$line['numserie'].'.', 'errors');
 			}
 			else{
 				if ($fk_product > 0) {
@@ -105,10 +103,10 @@
 					}
 	
 					if (!$find) {
-						setEventMessage('Référence produit ('.$fk_product.') non présente dans la commande', 'errors');
+						setEventMessage($langs->trans('ProductNotInOrder', $fk_product), 'errors');
 					}
 					else if (empty($product->id)) {
-						setEventMessage('Référence produit ('.$fk_product.') introuvable', 'errors');
+						setEventMessage($langs->trans('RefProductNotFound', $fk_product), 'errors');
 					}
 					else {
 						$TImport = _addCommandedetLine($PDOdb,$TImport,$commandefourn,$product->ref,$line['numserie'],$line['imei'],$line['firmware'],$line['lot_number'],($line['quantity']) ? $line['quantity'] : 1,$line['quantity_unit'],$line['dluo'], $k, $line['entrepot'], $comment);
@@ -123,7 +121,7 @@
 		}
 
 		if (is_array($TLine) && count($TLine) > 1 && !$error) { // $TLine jamais vide, $TLine[-1] contient la nouvelle ligne
-			setEventMessage('Modifications enregistrées');
+			setEventMessage($langs->trans('SavedModifications'));
 		}
 
 		if ($toDispatch) {
@@ -210,7 +208,7 @@
 			// Si on a une fk_asset, cela veut dire qu'on est un équipement et donc qu'on attend d'avoir un numéro de série afin d'être créé
 			// Si fk_asset = null, cela veut dire qu'on est un produit "non sérialisé"
 			if (empty($line['numserie']) && ($line['fk_asset']) !== 'standardProduct') {
-				setEventMessage("Pas de numéro de série : impossible de créer l'équipement pour " . $line['ref'] . ". Si vous ne voulez pas sérialiser ce produit, supprimez les lignes de numéro de série et faites une réception simple. ", "errors");
+				setEventMessage($langs->trans('NoSerialNumber', $line['ref']), 'errors');
 			}
 			// Ici, on a un fk_asset et un numéro de série renseigné donc on est un équipement
 			// Mais on vérifie que cet équipement n'est pas déjà créé chez nous
@@ -227,8 +225,6 @@
 					$prod = new Product($db);
 					$prod->fetch($line['fk_product']);
 
-
-					var_dump($line['numserie']);
 					// Affectation du type d'équipement pour avoir accès aux extrafields équipement
 					$asset->fk_asset_type = $asset->get_asset_type($PDOdb, $prod->id);
 					$asset->load_asset_type($PDOdb);
@@ -280,9 +276,7 @@
 					//pre($asset,true);exit;
 					// Le destockage dans Dolibarr est fait par la fonction de ventilation plus loin, donc désactivation du mouvement créé par l'équipement.
 					//				$asset->save($PDOdb, $user,$langs->trans("Asset").' '.$asset->serial_number.' '. $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $line['quantity'], false, $line['fk_product'], false,$fk_entrepot);
-					var_dump("beforeCreatedAsset");
 					$TAssetCreated[$asset->fk_product][] = $asset->save($PDOdb, $user, '', 0, false, 0, true, $fk_entrepot);
-					var_dump($TAssetCreated);
 
 					$TAssetVentil[$line['fk_product']][$fk_entrepot]['qty'] += $line['quantity'];
 					$TAssetVentil[$line['fk_product']][$fk_entrepot]['price'] += $line['quantity'] * $asset->prix_achat;
@@ -290,12 +284,7 @@
 					$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['price'] = $line['quantity'] * $asset->prix_achat;
 					$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['comment'] = $comment;
 
-					/*				$TImport[$k]['numserie'] = $asset->serial_number;
 
-									$stock = new TAssetStock;
-									$stock->mouvement_stock($PDOdb, $user, $asset->getId(), $asset->contenancereel_value, $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $commandefourn->id);
-						*/
-					//TODO /!\ à modifier... (remonter l'info dans interfaceTest)
 					if ($asset->serial_number != $line['numserie']) {
 						$receptDetailLine = new TRecepDetail;
 						$receptDetailLine->load($PDOdb, $line['commande_fournisseurdet_asset']);
@@ -303,9 +292,6 @@
 						$receptDetailLine->save($PDOdb);
 					}
 
-					// Compteur pour chaque produit : 1 équipement = 1 quantité de produit ventilé
-					// Deprecated >>
-					//	$TProdVentil[$asset->fk_product]['qty'] += ($line['quantity']) ? $line['quantity'] : 1;
 				} else {
 					setEventMessage($langs->trans('AssetAlreadyLinked') . ' : ' . $line['numserie'], 'errors');
 				}
@@ -544,23 +530,17 @@ function fiche(&$commande, &$TImport, $comment) {
 		echo $form->btsubmit('Envoyer', 'btsend');
 	}
 
+	// details expedition selectionnée
 
-
-	$form->end();
 
 	// ICI SWITCH SI FOURNISSEUR LINKÉ
 	if (is_supplier_Linked($conf->entity,$commande->socid)){
-
 		_list_shipments_untreated($commande->shipmentsFromSupplier,$commande->id);
-
 	}else{
-		// details expedition selectionnée
 		tabImport($TImport,$commande,$comment);
-
+		$form->end();
 		_list_already_dispatched($commande);
-
 	}
-
 
 	dol_fiche_end($notab);
 	llxFooter();
@@ -569,12 +549,11 @@ function fiche(&$commande, &$TImport, $comment) {
 
 
 /**
- * récupoeration des expéditions
+ * Récupération des expéditions
  * @param $shipments
  */
 function _list_shipments_untreated(&$shipments , $idCmdFourn){
 	global $db, $langs, $conf, $user;
-	//var_dump($shipments);
 	print load_fiche_titre($langs->trans("ShipmentsList"));
 
 	print '<table class="noborder" width="100%">';
@@ -588,9 +567,8 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 		print '<td>'.$langs->trans("l_eatby").'</td>';
 		print '<td>'.$langs->trans("l_sellby").'</td>';
 	}
-	//print '<td align="right">'.$langs->trans("QtyDispatched").'</td>';
+
 	print '<td></td>';
-	//print '<td>'.$langs->trans("Warehouse").'</td>';
 	print '<td>'.$langs->trans("Comment").'</td>';
 	if (! empty($conf->global->SUPPLIER_ORDER_USE_DISPATCH_STATUS) && (float) DOL_VERSION > 3.7)
 		print '<td align="center" colspan="2">'.$langs->trans("Status").'</td>';
@@ -617,9 +595,6 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 		$extra->fetch_name_optionals_label($currentExp->table_element);
 		//$res = $currentExp->fetch($shipment->rowid);
 		$currentExp->fetch($shipment->rowid);
-		//$currentExp->fetch_optionals($shipment->rowid);
-		//var_dump(array($res, $currentExp->error, $currentExp->errors));
-		//var_dump($currentExp);
 		$conf->entity = $backupConfEntity;
 
 
@@ -704,7 +679,7 @@ global $langs, $db, $conf, $hookmanager;
 		print $langs->trans("OrderStatusNotReadyToDispatch");
 	}
 
-	//_show_product_ventil($TImport,$commande,$form);
+	_show_product_ventil($TImport, $commande, $form);
 
 	print load_fiche_titre($langs->trans("DispatchItemCountReception", count($TImport)), '', 'nothing');
 
@@ -725,7 +700,7 @@ global $langs, $db, $conf, $hookmanager;
 		<?php } ?>
 			<td><?php echo $langs->trans('Warehouse'); ?></td>
 		<?php if($conf->global->ASSET_SHOW_DLUO){ ?>
-				<td>DLUO</td>
+				<td><?php $langs->trans('DLUO'); ?></td>
 		<?php }
 		 if(empty($conf->global->DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION)) { ?>
 			<td><?php print $langs->trans('Quantity'); ?></td>
@@ -736,8 +711,8 @@ global $langs, $db, $conf, $hookmanager;
             }
 			if($conf->global->clinomadic->enabled){
 				?>
-				<td>IMEI</td>
-				<td>Firmware</td>
+				<td><?php $langs->trans('IMEI'); ?></td>
+				<td><?php $langs->trans('Firmware'); ?></td>
 				<?php
 			}
 
@@ -917,7 +892,7 @@ global $langs, $db, $conf, $hookmanager;
                     print $hookmanager->resPrint;
 
 					?>
-					<td>Nouveau
+					<td>
 					</td>
 				</tr>
 			<?php
@@ -1160,11 +1135,6 @@ function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$nums
 	$recepdetail->imei = $imei;
 	$recepdetail->firmware = $firmware;
 	$recepdetail->fk_warehouse = $entrepot;
-	/*$recepdetail->weight = 1;
-	 $recepdetail->weight_reel = 1;
-	 $recepdetail->weight_unit = 0;
-	 $recepdetail->weight_reel_unit = 0;*/
-
 	$recepdetail->save($PDOdb);
 
 	$currentLine = array(
@@ -1426,9 +1396,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 			}
 			print "</td>\n";
 
-
 			print '<td align="right">';
-			/*print $form->checkbox1('', 'TOrderLine['.$objp->fk_product.'][serialized]', 1, $serializedProduct); */
 
 			if($remaintodispatch==0) {
 				print $langs->trans('Yes').img_info('SerializedProductInfo');
