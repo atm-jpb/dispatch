@@ -589,7 +589,7 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 		$conf->entity = $backupConfEntity;
 
 		// On remonte l'extrafield caché de l'état de traitement de l'expédition.
-		if ($currentExp->array_options['options_customer_treated_shipment'] == "0"){
+		if (!$currentExp->array_options['options_customer_treated_shipment']){
 
 			print '<td>'.  $current_cmdFourn->getNomUrl() .'  ->   <span class="classfortooltip" title="'.$langs->trans("supplierOrderLinkedShipment").'">' .$shipment->ref.' </span></td>';
 			print '<td></td>';
@@ -640,7 +640,7 @@ function _list_shipments_treated(&$shipments , $idCmdFourn){
 			$conf->entity = $backupConfEntity;
 
 			// On remonte l'extrafield caché de l'état de traitement de l'expédition.
-			if ($currentExp->array_options['options_customer_treated_shipment'] == "1"){
+			if ($currentExp->array_options['options_customer_treated_shipment']){
 
 				print '<td>'.  $current_cmdFourn->getNomUrl() .'  ->   <span class="classfortooltip" title="'.$langs->trans("supplierOrderLinkedShipment").'">' .$shipment->ref.' </span></td>';
 				print '<td></td>';
@@ -1632,7 +1632,7 @@ function _isTreatedExpAlreadyExists($shipments) {
 	//array_map sur array d'object
 	$arrShimpemtsId = array_map(function($shipment){return $shipment->rowid;},$shipments);
 
-	$sql = 'SELECT count(*) FROM '.MAIN_DB_PREFIX . 'expedition_extrafields WHERE fk_object in (' . implode(",",$arrShimpemtsId) . ')';
+	$sql = 'SELECT * FROM '.MAIN_DB_PREFIX . 'expedition_extrafields WHERE fk_object in (' . implode(",",$arrShimpemtsId) . ') AND customer_treated_shipment = 1';
 	$resultset= $db->query($sql);
 
 	return $db->num_rows($resultset) > 0;
