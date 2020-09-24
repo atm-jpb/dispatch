@@ -488,9 +488,7 @@
 		if (isset($dataShipmentTreatedId) && !empty($dataShipmentTreatedId)) {
 			_set_treated_expedition_extrafield($dataShipmentTreatedId, $dataShipmentEntity);
 		}
-
 	}
-
 	fiche($commandefourn, $TImport, $comment);
 
 
@@ -600,7 +598,6 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 		}
 	}
 }
-
 
 /**
  * Affichage des expéditions traitées
@@ -1632,10 +1629,8 @@ function _set_treated_expedition_extrafield($idexpe, $shipmentEntity) {
 function _isTreatedExpAlreadyExists($shipments) {
 	global $db;
 
-	$arrShimpemtsId = array();
-	foreach ($shipments as $shipment){
-		$arrShimpemtsId[] = $shipment->rowid;
-	}
+	//array_map sur array d'object
+	$arrShimpemtsId = array_map(function($shipment){return $shipment->rowid;},$shipments);
 
 	$sql = 'SELECT count(*) FROM '.MAIN_DB_PREFIX . 'expedition_extrafields WHERE fk_object in (' . implode(",",$arrShimpemtsId) . ')';
 	$resultset= $db->query($sql);
