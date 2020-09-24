@@ -38,6 +38,8 @@
 	$toDispatch = GETPOST('ToDispatch');
 	$newLineFkProduct = GETPOST('new_line_fk_product');
 	$tOrderLine = GETPOST('TOrderLine');
+	$dataShipmentTreatedId = GETPOST('data-shipment-treated-id');
+	$dataShipmentEntity = GETPOST('data-shipment-entity');
 
 	$commandefourn = new CommandeFournisseur($db);
 	$commandefourn->fetch($id, $ref);
@@ -483,10 +485,11 @@
         if(method_exists($commandefourn, 'log')) $commandefourn->log($user, $status, time()); // removed in 4.0
 
         setEventMessage($langs->transnoentities('DispatchMsgAssetGen'));
+		if (isset($dataShipmentTreatedId) && !empty($dataShipmentTreatedId)) {
+			_set_treated_expedition_extrafield($dataShipmentTreatedId, $dataShipmentEntity);
+		}
 
 	}
-
-	//if(is_array($TImport)) usort($TImport,'_by_ref');
 
 	fiche($commandefourn, $TImport, $comment);
 
@@ -530,16 +533,15 @@ function fiche(&$commande, &$TImport, $comment) {
 		echo $form->btsubmit('Envoyer', 'btsend');
 	}
 
-	// details expedition selectionnée
-
-
 	// ICI SWITCH SI FOURNISSEUR LINKÉ
 	if (is_supplier_Linked($conf->entity,$commande->socid)){
 		_list_shipments_untreated($commande->shipmentsFromSupplier,$commande->id);
+		_list_shipments_treated($commande->shipmentsFromSupplier,$commande->id);
 	}else{
 		tabImport($TImport,$commande,$comment);
 		$form->end();
 		_list_already_dispatched($commande);
+
 	}
 
 	dol_fiche_end($notab);
@@ -557,7 +559,6 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 	print load_fiche_titre($langs->trans("ShipmentsList"));
 
 	print '<table class="noborder" width="100%">';
-
 	print '<tr class="liste_titre">';
 	print '<td>'.$langs->trans("SelectShipment").'</td>';
 
@@ -573,32 +574,23 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 	if (! empty($conf->global->SUPPLIER_ORDER_USE_DISPATCH_STATUS) && (float) DOL_VERSION > 3.7)
 		print '<td align="center" colspan="2">'.$langs->trans("Status").'</td>';
 
-
 	print "</tr>\n";
 	print "</table>\n";
 
-
-
 	foreach ($shipments as $shipment) {
 		$current_cmdFourn = new CommandeFournisseur($db);
-
 		$current_cmdFourn->fetch($idCmdFourn);
-
-
 
 		$backupConfEntity = $conf->entity;
 		$conf->entity = $shipment->entity;
 
 		$currentExp = new Expedition($db);
-
 		$extra = new ExtraFields($db);
-		$extra->fetch_name_optionals_label($currentExp->table_element);
-		//$res = $currentExp->fetch($shipment->rowid);
+		$extra->fetch_name_optionals_label($shipment->table_element);
 		$currentExp->fetch($shipment->rowid);
 		$conf->entity = $backupConfEntity;
 
-
-		// on remonte l'extrafield caché de l'état de traitement de l'expédition.
+		// On remonte l'extrafield caché de l'état de traitement de l'expédition.
 		if ($currentExp->array_options['options_customer_treated_shipment'] == "0"){
 
 			print '<td>'.  $current_cmdFourn->getNomUrl() .'  ->   <span class="classfortooltip" title="'.$langs->trans("supplierOrderLinkedShipment").'">' .$shipment->ref.' </span></td>';
@@ -607,54 +599,59 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 			print '<td><a class="butAction ventileBtn button --ventilate-button" type="submit"  data-shipment-entity="'.$current_cmdFourn->entity.'" data-shipment-id="'.$shipment->rowid.'" data-commandFourn-id="'.$idCmdFourn.'"  data-shipment-ref="'.$shipment->ref.'"  >'.$langs->trans("SelectExpe").'</a></td><hr><br/>';
 		}
 	}
+}
 
-//	while ($i < $num)
-//	{
-//		$objp = $db->fetch_object($resql);
-//
-//		print "<tr ".$bc[$var].">";
-//		print '<td>';
-//		print '<a href="'.DOL_URL_ROOT.'/product/fournisseurs.php?id='.$objp->fk_product.'">'.img_object($langs->trans("ShowProduct"),'product').' '.$objp->ref.'</a>';
-//		print ' - '.$objp->label;
-//		print "</td>\n";
-//
-//		if (! empty($conf->productbatch->enabled) && (float) DOL_VERSION > 3.7)
-//		{
-//			print '<td>'.$objp->batch.'</td>';
-//			print '<td>'.dol_print_date($db->jdate($objp->eatby),'day').'</td>';
-//			print '<td>'.dol_print_date($db->jdate($objp->sellby),'day').'</td>';
-//		}
-//
-//		// Qty
-//		print '<td align="right">'.$objp->qty.'</td>';
-//		print '<td>&nbsp;</td>';
-//
-//		// Warehouse
-//		print '<td>';
-//		$warehouse_static = new Entrepot($db);
-//		$warehouse_static->id=$objp->warehouse_id;
-//		$warehouse_static->libelle=$objp->entrepot;
-//		print $warehouse_static->getNomUrl(1);
-//		print '</td>';
-//
-//		// Comment
-//		print '<td>'.dol_trunc($objp->comment).'</td>';
-//
-//		print "</tr>\n";
-//
-//		$i++;
-//		$var=!$var;
-//	}
-//	$db->free($resql);
-//
-//	print "</table>\n";
-//
-//}
-//else
-//{
-//	dol_print_error($db);
-//}
 
+/**
+ * Affichage des expéditions traitées
+ * @param $shipments
+ */
+function _list_shipments_treated(&$shipments , $idCmdFourn){
+	global $db, $langs, $conf, $user;
+
+	if (isTreatedExpAlreadyExists()) {
+		print load_fiche_titre($langs->trans("ShipmentsTreatedList"));
+		print '<table class="noborder" width="100%">';
+		print '<tr class="liste_titre">';
+		print '<td>'.$langs->trans("VentilatedExpeditions").'</td>';
+
+		if (! empty($conf->productbatch->enabled) && (float) DOL_VERSION > 3.7)
+		{
+			print '<td>'.$langs->trans("batch_number").'</td>';
+			print '<td>'.$langs->trans("l_eatby").'</td>';
+			print '<td>'.$langs->trans("l_sellby").'</td>';
+		}
+
+		print '<td></td>';
+		if (! empty($conf->global->SUPPLIER_ORDER_USE_DISPATCH_STATUS) && (float) DOL_VERSION > 3.7)
+			print '<td align="center" colspan="2">'.$langs->trans("Status").'</td>';
+
+		print "</tr>\n";
+		print "</table>\n";
+
+		foreach ($shipments as $shipment) {
+			$current_cmdFourn = new CommandeFournisseur($db);
+			$current_cmdFourn->fetch($idCmdFourn);
+
+			$backupConfEntity = $conf->entity;
+			$conf->entity = $shipment->entity;
+
+			$currentExp = new Expedition($db);
+			$extra = new ExtraFields($db);
+			$extra->fetch_name_optionals_label($shipment->table_element);
+			$currentExp->fetch($shipment->rowid);
+			$conf->entity = $backupConfEntity;
+
+			// On remonte l'extrafield caché de l'état de traitement de l'expédition.
+			if ($currentExp->array_options['options_customer_treated_shipment'] == "1"){
+
+				print '<td>'.  $current_cmdFourn->getNomUrl() .'  ->   <span class="classfortooltip" title="'.$langs->trans("supplierOrderLinkedShipment").'">' .$shipment->ref.' </span></td>';
+				print '<td></td>';
+				$form=new TFormCore;
+				print '<td><span class="butActionRefused" data-shipment-entity="'.$current_cmdFourn->entity.'" data-shipment-id="'.$shipment->rowid.'" data-commandFourn-id="'.$idCmdFourn.'"  data-shipment-ref="'.$shipment->ref.'"  >'.$langs->trans("TreatedExpe").'</span></td><hr><br/>';
+			}
+		}
+	}
 }
 
 /**
@@ -1508,11 +1505,11 @@ function printJSSerialNumberAutoDeduce() {
 function is_supplier_Linked($entity,$socid){
 	global $db;
 
-	$sql = "SELECT DISTINCT te.rowid , te.fk_soc , te.entity , te.fk_entity FROM ".MAIN_DB_PREFIX."societe as s , ".MAIN_DB_PREFIX."thirdparty_entity as te WHERE ";
-	$sql .= "te.entity=".$entity;
-	$sql .= " AND te.fk_soc =".$socid;
+		$sql = "SELECT DISTINCT te.rowid , te.fk_soc , te.entity , te.fk_entity FROM " . MAIN_DB_PREFIX . "societe as s , " . MAIN_DB_PREFIX . "thirdparty_entity as te WHERE ";
+		$sql .= "te.entity=" . $entity;
+		$sql .= " AND te.fk_soc =" . $socid;
 
-	return  !is_null($db->fetch_object($db->query($sql)));
+		return !is_null($db->fetch_object($db->query($sql)));
 }
 
 /**
@@ -1612,4 +1609,26 @@ function _list_already_dispatched(&$bdr) {
 	{
 		dol_print_error($db);
 	}
+}
+
+function _set_treated_expedition_extrafield($idexpe, $shipmentEntity) {
+	global $db, $user, $conf;
+
+	$backEntity = $conf->entity;
+	$conf->entity = $shipmentEntity;
+
+	$currentExp = new Expedition($db);
+	$currentExp->fetch($idexpe);
+
+	$extra = new ExtraFields($db);
+	$extra->fetch_name_optionals_label($currentExp->table_element);
+
+	$currentExp->array_options['options_customer_treated_shipment'] = 1;
+	$currentExp->updateExtraField('customer_treated_shipment');
+
+	$conf->entity = $backEntity;
+}
+
+function isTreatedExpAlreadyExists() {
+
 }

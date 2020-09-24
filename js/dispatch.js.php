@@ -100,7 +100,7 @@ $(document).ready(function() {
 			};
 
 		$.ajax({
-			url: "<?php print dol_buildpath('dispatch/script/interfaceTest.php', 1)?>",
+			url: "<?php print dol_buildpath('dispatch/script/interface_expedition_handler.php', 1)?>",
 			method: "POST",
 			dataType: "json",
 			data: data,

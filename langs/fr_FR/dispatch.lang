@@ -105,7 +105,7 @@ DispatchMsgAssetGen=Equipements créés / produits ventilés
 # T2476
 #
 ShipmentsList = Liste des expéditions non traitées
-SelectShipment = Expédition à ventiler
+SelectShipment = Expédition(s) à ventiler
 supplierOrderLinkedShipment = Expédition liée à la commande fournisseur
 SelectExpe = Traiter cette expédition
 NbItemCountInReception = Détail de l'expédition
@@ -120,3 +120,6 @@ NoSerialNumber = Pas de numéro de série : impossible de créer l'équipement p
 DLUO = DLUO
 IMEI = IMEI
 Firmware = Firmware
+TreatedExpe = Expédition traitée
+ShipmentsTreatedList = Liste des expéditions traitées
+VentilatedExpeditions = Expédition(s) ventilées

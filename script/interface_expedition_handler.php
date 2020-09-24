@@ -245,6 +245,13 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 	$output .=  $langs->trans("Comment").' : '.$form->texte('', 'comment', !empty($comment)?$comment:'', 60,128);
 
 	$output .=  $form->btsubmit($langs->trans('AssetVentil'), 'bt_create', '', 'butAction butValidateVentilation');
+	$output .=  $form->hidden('data-shipment-treated-id', $currentExp->id);
+
+	// On remonte l'entité liée à la société
+	$soc = new Societe($db);
+	$soc->fetch($currentExp->socid);
+
+	$output .=  $form->hidden('data-shipment-entity', $soc->entity);
 	$output .=  '</td></tr></div>';
 
 	$warning_asset = false;
