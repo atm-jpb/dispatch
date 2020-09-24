@@ -609,7 +609,7 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 function _list_shipments_treated(&$shipments , $idCmdFourn){
 	global $db, $langs, $conf, $user;
 
-	if (isTreatedExpAlreadyExists()) {
+	if (_isTreatedExpAlreadyExists($shipments)) {
 		print load_fiche_titre($langs->trans("ShipmentsTreatedList"));
 		print '<table class="noborder" width="100%">';
 		print '<tr class="liste_titre">';
@@ -1629,6 +1629,16 @@ function _set_treated_expedition_extrafield($idexpe, $shipmentEntity) {
 	$conf->entity = $backEntity;
 }
 
-function isTreatedExpAlreadyExists() {
+function _isTreatedExpAlreadyExists($shipments) {
+	global $db;
 
+	$arrShimpemtsId = array();
+	foreach ($shipments as $shipment){
+		$arrShimpemtsId[] = $shipment->rowid;
+	}
+
+	$sql = 'SELECT count(*) FROM '.MAIN_DB_PREFIX . 'expedition_extrafields WHERE fk_object in (' . implode(",",$arrShimpemtsId) . ')';
+	$resultset= $db->query($sql);
+
+	return $db->num_rows($resultset) > 0;
 }
