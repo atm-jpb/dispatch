@@ -45,10 +45,10 @@ print json_encode($JsonOutput);
 
 
 /**
- * la commande client générée automatiquement chez (Entité A)
+ * La commande client générée automatiquement chez (Entité A)
  * depuis une commande fournisseur passée par entité B (pour son founisseur Entité A)
  * ne possède pas le descriptif des equipements.
- * nous devons le loader pour exploitation  de l'expedition courante
+ * Nous devons le loader pour exploitation  de l'expedition courante
  * @param $currentExpe
  *
  */
@@ -58,11 +58,8 @@ function getEquipmentsFromSupplier(&$currentExpe){
 
 	foreach ($currentExpe->lines as $currentLineExp) {
 
-		// $currentLineExp donne les infos suivantes :   product id // qty // qty shiped  // label
-
-		// on remonte les equipements si l'expedition en possède ...
+		// On remonte les equipements si l'expedition en possède ...
 		$sql = "SELECT * FROM ".MAIN_DB_PREFIX."expeditiondet_asset AS ea, ".MAIN_DB_PREFIX."assetatm AS AT WHERE fk_expeditiondet = ".$currentLineExp->id." AND ea.fk_asset = AT.rowid" ;
-
 
 		$resultsetEquipments = $db->query($sql);
 		$num = $db->num_rows($resultsetEquipments);
@@ -73,11 +70,12 @@ function getEquipmentsFromSupplier(&$currentExpe){
 			$objs[$i]['obj'] = $db->fetch_object($resultsetEquipments);
 			$i++;
 		}
-		// on ajoute les lignes d'infos équipements présents
+		// On ajoute les lignes d'infos équipements présents
 		$currentLineExp->equipement = $objs;
 	}
 
 }
+
 function formatDisplayTableProductsHeader(){
 	global $conf, $langs,$db;
 
@@ -104,16 +102,13 @@ function formatDisplayTableProductsHeader(){
 		$output .='<td>Firmware</td>';
 	}
 
-	//$parameters=array('commande'=>$commande);
-	//$reshook=$hookmanager->executeHooks('printFieldListTitle',$parameters);    // Note that $action and $object may have been modified by hook
-	//print $hookmanager->resPrint;
-
 	$output .='<td>&nbsp;</td>';
 	$output .='</tr>';
 
 return $output;
 
 }
+
 function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
 	global $conf, $langs, $db;
@@ -199,12 +194,12 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 			$output .='<td>'. $form->hidden('TLine['.$key.'][quantity]', $line->qty_shipped). $line->qty_shipped.'</td>';
 		}
 
-		//LOTS
+		// LOTS
 		if(! empty($conf->global->USE_LOT_IN_OF)) {
 			 $output .= "<td>".$form->texte('','TLine['.$key.'][lot_number]', $line->lot_number, 30)."</td>";
 		}
 
-		//DLUO
+		// DLUO
 		if(!empty($conf->global->ASSET_SHOW_DLUO)){
 				//$output .='<td>'.$form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo']))).'</td>';
 		}

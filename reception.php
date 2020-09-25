@@ -115,8 +115,6 @@
 					}
 				}
 			}
-			// Si un produit est renseigné, on sauvegarde
-			
 
 			$fk_product = -1; // Reset de la variable contenant la référence produit
 
@@ -171,7 +169,7 @@
 		$TAssetVentil=array();
         $TAssetCreated = array();
 
-		//Use to calculated corrected order status at the end of dispatch/serialize process
+		// Use to calculated corrected order status at the end of dispatch/serialize process
 		$TQtyDispatch=array();
 		$TQtyWished=array();
 
@@ -232,15 +230,15 @@
 					$asset->load_asset_type($PDOdb);
 					$asset->fk_product = $line['fk_product'];
 					$asset->serial_number = ($line['numserie']) ? $line['numserie'] : $asset->getNextValue($PDOdb);
-					$asset->lot_number = $line['lot_number']; // TODO à gérer ?
+					$asset->lot_number = $line['lot_number'];
 					$asset->contenance_value = ($line['quantity']) ? $line['quantity'] : 1;
 					$asset->contenancereel_value = ($line['quantity']) ? $line['quantity'] : 1;
-					$asset->contenancereel_units = ($line['quantity_unit']) ? $line['quantity_unit'] : 0; // TODO à gérer ?
-					$asset->contenance_units = ($line['quantity_unit']) ? $line['quantity_unit'] : 0; // TODO à gérer ?
-					$asset->lot_number = $line['lot_number']; // TODO à gérer ?
-					$asset->firmware = $line['firmware']; // TODO à gérer ?
-					$asset->imei = $line['imei']; // TODO à gérer ?
-					$asset->set_date('dluo', $line['dluo']); // TODO à gérer ?
+					$asset->contenancereel_units = ($line['quantity_unit']) ? $line['quantity_unit'] : 0;
+					$asset->contenance_units = ($line['quantity_unit']) ? $line['quantity_unit'] : 0;
+					$asset->lot_number = $line['lot_number'];
+					$asset->firmware = $line['firmware'];
+					$asset->imei = $line['imei'];
+					$asset->set_date('dluo', $line['dluo']);
 					$asset->entity = $conf->entity;
 					// $asset->contenancereel_value = 1;
 					$nb_year_garantie = 0;
@@ -275,7 +273,7 @@
 
 					$asset->fk_societe_localisation = $societe->id;
 					$asset->etat = 0; //En stock
-					//pre($asset,true);exit;
+
 					// Le destockage dans Dolibarr est fait par la fonction de ventilation plus loin, donc désactivation du mouvement créé par l'équipement.
 					//				$asset->save($PDOdb, $user,$langs->trans("Asset").' '.$asset->serial_number.' '. $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $line['quantity'], false, $line['fk_product'], false,$fk_entrepot);
 					$TAssetCreated[$asset->fk_product][] = $asset->save($PDOdb, $user, '', 0, false, 0, true, $fk_entrepot);
@@ -349,7 +347,6 @@
 		}
 
 		// PRISE EN COMPTE DES LIGNES NON VENTILÉES EN RÉCEPTION SIMPLE
-
 		if(!empty($TLine)) {
 
 			foreach($TLine as &$line) {
@@ -465,7 +462,6 @@
             $TQtyDispatched[$objd->fk_product] = $objd->qty;
         }
 
-
         //Compare array
         dol_syslog(__METHOD__.' $TQtyDispatched='.var_export($TQtyDispatched,true), LOG_DEBUG);
         dol_syslog(__METHOD__.' $TQtyWished='.var_export($TQtyWished,true), LOG_DEBUG);
@@ -490,9 +486,6 @@
 		}
 	}
 	fiche($commandefourn, $TImport, $comment);
-
-
-
 
 
 function _by_ref(&$a, &$b) {
@@ -539,7 +532,6 @@ function fiche(&$commande, &$TImport, $comment) {
 		tabImport($TImport,$commande,$comment);
 		$form->end();
 		_list_already_dispatched($commande);
-
 	}
 
 	dol_fiche_end($notab);
@@ -970,7 +962,7 @@ function entetecmd(&$commande)
 
 
 	/*
-	 *	Commande
+	 *	COMMANDE
 	 */
 	print '<div class="fichecenter">';
 	    print '<div class="fichehalfleft">';
@@ -1000,7 +992,7 @@ function entetecmd(&$commande)
                 print "</td></tr>";
             }
 
-            // Date
+            // DATE
             if ($commande->methode_commande_id > 0)
             {
                 print '<tr><td class="titlefield">' . $langs->trans("Date") . '</td><td colspan="2">';
@@ -1015,7 +1007,7 @@ function entetecmd(&$commande)
                 }
             }
 
-                // Author
+                // AUTHOR
                 print '<tr><td>' . $langs->trans("AuthorRequest") . '</td>';
                 print '<td colspan="2">' . $author->getNomUrl(1) . '</td>';
                 print '</tr>';
@@ -1027,16 +1019,11 @@ function entetecmd(&$commande)
 	        print '<div class="ficheaddleft">';
 	            print '<div class="underbanner clearboth"></div>';
 
-	            // print '<table class="border tableforfield centpercent">';
-                // print '</table>';
-
 	        print '</div>'; // .ficheaddleft
 	    print '</div>'; // .fichehalfright
 	print '</div>'; // .fichecenter
 
 	print '<div class="clearboth"></div><br>';
-
-	//if ($mesg) print $mesg;
 }
 
 
@@ -1280,7 +1267,6 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 		}
 
-
 		$nbproduct=0;
 
 		$TOrderLine = GETPOST('TOrderLine');
@@ -1308,8 +1294,6 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 			$var=!$var;
 
 			// To show detail cref and description value, we must make calculation by cref
-			//print ($objp->cref?' ('.$objp->cref.')':'');
-			//if ($objp->description) print '<br>'.nl2br($objp->description);
 			if (DOL_VERSION<3.8 || (empty($conf->productbatch->enabled)) || $objp->tobatch==0)
 			{
 				$suffix='_'.$i;
