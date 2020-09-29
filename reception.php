@@ -2,16 +2,15 @@
 
 	require('config.php');
 
-	dol_include_once('/fourn/class/fournisseur.commande.class.php' );
-	dol_include_once('/fourn/class/fournisseur.product.class.php' );
-	dol_include_once('/dispatch/class/dispatchdetail.class.php' );
-	dol_include_once('/product/class/html.formproduct.class.php' );
-	dol_include_once('/product/stock/class/entrepot.class.php' );
-	dol_include_once('/core/lib/product.lib.php' );
-	dol_include_once('/core/lib/fourn.lib.php' );
+	require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.commande.class.php';
+	require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.product.class.php';
+	dol_include_once('/dispatch/class/dispatchdetail.class.php');
+	require_once DOL_DOCUMENT_ROOT.'/product/class/html.formproduct.class.php';
+	require_once DOL_DOCUMENT_ROOT.'/product/stock/class/entrepot.class.php';
+	require_once DOL_DOCUMENT_ROOT.'/core/lib/product.lib.php';
+	require_once DOL_DOCUMENT_ROOT.'/core/lib/fourn.lib.php';
 	dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
-	dol_include_once('/fourn/class/fournisseur.commande.class.php' );
-	dol_include_once('/expedition/class/expedition.class.php' );
+	require_once DOL_DOCUMENT_ROOT.'/expedition/class/expedition.class.php';
 
 	$PDOdb = new TPDOdb;
 
@@ -37,7 +36,7 @@
 	$btSave = GETPOST('bt_save');
 	$toDispatch = GETPOST('ToDispatch');
 	$newLineFkProduct = GETPOST('new_line_fk_product');
-	$tOrderLine = GETPOST('TOrderLine');
+	$TOrderLine = GETPOST('TOrderLine');
 	$dataShipmentTreatedId = GETPOST('data-shipment-treated-id');
 	$dataShipmentEntity = GETPOST('data-shipment-entity');
 
@@ -132,8 +131,8 @@
 					$product->fetch($fk_product);
 
 
-					$qty = (int)$tOrderLine[$fk_product]['qty'];
-					$fk_warehouse =(int) empty($tOrderLine[$fk_product]['entrepot']) ? GETPOST('id_entrepot') : $tOrderLine[$fk_product]['entrepot'];
+					$qty = (int)$TOrderLine[$fk_product]['qty'];
+					$fk_warehouse =(int) empty($TOrderLine[$fk_product]['entrepot']) ? GETPOST('id_entrepot') : $TOrderLine[$fk_product]['entrepot'];
 
 					for($ii = 0; $ii < $qty; $ii++) {
 						$TImport[] =array(
@@ -240,10 +239,9 @@
 					$asset->imei = $line['imei'];
 					$asset->set_date('dluo', $line['dluo']);
 					$asset->entity = $conf->entity;
-					// $asset->contenancereel_value = 1;
 					$nb_year_garantie = 0;
 					// Renseignement des extrafields
-					$asset->set_date('date_reception', $_REQUEST['date_recep']);
+					$asset->set_date('date_reception', GETPOST('date_recep'));
 
 
 					// OPTIONS DE GARANTIE
@@ -497,6 +495,7 @@ function _by_ref(&$a, &$b) {
 }
 
 /**
+ * @var Commande $commande
  * @param $commande
  * @param $TImport
  * @param $comment
@@ -525,7 +524,7 @@ function fiche(&$commande, &$TImport, $comment) {
 	}
 
 	// ICI SWITCH SI FOURNISSEUR LINKÉ
-	if (is_supplier_Linked($conf->entity,$commande->socid)){
+	if (is_supplier_linked($conf->entity,$commande->socid)){
 		_list_shipments_untreated($commande->shipmentsFromSupplier,$commande->id);
 		_list_shipments_treated($commande->shipmentsFromSupplier,$commande->id);
 	}else{
@@ -543,6 +542,7 @@ function fiche(&$commande, &$TImport, $comment) {
 /**
  * Récupération des expéditions
  * @param $shipments
+ * @param $idCmdFourn
  */
 function _list_shipments_untreated(&$shipments , $idCmdFourn){
 	global $db, $langs, $conf, $user;
@@ -628,16 +628,18 @@ function _list_shipments_treated(&$shipments , $idCmdFourn){
 			$currentExp = new Expedition($db);
 			$extra = new ExtraFields($db);
 			$extra->fetch_name_optionals_label($shipment->table_element);
-			$currentExp->fetch($shipment->rowid);
-			$conf->entity = $backupConfEntity;
+			$ret = $currentExp->fetch($shipment->rowid);
+			if($ret) {
+				$conf->entity = $backupConfEntity;
 
-			// On remonte l'extrafield caché de l'état de traitement de l'expédition.
-			if ($currentExp->array_options['options_customer_treated_shipment']){
+				// On remonte l'extrafield caché de l'état de traitement de l'expédition.
+				if ($currentExp->array_options['options_customer_treated_shipment']) {
 
-				print '<td>'.  $current_cmdFourn->getNomUrl() .'  ->   <span class="classfortooltip" title="'.$langs->trans("supplierOrderLinkedShipment").'">' .$shipment->ref.' </span></td>';
-				print '<td></td>';
-				$form=new TFormCore;
-				print '<td><span class="butActionRefused" data-shipment-entity="'.$current_cmdFourn->entity.'" data-shipment-id="'.$shipment->rowid.'" data-commandFourn-id="'.$idCmdFourn.'"  data-shipment-ref="'.$shipment->ref.'"  >'.$langs->trans("TreatedExpe").'</span></td><hr><br/>';
+					print '<td>' . $current_cmdFourn->getNomUrl() . '  ->   <span class="classfortooltip" title="' . $langs->trans("supplierOrderLinkedShipment") . '">' . $shipment->ref . ' </span></td>';
+					print '<td></td>';
+					$form = new TFormCore;
+					print '<td><span class="butActionRefused" data-shipment-entity="' . $current_cmdFourn->entity . '" data-shipment-id="' . $shipment->rowid . '" data-commandFourn-id="' . $idCmdFourn . '"  data-shipment-ref="' . $shipment->ref . '"  >' . $langs->trans("TreatedExpe") . '</span></td><hr><br/>';
+				}
 			}
 		}
 	}
@@ -645,6 +647,7 @@ function _list_shipments_treated(&$shipments , $idCmdFourn){
 
 /**
  * @param $TImport
+ * @var Commande $commande
  * @param $commande
  * @param $comment
  * @throws Exception
@@ -800,7 +803,7 @@ global $langs, $db, $conf, $hookmanager;
                     $reshook=$hookmanager->executeHooks('printFieldListValue',$parameters);    // Note that $action and $object may have been modified by hook
                     print $hookmanager->resPrint;
 					?>
-					<td>test
+					<td>
 						<?php
 						if($commande->statut < 5 && $line['commande_fournisseurdet_asset'] > 0){
 							echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$commande->id.'&rowid='.$line['commande_fournisseurdet_asset'].'">'.img_delete().'</a>';
@@ -1030,6 +1033,7 @@ function entetecmd(&$commande)
 /**
  * Remonte les informations des équipements liées aux lignes de la commande fournisseur
  * @param $PDOdb
+ * @var CommandeFournisseur $commandefourn
  * @param $commandefourn
  * @return array  tableau d'import des équipements
  */
@@ -1067,6 +1071,25 @@ function _loadDetail(&$PDOdb,&$commandefourn){
 	return $TImport;
 }
 
+/**
+ * @param        $PDOdb
+ * @param        $TImport
+ * @var CommandeFournisseur $commandefourn
+ * @param        $commandefourn
+ * @param        $refproduit
+ * @param        $numserie
+ * @param        $imei
+ * @param        $firmware
+ * @param        $lot_number
+ * @param        $quantity
+ * @param        $quantity_unit
+ * @param null   $dluo
+ * @param null   $k
+ * @var Entrepot $entrepot
+ * @param null   $entrepot
+ * @param string $comment
+ * @return mixed
+ */
 function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null,$comment=''){
 	global $db, $conf, $user;
 	//Charge le produit associé à l'équipement
@@ -1088,8 +1111,6 @@ function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$nums
 	}
 	//Sauvegarde (ajout/MAJ) des lignes de détail d'expédition
 	$recepdetail = new TRecepDetail;
-
-	//pre($TImport,true);
 
 	$fk_line_receipt = !empty($TLine[$k]['commande_fournisseurdet_asset']) ? (int)$TLine[$k]['commande_fournisseurdet_asset'] : 0;
 	if($fk_line_receipt>0){
@@ -1139,6 +1160,11 @@ function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$nums
 
 }
 
+/**
+ * @param $array
+ * @param $idprod
+ * @return bool|mixed
+ */
 function searchProductInCommandeLine($array, $idprod)
 {
 	$line=false;
@@ -1153,6 +1179,12 @@ function searchProductInCommandeLine($array, $idprod)
 	return $line;
 }
 
+/**
+ * @param $TImport
+ * @var Commande $commande
+ * @param $commande
+ * @param $form
+ */
 function _show_product_ventil(&$TImport, &$commande,&$form) {
 	global $langs, $db, $conf, $hookmanager;
 	$langs->load('dispatch@dispatch');
@@ -1251,15 +1283,10 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 					$('#id_entrepot').change(function() {
 						$('td[rel=entrepot] select').val($(this).val());
 					});
-
 					$('td[rel=entrepot] select').change(function() {
-
 						var fk_product = $(this).closest('td').attr('fk_product');
-						console.log(fk_product);
 						$('#dispatchAsset td[rel=entrepotChild][fk_product='+fk_product+'] select').val($(this).val());
-
 					});
-
 				});
 			</script>
 
@@ -1483,14 +1510,22 @@ function printJSSerialNumberAutoDeduce() {
 	<?php
 }
 
-function is_supplier_Linked($entity,$socid){
+/**
+ * @param $entityId
+ * @param $socid
+ * @return bool
+ */
+function is_supplier_linked($entityId,$socid)
+{
 	global $db;
 
-		$sql = "SELECT DISTINCT te.rowid , te.fk_soc , te.entity , te.fk_entity FROM " . MAIN_DB_PREFIX . "societe as s , " . MAIN_DB_PREFIX . "thirdparty_entity as te WHERE ";
-		$sql .= "te.entity=" . $entity;
-		$sql .= " AND te.fk_soc =" . $socid;
+	$sql = "SELECT DISTINCT te.rowid FROM " . MAIN_DB_PREFIX . "societe AS s , " . MAIN_DB_PREFIX . "thirdparty_entity AS te WHERE ";
+	$sql .= "te.entity=" . $entityId;
+	$sql .= " AND te.fk_soc =" . $socid;
+	$sql .= " AND s.rowid = te.fk_soc ";
 
-		return !is_null($db->fetch_object($db->query($sql)));
+	$res = $db->query($sql);
+	return $db->num_rows($res) > 0;
 }
 
 /**
@@ -1592,6 +1627,10 @@ function _list_already_dispatched(&$bdr) {
 	}
 }
 
+/**
+ * @param $idexpe
+ * @param $shipmentEntity
+ */
 function _set_treated_expedition_extrafield($idexpe, $shipmentEntity) {
 	global $db, $user, $conf;
 
@@ -1610,6 +1649,10 @@ function _set_treated_expedition_extrafield($idexpe, $shipmentEntity) {
 	$conf->entity = $backEntity;
 }
 
+/**
+ * @param $shipments
+ * @return bool
+ */
 function _isTreatedExpAlreadyExists($shipments) {
 	global $db;
 

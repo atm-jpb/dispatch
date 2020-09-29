@@ -8,7 +8,7 @@ require('../config.php');
 //dol_include_once('/' . ATM_ASSET_NAME . '/config.php');
 dol_include_once('/' . ATM_ASSET_NAME . '/lib/asset.lib.php');
 dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
-dol_include_once('/expedition/class/expedition.class.php' );
+require_once DOL_DOCUMENT_ROOT. '/expedition/class/expedition.class.php';
 //Interface qui renvoie les emprunts de ressources d'un utilisateur
 $PDOdb=new TPDOdb;
 // Load traductions files requiredby by page
@@ -49,33 +49,37 @@ print json_encode($JsonOutput);
  * depuis une commande fournisseur passée par entité B (pour son founisseur Entité A)
  * ne possède pas le descriptif des equipements.
  * Nous devons le loader pour exploitation  de l'expedition courante
+ * @var Expedition $currentExpe
  * @param $currentExpe
  *
  */
 function getEquipmentsFromSupplier(&$currentExpe){
 	global $langs,$db;
 
+	if (!empty($currentExpe->lines)) {
+		foreach ($currentExpe->lines as $currentLineExp) {
+			// On remonte les equipements si l'expedition en possède ...
+			$sql = "SELECT * FROM ".MAIN_DB_PREFIX."expeditiondet_asset AS ea, ".MAIN_DB_PREFIX."assetatm AS at ";
+			$sql.= " WHERE ea.fk_expeditiondet = ".$currentLineExp->id." AND ea.fk_asset = at.rowid ";
 
-	foreach ($currentExpe->lines as $currentLineExp) {
+			$resultsetEquipments = $db->query($sql);
+			$num = $db->num_rows($resultsetEquipments);
 
-		// On remonte les equipements si l'expedition en possède ...
-		$sql = "SELECT * FROM ".MAIN_DB_PREFIX."expeditiondet_asset AS ea, ".MAIN_DB_PREFIX."assetatm AS AT WHERE fk_expeditiondet = ".$currentLineExp->id." AND ea.fk_asset = AT.rowid" ;
-
-		$resultsetEquipments = $db->query($sql);
-		$num = $db->num_rows($resultsetEquipments);
-
-		$i = 0;
-		$objs = array();
-		while( $i < $num){
-			$objs[$i]['obj'] = $db->fetch_object($resultsetEquipments);
-			$i++;
+			$i = 0;
+			$objs = array();
+			while( $i < $num){
+				$objs[$i]['obj'] = $db->fetch_object($resultsetEquipments);
+				$i++;
+			}
+			// On ajoute les lignes d'infos équipements présents
+			$currentLineExp->equipement = $objs;
 		}
-		// On ajoute les lignes d'infos équipements présents
-		$currentLineExp->equipement = $objs;
 	}
-
 }
 
+/**
+ * @return string
+ */
 function formatDisplayTableProductsHeader(){
 	global $conf, $langs,$db;
 
@@ -109,10 +113,16 @@ return $output;
 
 }
 
+/**
+ * @var Expedition $currentExp
+ * @param $currentExp
+ * @param $entity
+ * @param $idCommand
+ * @return string
+ */
 function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
 	global $conf, $langs, $db;
-	dol_include_once('/core/class/html.form.class.php');
 
 	$form = new TFormCore();
 	$prod = new Product($db);
@@ -121,17 +131,19 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 	$TEquipements = array();
 	$TStandard = array();
 
-	foreach ($currentExp->lines as $k=>$line) {
+	if (!empty($currentExp->lines)){
+		foreach ($currentExp->lines as $k=>$line) {
 
-		if ($line->equipement) {
-			foreach ($line->equipement as $key => $eq) {
-				$eq['obj']->ref = $line->ref;
-				$eq['obj']->qty = 1;
-				$TEquipements[] = $eq;
+			if ($line->equipement) {
+				foreach ($line->equipement as $key => $eq) {
+					$eq['obj']->ref = $line->ref;
+					$eq['obj']->qty = 1;
+					$TEquipements[] = $eq;
+				}
 			}
-		}
-		else{
-			$TStandard[] = $line;
+			else{
+				$TStandard[] = $line;
+			}
 		}
 	}
 
@@ -140,7 +152,7 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 	foreach ($TAllProductsAndAssets as $key=>$line) {
 		if (is_array($line)) {
 			$fk_asset = $line['obj']->fk_asset;
-		}else {$fk_asset = "standardProduct";}
+		}else $fk_asset = "standardProduct";
 
 		is_array($line) ? $prod->fetch($line['obj']->fk_product) : $prod->fetch($line->fk_product);
 
@@ -167,7 +179,7 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
 		// ENTREPOT
 		$output .='<td rel="entrepotChild" fk_product="'.$prod->id.'">';
-		dol_include_once('/product/class/html.formproduct.class.php');
+		require_once DOL_DOCUMENT_ROOT.'/product/class/html.formproduct.class.php';
 
 		$formproduct=new FormProduct($db);
 		$backupEntity = $conf->entity;
@@ -201,15 +213,7 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
 		// DLUO
 		if(!empty($conf->global->ASSET_SHOW_DLUO)){
-				//$output .='<td>'.$form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo']))).'</td>';
-		}
-
-		if(empty($conf->global->DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION)) {
-		//$output .='<td>'.$form->texte('','TLine['.$k.'][quantity]', $line->quantity, 10).'</td>';
-
-//					if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) {
-//						echo '<td>'. ($commande->statut < 5) ? $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']) : measuring_units_string($line['quantity_unit'],'weight').'</td>';
-//					}
+				$output .='<td>'.$form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo']))).'</td>';
 		}
 		else{
 				$output .= $form->hidden('TLine['.$key.'][quantity]', $line->quantity);
@@ -245,13 +249,12 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
 	// On remonte l'entité liée à la société
 	$soc = new Societe($db);
-	$soc->fetch($currentExp->socid);
-
-	$output .=  $form->hidden('data-shipment-entity', $soc->entity);
+	$res = $soc->fetch($currentExp->socid);
+	if ($res){
+		$output .=  $form->hidden('data-shipment-entity', $soc->entity);
+	}
 	$output .=  '</td></tr></div>';
-
 	$warning_asset = false;
 	return $output;
-
 }
 

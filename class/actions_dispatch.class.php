@@ -13,14 +13,20 @@ class ActionsDispatch
 		dol_include_once('/commande/class/commande.class.php' );
 		dol_include_once('/expedition/class/expedition.class.php' );
 
-		$sql = "SELECT c.rowid FROM llx_commande AS c, llx_commandedet AS cd WHERE c.ref_client = '".$object->ref. "' AND c.rowid = cd.fk_commande ORDER BY cd.rowid";
+		$sql = "SELECT c.rowid FROM ".MAIN_DB_PREFIX. "commande AS c, ".MAIN_DB_PREFIX. "commandedet AS cd , ".MAIN_DB_PREFIX."element_element AS ee";
+		$sql .= " WHERE ee.fk_target = c.rowid AND ee.targettype = 'commande'";
+		$sql .= " AND ee.fk_source = ".$object->id. " AND ee.sourcetype = 'commandefourn'" ;
+		$sql .= " AND c.rowid = cd.fk_commande ORDER BY cd.rowid";
+
 		$resultSetSupplierOrder = $db->query($sql);
 		$resql = $db->fetch_object($resultSetSupplierOrder);
 
 		$orderFromSupplierOrder = new Commande($db);
 		$orderFromSupplierOrder->fetch($resql->rowid);
 
-		$shipmentsSql = "SELECT * FROM llx_commande AS c, llx_expedition AS e WHERE c.ref = '".$orderFromSupplierOrder->ref. "' AND c.ref_client = e.ref_customer";
+		$shipmentsSql = "SELECT c.*, e.* FROM ".MAIN_DB_PREFIX."commande AS c, ".MAIN_DB_PREFIX. "expedition AS e, ".MAIN_DB_PREFIX. "element_element AS ee ";
+		$shipmentsSql .= " WHERE c.ref = '".$orderFromSupplierOrder->ref."' AND ee.sourcetype = 'commande' AND ee.targettype = 'shipping' AND ee.fk_source = c.rowid AND ee.fk_target = e.rowid ";
+
 		$resultSetShipments = $db->query($shipmentsSql);
 
 		$TShipments = array();
@@ -34,16 +40,9 @@ class ActionsDispatch
 		$object->orderFromSupplierOrder = $orderFromSupplierOrder;
 		$object->shipmentsFromSupplier = $TShipments;
 
-		//var_dump($object->orderFromSupplierOrder);
-		//var_dump($object->shipmentsFromSupplier);
-
 		return 0;
 	}
 
-	function formObjectOptions($parameters, &$object, &$action, $hookmanager){
-		//var_dump($object->orderFromSupplierOrder);
-		//var_dump($object->shipmentsFromSupplier);
-	}
 	/**
 	 * Overloading the doActions function : replacing the parent's function with the one below
 	 *
@@ -58,7 +57,7 @@ class ActionsDispatch
 		global $conf;
 
 		$TContexts = explode(':', $parameters['context']);
-		//var_dump("dump dispatch action");
+
 		if(in_array('bonderetourcard', $TContexts))
 		{
 //			var_dump($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE, $conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE);
