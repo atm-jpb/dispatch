@@ -13,10 +13,13 @@ class ActionsDispatch
 		dol_include_once('/commande/class/commande.class.php' );
 		dol_include_once('/expedition/class/expedition.class.php' );
 
-		$sql = "SELECT c.rowid FROM ".MAIN_DB_PREFIX. "commande AS c, ".MAIN_DB_PREFIX. "commandedet AS cd , ".MAIN_DB_PREFIX."element_element AS ee";
-		$sql .= " WHERE ee.fk_target = c.rowid AND ee.targettype = 'commande'";
-		$sql .= " AND ee.fk_source = ".$object->id. " AND ee.sourcetype = 'commandefourn'" ;
-		$sql .= " AND c.rowid = cd.fk_commande ORDER BY cd.rowid";
+		$sql = "SELECT DISTINCT c.rowid FROM ".MAIN_DB_PREFIX. "commande AS c ";
+		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."element_element AS ee ON c.rowid = ee.fk_target";
+		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."commandedet AS cd ON c.rowid = cd.fk_commande ";
+		$sql .= " AND ee.fk_source = ".$object->id. "";
+		$sql .= " AND ee.targettype = 'commande'";
+		$sql .= " AND ee.sourcetype = 'commandefourn'";
+		$sql .= " ORDER BY cd.rowid ";
 
 		$resultSetSupplierOrder = $db->query($sql);
 		$resql = $db->fetch_object($resultSetSupplierOrder);
@@ -24,8 +27,13 @@ class ActionsDispatch
 		$orderFromSupplierOrder = new Commande($db);
 		$orderFromSupplierOrder->fetch($resql->rowid);
 
-		$shipmentsSql = "SELECT c.*, e.* FROM ".MAIN_DB_PREFIX."commande AS c, ".MAIN_DB_PREFIX. "expedition AS e, ".MAIN_DB_PREFIX. "element_element AS ee ";
-		$shipmentsSql .= " WHERE c.ref = '".$orderFromSupplierOrder->ref."' AND ee.sourcetype = 'commande' AND ee.targettype = 'shipping' AND ee.fk_source = c.rowid AND ee.fk_target = e.rowid ";
+		$shipmentsSql = "SELECT * FROM ".MAIN_DB_PREFIX."commande AS c ";
+		$shipmentsSql .= " INNER JOIN ".MAIN_DB_PREFIX."element_element AS ee ON c.rowid = ee.fk_source ";
+		$shipmentsSql .= " INNER JOIN ".MAIN_DB_PREFIX."expedition AS e ON e.rowid = ee.fk_target ";
+		$shipmentsSql .= " AND c.ref = '".$orderFromSupplierOrder->ref."' ";
+		$shipmentsSql .= " AND ee.sourcetype = 'commande' ";
+		$shipmentsSql .= " AND ee.targettype = 'shipping' ";
+
 
 		$resultSetShipments = $db->query($shipmentsSql);
 
@@ -60,11 +68,8 @@ class ActionsDispatch
 
 		if(in_array('bonderetourcard', $TContexts))
 		{
-//			var_dump($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE, $conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE);
 			//if (! empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE)) $conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE = 0;
 			//if (! empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE)) $conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE = 0;
-//			var_dump($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE, $conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE);
-//			exit('la');
 		}
 
 		return 0;

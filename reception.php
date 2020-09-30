@@ -495,10 +495,9 @@ function _by_ref(&$a, &$b) {
 }
 
 /**
- * @var Commande $commande
- * @param $commande
- * @param $TImport
- * @param $comment
+ * @param Commande $commande
+ * @param array $TImport
+ * @param string $comment
  */
 function fiche(&$commande, &$TImport, $comment) {
 
@@ -541,8 +540,8 @@ function fiche(&$commande, &$TImport, $comment) {
 
 /**
  * Récupération des expéditions
- * @param $shipments
- * @param $idCmdFourn
+ * @param array $shipments
+ * @param int $idCmdFourn
  */
 function _list_shipments_untreated(&$shipments , $idCmdFourn){
 	global $db, $langs, $conf, $user;
@@ -593,7 +592,8 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 
 /**
  * Affichage des expéditions traitées
- * @param $shipments
+ * @param array $shipments
+ * @param int $idCmdFourn
  */
 function _list_shipments_treated(&$shipments , $idCmdFourn){
 	global $db, $langs, $conf, $user;
@@ -646,10 +646,9 @@ function _list_shipments_treated(&$shipments , $idCmdFourn){
 }
 
 /**
- * @param $TImport
- * @var Commande $commande
- * @param $commande
- * @param $comment
+ * @param array $TImport
+ * @param Commande $commande
+ * @param string $comment
  * @throws Exception
  */
 function tabImport(&$TImport,&$commande,$comment) {
@@ -913,6 +912,9 @@ global $langs, $db, $conf, $hookmanager;
 
 }
 
+/**
+ * @param Commande $commande
+ */
 function entetecmd(&$commande)
 {
 	global $langs, $db, $form, $user, $conf;
@@ -1033,8 +1035,7 @@ function entetecmd(&$commande)
 /**
  * Remonte les informations des équipements liées aux lignes de la commande fournisseur
  * @param $PDOdb
- * @var CommandeFournisseur $commandefourn
- * @param $commandefourn
+ * @param CommandeFournisseur $commandefourn
  * @return array  tableau d'import des équipements
  */
 function _loadDetail(&$PDOdb,&$commandefourn){
@@ -1073,16 +1074,15 @@ function _loadDetail(&$PDOdb,&$commandefourn){
 
 /**
  * @param        $PDOdb
- * @param        $TImport
- * @var CommandeFournisseur $commandefourn
- * @param        $commandefourn
- * @param        $refproduit
- * @param        $numserie
- * @param        $imei
- * @param        $firmware
- * @param        $lot_number
- * @param        $quantity
- * @param        $quantity_unit
+ * @param        array $TImport
+ * @param        CommandeFournisseur $commandefourn
+ * @param        string $refproduit
+ * @param        string $numserie
+ * @param        string $imei
+ * @param        string $firmware
+ * @param        string $lot_number
+ * @param        int $quantity
+ * @param        int $quantity_unit
  * @param null   $dluo
  * @param null   $k
  * @var Entrepot $entrepot
@@ -1161,8 +1161,8 @@ function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$nums
 }
 
 /**
- * @param $array
- * @param $idprod
+ * @param array $array
+ * @param int $idprod
  * @return bool|mixed
  */
 function searchProductInCommandeLine($array, $idprod)
@@ -1180,10 +1180,9 @@ function searchProductInCommandeLine($array, $idprod)
 }
 
 /**
- * @param $TImport
- * @var Commande $commande
- * @param $commande
- * @param $form
+ * @param array $TImport
+ * @param Commande $commande
+ * @param TFormCore $form
  */
 function _show_product_ventil(&$TImport, &$commande,&$form) {
 	global $langs, $db, $conf, $hookmanager;
@@ -1511,8 +1510,8 @@ function printJSSerialNumberAutoDeduce() {
 }
 
 /**
- * @param $entityId
- * @param $socid
+ * @param int $entityId
+ * @param int $socid
  * @return bool
  */
 function is_supplier_linked($entityId,$socid)
@@ -1530,7 +1529,7 @@ function is_supplier_linked($entityId,$socid)
 
 /**
  * copyed from receptionBdr.
- * @param $bdr
+ * @param Bonderetour $bdr
  */
 function _list_already_dispatched(&$bdr) {
 	global $db, $langs, $bc, $conf;
@@ -1628,8 +1627,8 @@ function _list_already_dispatched(&$bdr) {
 }
 
 /**
- * @param $idexpe
- * @param $shipmentEntity
+ * @param int $idexpe
+ * @param int $shipmentEntity
  */
 function _set_treated_expedition_extrafield($idexpe, $shipmentEntity) {
 	global $db, $user, $conf;
@@ -1650,7 +1649,7 @@ function _set_treated_expedition_extrafield($idexpe, $shipmentEntity) {
 }
 
 /**
- * @param $shipments
+ * @param array $shipments
  * @return bool
  */
 function _isTreatedExpAlreadyExists($shipments) {
