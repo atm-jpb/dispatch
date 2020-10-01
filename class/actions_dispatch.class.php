@@ -27,7 +27,13 @@ class ActionsDispatch
 		$orderFromSupplierOrder = new Commande($db);
 		$orderFromSupplierOrder->fetch($resql->rowid);
 
-		$shipmentsSql = "SELECT * FROM llx_commande AS c, llx_expedition AS e WHERE c.ref = '".$orderFromSupplierOrder->ref. "' AND c.ref_client = e.ref_customer";
+		$shipmentsSql = "SELECT * FROM ".MAIN_DB_PREFIX."commande AS c ";
+		$shipmentsSql .= " INNER JOIN ".MAIN_DB_PREFIX."element_element AS ee ON c.rowid = ee.fk_source ";
+		$shipmentsSql .= " INNER JOIN ".MAIN_DB_PREFIX."expedition AS e ON e.rowid = ee.fk_target ";
+		$shipmentsSql .= " AND c.ref = '".$orderFromSupplierOrder->ref."' ";
+		$shipmentsSql .= " AND ee.sourcetype = 'commande' ";
+		$shipmentsSql .= " AND ee.targettype = 'shipping' ";
+
 		$resultSetShipments = $db->query($shipmentsSql);
 
 		$TShipments = array();
