@@ -239,7 +239,6 @@
 					$asset->imei = $line['imei'];
 					$asset->set_date('dluo', $line['dluo']);
 					$asset->entity = $conf->entity;
-					// $asset->contenancereel_value = 1;
 					$nb_year_garantie = 0;
 					// Renseignement des extrafields
 					$asset->set_date('date_reception', $date_recep);
@@ -496,9 +495,9 @@ function _by_ref(&$a, &$b) {
 }
 
 /**
- * @param $commande
- * @param $TImport
- * @param $comment
+ * @param Commande $commande
+ * @param array $TImport
+ * @param string $comment
  */
 function fiche(&$commande, &$TImport, $comment) {
 
@@ -524,7 +523,7 @@ function fiche(&$commande, &$TImport, $comment) {
 	}
 
 	// ICI SWITCH SI FOURNISSEUR LINKÉ
-	if (is_supplier_Linked($conf->entity,$commande->socid)){
+	if (is_supplier_linked($conf->entity,$commande->socid)){
 		_list_shipments_untreated($commande->shipmentsFromSupplier,$commande->id);
 		_list_shipments_treated($commande->shipmentsFromSupplier,$commande->id);
 	}else{
@@ -541,7 +540,8 @@ function fiche(&$commande, &$TImport, $comment) {
 
 /**
  * Récupération des expéditions
- * @param $shipments
+ * @param array $shipments
+ * @param int $idCmdFourn
  */
 function _list_shipments_untreated(&$shipments , $idCmdFourn){
 	global $db, $langs, $conf, $user;
@@ -627,16 +627,18 @@ function _list_shipments_treated(&$shipments , $idCmdFourn){
 			$currentExp = new Expedition($db);
 			$extra = new ExtraFields($db);
 			$extra->fetch_name_optionals_label($shipment->table_element);
-			$currentExp->fetch($shipment->rowid);
-			$conf->entity = $backupConfEntity;
+			$ret = $currentExp->fetch($shipment->rowid);
+			if ($ret){
+				$conf->entity = $backupConfEntity;
 
-			// On remonte l'extrafield caché de l'état de traitement de l'expédition.
-			if ($currentExp->array_options['options_customer_treated_shipment']){
+				// On remonte l'extrafield caché de l'état de traitement de l'expédition.
+				if ($currentExp->array_options['options_customer_treated_shipment']){
 
-				print '<td>'.  $current_cmdFourn->getNomUrl() .'  ->   <span class="classfortooltip" title="'.$langs->trans("supplierOrderLinkedShipment").'">' .$shipment->ref.' </span></td>';
-				print '<td></td>';
-				$form=new TFormCore;
-				print '<td><span class="butActionRefused" data-shipment-entity="'.$current_cmdFourn->entity.'" data-shipment-id="'.$shipment->rowid.'" data-commandFourn-id="'.$idCmdFourn.'"  data-shipment-ref="'.$shipment->ref.'"  >'.$langs->trans("TreatedExpe").'</span></td><hr><br/>';
+					print '<td>'.  $current_cmdFourn->getNomUrl() .'  ->   <span class="classfortooltip" title="'.$langs->trans("supplierOrderLinkedShipment").'">' .$shipment->ref.' </span></td>';
+					print '<td></td>';
+					$form=new TFormCore;
+					print '<td><span class="butActionRefused" data-shipment-entity="'.$current_cmdFourn->entity.'" data-shipment-id="'.$shipment->rowid.'" data-commandFourn-id="'.$idCmdFourn.'"  data-shipment-ref="'.$shipment->ref.'"  >'.$langs->trans("TreatedExpe").'</span></td><hr><br/>';
+				}
 			}
 		}
 	}
@@ -1482,7 +1484,7 @@ function printJSSerialNumberAutoDeduce() {
 	<?php
 }
 
-function is_supplier_Linked($entityId,$socid){
+function is_supplier_linked($entityId,$socid){
 	global $db;
 
 	$sql = "SELECT DISTINCT te.rowid FROM " . MAIN_DB_PREFIX . "societe AS s ";
@@ -1498,7 +1500,7 @@ function is_supplier_Linked($entityId,$socid){
 
 /**
  * copyed from receptionBdr.
- * @param $bdr
+ * @param Bonderetour $bdr
  */
 function _list_already_dispatched(&$bdr) {
 	global $db, $langs, $bc, $conf;
