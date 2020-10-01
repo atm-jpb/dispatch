@@ -5,10 +5,10 @@ set_time_limit(0);
 
 require('../config.php');
 
-//dol_include_once('/' . ATM_ASSET_NAME . '/config.php');
 dol_include_once('/' . ATM_ASSET_NAME . '/lib/asset.lib.php');
 dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
-dol_include_once('/expedition/class/expedition.class.php' );
+require_once DOL_DOCUMENT_ROOT. '/expedition/class/expedition.class.php';
+
 //Interface qui renvoie les emprunts de ressources d'un utilisateur
 $PDOdb=new TPDOdb;
 // Load traductions files requiredby by page

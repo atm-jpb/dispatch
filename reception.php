@@ -645,9 +645,9 @@ function _list_shipments_treated(&$shipments , $idCmdFourn){
 }
 
 /**
- * @param $TImport
- * @param $commande
- * @param $comment
+ * @param array $TImport
+ * @param Commande $commande
+ * @param string $comment
  * @throws Exception
  */
 function tabImport(&$TImport,&$commande,$comment) {
@@ -801,7 +801,7 @@ global $langs, $db, $conf, $hookmanager;
                     $reshook=$hookmanager->executeHooks('printFieldListValue',$parameters);    // Note that $action and $object may have been modified by hook
                     print $hookmanager->resPrint;
 					?>
-					<td>test
+					<td>
 						<?php
 						if($commande->statut < 5 && $line['commande_fournisseurdet_asset'] > 0){
 							echo '<a href="?action=DELETE_LINE&k='.$k.'&id='.$commande->id.'&rowid='.$line['commande_fournisseurdet_asset'].'">'.img_delete().'</a>';
@@ -1031,7 +1031,7 @@ function entetecmd(&$commande)
 /**
  * Remonte les informations des équipements liées aux lignes de la commande fournisseur
  * @param $PDOdb
- * @param $commandefourn
+ * @param CommandeFournisseur $commandefourn
  * @return array  tableau d'import des équipements
  */
 function _loadDetail(&$PDOdb,&$commandefourn){
@@ -1068,6 +1068,24 @@ function _loadDetail(&$PDOdb,&$commandefourn){
 	return $TImport;
 }
 
+/**
+ * @param        $PDOdb
+ * @param        array $TImport
+ * @param        CommandeFournisseur $commandefourn
+ * @param        string $refproduit
+ * @param        string $numserie
+ * @param        string $imei
+ * @param        string $firmware
+ * @param        string $lot_number
+ * @param        int $quantity
+ * @param        int $quantity_unit
+ * @param null   $dluo
+ * @param null   $k
+ * @var Entrepot $entrepot
+ * @param null   $entrepot
+ * @param string $comment
+ * @return mixed
+ */
 function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null,$comment=''){
 	global $db, $conf, $user;
 	//Charge le produit associé à l'équipement
@@ -1089,8 +1107,6 @@ function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$nums
 	}
 	//Sauvegarde (ajout/MAJ) des lignes de détail d'expédition
 	$recepdetail = new TRecepDetail;
-
-	//pre($TImport,true);
 
 	$fk_line_receipt = !empty($TLine[$k]['commande_fournisseurdet_asset']) ? (int)$TLine[$k]['commande_fournisseurdet_asset'] : 0;
 	if($fk_line_receipt>0){
@@ -1140,6 +1156,11 @@ function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$nums
 
 }
 
+/**
+ * @param array $array
+ * @param int $idprod
+ * @return bool|mixed
+ */
 function searchProductInCommandeLine($array, $idprod)
 {
 	$line=false;
@@ -1154,6 +1175,11 @@ function searchProductInCommandeLine($array, $idprod)
 	return $line;
 }
 
+/**
+ * @param array $TImport
+ * @param Commande $commande
+ * @param TFormCore $form
+ */
 function _show_product_ventil(&$TImport, &$commande,&$form) {
 	global $langs, $db, $conf, $hookmanager;
 	$langs->load('dispatch@dispatch');
@@ -1256,7 +1282,6 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 					$('td[rel=entrepot] select').change(function() {
 
 						var fk_product = $(this).closest('td').attr('fk_product');
-						console.log(fk_product);
 						$('#dispatchAsset td[rel=entrepotChild][fk_product='+fk_product+'] select').val($(this).val());
 
 					});
@@ -1484,6 +1509,11 @@ function printJSSerialNumberAutoDeduce() {
 	<?php
 }
 
+/**
+ * @param int $entityId
+ * @param int $socid
+ * @return bool
+ */
 function is_supplier_linked($entityId,$socid){
 	global $db;
 
@@ -1597,6 +1627,10 @@ function _list_already_dispatched(&$bdr) {
 	}
 }
 
+/**
+ * @param int $idexpe
+ * @param int $shipmentEntity
+ */
 function _set_treated_expedition_extrafield($idexpe, $shipmentEntity) {
 	global $db, $user, $conf;
 
@@ -1615,6 +1649,10 @@ function _set_treated_expedition_extrafield($idexpe, $shipmentEntity) {
 	$conf->entity = $backEntity;
 }
 
+/**
+ * @param array $shipments
+ * @return bool
+ */
 function _isTreatedExpAlreadyExists($shipments) {
 	global $db;
 
