@@ -59,7 +59,9 @@ function getEquipmentsFromSupplier(&$currentExpe){
 	foreach ($currentExpe->lines as $currentLineExp) {
 
 		// On remonte les equipements si l'expedition en possède ...
-		$sql = "SELECT * FROM ".MAIN_DB_PREFIX."expeditiondet_asset AS ea, ".MAIN_DB_PREFIX."assetatm AS AT WHERE fk_expeditiondet = ".$currentLineExp->id." AND ea.fk_asset = AT.rowid" ;
+		$sql = "SELECT * FROM ".MAIN_DB_PREFIX."expeditiondet_asset AS ea ";
+		$sql.= " INNER JOIN ".MAIN_DB_PREFIX."assetatm AS at ON ea.fk_asset = at.rowid ";
+		$sql .= " WHERE ea.fk_expeditiondet = ".$currentLineExp->id ;
 
 		$resultsetEquipments = $db->query($sql);
 		$num = $db->num_rows($resultsetEquipments);
