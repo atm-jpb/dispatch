@@ -67,26 +67,21 @@ $(document).ready(function() {
 		e.preventDefault();
 		$(".shipment-details").remove();
 		$('.ventileBtn').removeClass('butActionRefused');
-
 	});
 
 	$(document).on("click", ".ventileBtn", function (e) {
 		$('.ventileBtn').removeClass('butActionRefused');
 		$(this).addClass('butActionRefused');
 
-		var	self= $(this);
 		let comFourn = $(this).attr('data-commandFourn-id');
 		let expeid = $(this).attr('data-shipment-id');
 		let experef = $(this).attr('data-shipment-ref');
 		let entity = $(this).attr('data-shipment-entity');
 
 		var className = "shipment-details";
-		console.log(document.getElementsByClassName(className).length == 0);
 		if (document.getElementsByClassName(className).length == 0) {
 			d = document.createElement("div");
 			d.className = className;
-			console.log(d);
-
 			$(".tabBar").append(d);
 		}
 
@@ -104,19 +99,9 @@ $(document).ready(function() {
 			dataType: "json",
 			data: data,
 			success: function (data) {
-				console.log("Success !!!");
-				console.log(data);
-
 				if(!data.error) {
 					$(".shipment-details").html(data.html);
-
-					self
-				}else {
-
 				}
-			},
-			error: function (err) {
-
 			}
 		})
 	});

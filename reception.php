@@ -2,16 +2,15 @@
 
 	require('config.php');
 
-	dol_include_once('/fourn/class/fournisseur.commande.class.php' );
-	dol_include_once('/fourn/class/fournisseur.product.class.php' );
-	dol_include_once('/dispatch/class/dispatchdetail.class.php' );
-	dol_include_once('/product/class/html.formproduct.class.php' );
-	dol_include_once('/product/stock/class/entrepot.class.php' );
-	dol_include_once('/core/lib/product.lib.php' );
-	dol_include_once('/core/lib/fourn.lib.php' );
+	require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.commande.class.php';
+	require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.product.class.php';
+	dol_include_once('/dispatch/class/dispatchdetail.class.php');
+	require_once DOL_DOCUMENT_ROOT.'/product/class/html.formproduct.class.php';
+	require_once DOL_DOCUMENT_ROOT.'/product/stock/class/entrepot.class.php';
+	require_once DOL_DOCUMENT_ROOT.'/core/lib/product.lib.php';
+	require_once DOL_DOCUMENT_ROOT.'/core/lib/fourn.lib.php';
 	dol_include_once('/' . ATM_ASSET_NAME . '/class/asset.class.php');
-	dol_include_once('/fourn/class/fournisseur.commande.class.php' );
-	dol_include_once('/expedition/class/expedition.class.php' );
+	require_once DOL_DOCUMENT_ROOT.'/expedition/class/expedition.class.php';
 
 	$PDOdb = new TPDOdb;
 
@@ -37,7 +36,7 @@
 	$btSave = GETPOST('bt_save');
 	$toDispatch = GETPOST('ToDispatch');
 	$newLineFkProduct = GETPOST('new_line_fk_product');
-	$tOrderLine = GETPOST('TOrderLine');
+	$TOrderLine = GETPOST('TOrderLine');
 	$dataShipmentTreatedId = GETPOST('data-shipment-treated-id');
 	$dataShipmentEntity = GETPOST('data-shipment-entity');
 
@@ -132,8 +131,8 @@
 					$product->fetch($fk_product);
 
 
-					$qty = (int)$tOrderLine[$fk_product]['qty'];
-					$fk_warehouse =(int) empty($tOrderLine[$fk_product]['entrepot']) ? GETPOST('id_entrepot') : $tOrderLine[$fk_product]['entrepot'];
+					$qty = (int)$TOrderLine[$fk_product]['qty'];
+					$fk_warehouse =(int) empty($TOrderLine[$fk_product]['entrepot']) ? GETPOST('id_entrepot') : $TOrderLine[$fk_product]['entrepot'];
 
 					for($ii = 0; $ii < $qty; $ii++) {
 						$TImport[] =array(
@@ -243,7 +242,7 @@
 					// $asset->contenancereel_value = 1;
 					$nb_year_garantie = 0;
 					// Renseignement des extrafields
-					$asset->set_date('date_reception', $_REQUEST['date_recep']);
+					$asset->set_date('date_reception', $date_recep);
 
 
 					// OPTIONS DE GARANTIE

@@ -47,16 +47,10 @@ class ActionsDispatch
 		$object->orderFromSupplierOrder = $orderFromSupplierOrder;
 		$object->shipmentsFromSupplier = $TShipments;
 
-		//var_dump($object->orderFromSupplierOrder);
-		//var_dump($object->shipmentsFromSupplier);
-
 		return 0;
 	}
 
-	function formObjectOptions($parameters, &$object, &$action, $hookmanager){
-		//var_dump($object->orderFromSupplierOrder);
-		//var_dump($object->shipmentsFromSupplier);
-	}
+
 	/**
 	 * Overloading the doActions function : replacing the parent's function with the one below
 	 *
@@ -74,11 +68,8 @@ class ActionsDispatch
 		//var_dump("dump dispatch action");
 		if(in_array('bonderetourcard', $TContexts))
 		{
-//			var_dump($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE, $conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE);
 			//if (! empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE)) $conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE = 0;
 			//if (! empty($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE)) $conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE = 0;
-//			var_dump($conf->global->STOCK_CALCULATE_ON_BONDERETOUR_VALIDATE, $conf->global->STOCK_CALCULATE_ON_BONDERETOUR_CLOSE);
-//			exit('la');
 		}
 
 		return 0;
