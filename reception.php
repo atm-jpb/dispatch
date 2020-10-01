@@ -32,6 +32,12 @@
 
 	$action = GETPOST('action');
 	$comment = GETPOST('comment');
+
+	if(is_supplier_linked($conf->entity, $commandefourn->socid)){
+		header('location:receptionofsom.php?id='.$id);
+		exit();
+	}
+
 	$TImport = _loadDetail($PDOdb,$commandefourn);
 	$parameters=array();
 	$hookmanager->executeHooks('doAction',$parameters, $commandefourn, $action);
@@ -1558,4 +1564,21 @@ function entetecmd(&$commande)
 	print '<div class="clearboth"></div><br>';
 
 	//if ($mesg) print $mesg;
+}
+
+/**
+ * @param int $entityId
+ * @param int $socid
+ * @return bool
+ */
+function is_supplier_linked($entityId,$socid){
+	global $db;
+
+	$sql = "SELECT DISTINCT te.rowid FROM " . MAIN_DB_PREFIX . "societe AS s ";
+	$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "thirdparty_entity AS te ON s.rowid = te.fk_soc ";
+	$sql .= " WHERE te.entity=" . $entityId;
+	$sql .= " AND te.fk_soc =" . $socid;
+
+	$res = $db->query($sql);
+	return $db->num_rows($res) > 0;
 }
