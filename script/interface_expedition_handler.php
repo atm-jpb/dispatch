@@ -80,6 +80,10 @@ function getEquipmentsFromSupplier(&$currentExpe)
 	}
 }
 
+
+/**
+ * @return string
+ */
 function formatDisplayTableProductsHeader(){
 	global $conf, $langs,$db;
 
@@ -113,10 +117,14 @@ return $output;
 
 }
 
+/**
+ * @param Expedition $currentExp
+ * @param $entity
+ * @return string
+ */
 function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
 	global $conf, $langs, $db;
-	dol_include_once('/core/class/html.form.class.php');
 
 	$form = new TFormCore();
 	$prod = new Product($db);
@@ -125,17 +133,18 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 	$TEquipements = array();
 	$TStandard = array();
 
-	foreach ($currentExp->lines as $k=>$line) {
+	if (!empty($currentExp->lines)) {
+		foreach ($currentExp->lines as $k => $line) {
 
-		if ($line->equipement) {
-			foreach ($line->equipement as $key => $eq) {
-				$eq['obj']->ref = $line->ref;
-				$eq['obj']->qty = 1;
-				$TEquipements[] = $eq;
+			if ($line->equipement) {
+				foreach ($line->equipement as $key => $eq) {
+					$eq['obj']->ref = $line->ref;
+					$eq['obj']->qty = 1;
+					$TEquipements[] = $eq;
+				}
+			} else {
+				$TStandard[] = $line;
 			}
-		}
-		else{
-			$TStandard[] = $line;
 		}
 	}
 
@@ -144,7 +153,7 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 	foreach ($TAllProductsAndAssets as $key=>$line) {
 		if (is_array($line)) {
 			$fk_asset = $line['obj']->fk_asset;
-		}else {$fk_asset = "standardProduct";}
+		}else $fk_asset = "standardProduct";
 
 		is_array($line) ? $prod->fetch($line['obj']->fk_product) : $prod->fetch($line->fk_product);
 
@@ -171,7 +180,7 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
 		// ENTREPOT
 		$output .='<td rel="entrepotChild" fk_product="'.$prod->id.'">';
-		dol_include_once('/product/class/html.formproduct.class.php');
+		require_once DOL_DOCUMENT_ROOT.'/product/class/html.formproduct.class.php';
 
 		$formproduct=new FormProduct($db);
 		$backupEntity = $conf->entity;
@@ -205,18 +214,21 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
 		// DLUO
 		if(!empty($conf->global->ASSET_SHOW_DLUO)){
-				//$output .='<td>'.$form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo']))).'</td>';
+			$output .='<td>'.$form->calendrier('','TLine['.$k.'][dluo]', date('d/m/Y',strtotime($line['dluo']))).'</td>';
 		}
 
 		if(empty($conf->global->DISPATCH_USE_ONLY_UNIT_ASSET_RECEPTION)) {
-		//$output .='<td>'.$form->texte('','TLine['.$k.'][quantity]', $line->quantity, 10).'</td>';
-
 //					if(!empty($conf->global->DISPATCH_SHOW_UNIT_RECEPTION)) {
 //						echo '<td>'. ($commande->statut < 5) ? $formproduct->select_measuring_units('TLine['.$k.'][quantity_unit]','weight',$line['quantity_unit']) : measuring_units_string($line['quantity_unit'],'weight').'</td>';
 //					}
 		}
 		else{
-				$output .= $form->hidden('TLine['.$key.'][quantity]', $line->quantity);
+			if (is_array($line)) {
+				$output .= "<td>" . $form->hidden('TLine['.$key.'][quantity]', 1) . "1</td>";
+			}
+			else {
+				$output .='<td>'. $form->hidden('TLine['.$key.'][quantity]', $line->qty_shipped). $line->qty_shipped.'</td>';
+			}
 				$output .=$form->hidden('TLine['.$key.'][quantity_unit]',$line->quantity_unit);
 			}
 
