@@ -49,33 +49,35 @@ print json_encode($JsonOutput);
  * depuis une commande fournisseur passée par entité B (pour son founisseur Entité A)
  * ne possède pas le descriptif des equipements.
  * Nous devons le loader pour exploitation  de l'expedition courante
+ * @var Expedition $currentExpe
  * @param $currentExpe
  *
  */
-function getEquipmentsFromSupplier(&$currentExpe){
-	global $langs,$db;
+function getEquipmentsFromSupplier(&$currentExpe)
+{
+	global $langs, $db;
 
+	if (!empty($currentExpe->lines)){
+		foreach ($currentExpe->lines as $currentLineExp) {
 
-	foreach ($currentExpe->lines as $currentLineExp) {
+			// On remonte les equipements si l'expedition en possède ...
+			$sql = "SELECT * FROM " . MAIN_DB_PREFIX . "expeditiondet_asset AS ea ";
+			$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "assetatm AS at ON ea.fk_asset = at.rowid ";
+			$sql .= " WHERE ea.fk_expeditiondet = " . $currentLineExp->id;
 
-		// On remonte les equipements si l'expedition en possède ...
-		$sql = "SELECT * FROM ".MAIN_DB_PREFIX."expeditiondet_asset AS ea ";
-		$sql.= " INNER JOIN ".MAIN_DB_PREFIX."assetatm AS at ON ea.fk_asset = at.rowid ";
-		$sql .= " WHERE ea.fk_expeditiondet = ".$currentLineExp->id ;
+			$resultsetEquipments = $db->query($sql);
+			$num = $db->num_rows($resultsetEquipments);
 
-		$resultsetEquipments = $db->query($sql);
-		$num = $db->num_rows($resultsetEquipments);
-
-		$i = 0;
-		$objs = array();
-		while( $i < $num){
-			$objs[$i]['obj'] = $db->fetch_object($resultsetEquipments);
-			$i++;
+			$i = 0;
+			$objs = array();
+			while ($i < $num) {
+				$objs[$i]['obj'] = $db->fetch_object($resultsetEquipments);
+				$i++;
+			}
+			// On ajoute les lignes d'infos équipements présents
+			$currentLineExp->equipement = $objs;
 		}
-		// On ajoute les lignes d'infos équipements présents
-		$currentLineExp->equipement = $objs;
 	}
-
 }
 
 function formatDisplayTableProductsHeader(){
