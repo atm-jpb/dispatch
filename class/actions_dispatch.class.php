@@ -13,7 +13,14 @@ class ActionsDispatch
 		dol_include_once('/commande/class/commande.class.php' );
 		dol_include_once('/expedition/class/expedition.class.php' );
 
-		$sql = "SELECT c.rowid FROM llx_commande AS c, llx_commandedet AS cd WHERE c.ref_client = '".$object->ref. "' AND c.rowid = cd.fk_commande ORDER BY cd.rowid";
+		$sql = "SELECT DISTINCT c.rowid FROM ".MAIN_DB_PREFIX. "commande AS c ";
+		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."element_element AS ee ON c.rowid = ee.fk_target";
+		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."commandedet AS cd ON c.rowid = cd.fk_commande ";
+		$sql .= " AND ee.fk_source = ".$object->id. "";
+		$sql .= " AND ee.targettype = 'commande'";
+		$sql .= " AND ee.sourcetype = 'commandefourn'";
+		$sql .= " ORDER BY cd.rowid ";
+
 		$resultSetSupplierOrder = $db->query($sql);
 		$resql = $db->fetch_object($resultSetSupplierOrder);
 
