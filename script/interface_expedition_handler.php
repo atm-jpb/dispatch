@@ -261,11 +261,11 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
 
 	// On remonte l'entité liée à la société
 	$soc = new Societe($db);
-	$soc->fetch($currentExp->socid);
-
-	$output .=  $form->hidden('data-shipment-entity', $soc->entity);
+	$res = $soc->fetch($currentExp->socid);
+	if ($res){
+		$output .=  $form->hidden('data-shipment-entity', $soc->entity);
+	}
 	$output .=  '</td></tr></div>';
-
 	$warning_asset = false;
 	return $output;
 
