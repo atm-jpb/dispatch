@@ -1483,15 +1483,19 @@ function printJSSerialNumberAutoDeduce() {
 	<?php
 }
 
-function is_supplier_Linked($entity,$socid){
+function is_supplier_Linked($entityId,$socid){
 	global $db;
 
-		$sql = "SELECT DISTINCT te.rowid , te.fk_soc , te.entity , te.fk_entity FROM " . MAIN_DB_PREFIX . "societe as s , " . MAIN_DB_PREFIX . "thirdparty_entity as te WHERE ";
-		$sql .= "te.entity=" . $entity;
-		$sql .= " AND te.fk_soc =" . $socid;
+	$sql = "SELECT DISTINCT te.rowid FROM " . MAIN_DB_PREFIX . "societe AS s ";
+	$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "thirdparty_entity AS te ON s.rowid = te.fk_soc ";
+	$sql .= " WHERE te.entity=" . $entityId;
+	$sql .= " AND te.fk_soc =" . $socid;
 
-		return !is_null($db->fetch_object($db->query($sql)));
+	$res = $db->query($sql);
+	return $db->num_rows($res) > 0;
 }
+
+
 
 /**
  * copyed from receptionBdr.
