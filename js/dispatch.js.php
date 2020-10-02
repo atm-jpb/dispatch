@@ -63,6 +63,7 @@ $langs->loadLangs(array("dispatch@dispatch","other"));
 /* Javascript library of module dispatch */
 $(document).ready(function() {
 
+
 	$(document).on("click", ".butActionDelete", function (e) {
 		e.preventDefault();
 		$(".shipment-details").remove();
@@ -77,6 +78,7 @@ $(document).ready(function() {
 		let expeid = $(this).attr('data-shipment-id');
 		let experef = $(this).attr('data-shipment-ref');
 		let entity = $(this).attr('data-shipment-entity');
+		let idWarehouse = $(this).parent().find('#idwarehouse').val();
 
 		var className = "shipment-details";
 		if (document.getElementsByClassName(className).length == 0) {
@@ -90,7 +92,8 @@ $(document).ready(function() {
 			idexpe: expeid,
 			refexpe: experef,
 			entity : entity,
-			action: "loadExpeLines"
+			action: "loadExpeLines",
+			idWarehouse : idWarehouse
 		};
 
 		$.ajax({

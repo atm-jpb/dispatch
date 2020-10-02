@@ -444,7 +444,7 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 	foreach ($shipments as $shipment) {
 		$current_cmdFourn = new CommandeFournisseur($db);
 		$current_cmdFourn->fetch($idCmdFourn);
-
+		$formproduct = new FormProduct($db);
 		$backupConfEntity = $conf->entity;
 		$conf->entity = $shipment->entity;
 
@@ -459,6 +459,7 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 
 			print '<td>'.  $current_cmdFourn->getNomUrl() .'  ->   <span class="classfortooltip" title="'.$langs->trans("supplierOrderLinkedShipment").'">' .$shipment->ref.' </span></td>';
 			print '<td></td>';
+			print '<td>'.$langs->trans('Warehouse').$formproduct->selectWarehouses('', 'idwarehouse', '', 1);'</td>';
 			$form=new TFormCore;
 			print '<td><a class="butAction ventileBtn button --ventilate-button" type="submit"  data-shipment-entity="'.$current_cmdFourn->entity.'" data-shipment-id="'.$shipment->rowid.'" data-commandFourn-id="'.$idCmdFourn.'"  data-shipment-ref="'.$shipment->ref.'"  >'.$langs->trans("SelectExpe").'</a></td><hr><br/>';
 		}

@@ -22,6 +22,7 @@ $refexpe = dol_htmlentitiesbr(GETPOST('refexpe'));
 $entity = dol_htmlentitiesbr(GETPOST('entity'));
 $action = dol_htmlentitiesbr(GETPOST('action'));
 $idCommand = dol_htmlentitiesbr(GETPOST('comFourn'));
+$idWarehouse = dol_htmlentitiesbr(GETPOST('idWarehouse'));
 
 $JsonOutput = new stdClass();
 
@@ -122,7 +123,7 @@ function formatDisplayTableProductsHeader(){
  * @param $entity
  * @return string
  */
-function formatDisplayTableProducts(&$currentExp,$entity, $idCommand){
+function formatDisplayTableProducts(&$currentExp,$entity, $idCommand, $idWarehouse){
 
 	global $conf, $langs, $db;
 
