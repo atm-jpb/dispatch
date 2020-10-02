@@ -457,7 +457,7 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 		// On remonte l'extrafield caché de l'état de traitement de l'expédition.
 		if (!$currentExp->array_options['options_customer_treated_shipment']){
 
-			print '<td>'.  $current_cmdFourn->getNomUrl() .'  ->   <span class="classfortooltip" title="'.$langs->trans("supplierOrderLinkedShipment").'">' .$shipment->ref.' </span></td>';
+			print '<td>'.  $current_cmdFourn->getNomUrl() .'  ->   <span class="classfortooltip" style="margin-right:25px" title="'.$langs->trans("supplierOrderLinkedShipment").'">' .$shipment->ref.' </span></td>';
 			print '<td></td>';
 			print '<td>'.$langs->trans('Warehouse').$formproduct->selectWarehouses('', 'idwarehouse', '', 1);'</td>';
 			$form=new TFormCore;

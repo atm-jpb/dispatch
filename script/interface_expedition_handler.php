@@ -39,7 +39,7 @@ if (isset($action) && $action == 'loadExpeLines'){
 	getEquipmentsFromSupplier($currentExp);
 	$JsonOutput->html .= '<form action='.dol_buildpath('dispatch/receptionofsom.php?id='.$idCommand, 1).' method="POST" name="products-dispatch">';
 	$JsonOutput->html .= formatDisplayTableProductsHeader();
-	$JsonOutput->html .= formatDisplayTableProducts($currentExp,$entity, $idCommand);
+	$JsonOutput->html .= formatDisplayTableProducts($currentExp,$entity, $idCommand, $idWarehouse);
 	$JsonOutput->html .= '</form>';
 }
 print json_encode($JsonOutput);
@@ -191,9 +191,9 @@ function formatDisplayTableProducts(&$currentExp,$entity, $idCommand, $idWarehou
 
 		if (count($formproduct->cache_warehouses) > 1) {
 
-			$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$key.'][entrepot]','',1,0,$prod->id,'',1);
+			$output .=$formproduct->selectWarehouses($idWarehouse, 'TLine['.$key.'][entrepot]','',1,0,$prod->id,'',1);
 		} elseif  (count($formproduct->cache_warehouses)==1) {
-			$output .=$formproduct->selectWarehouses($line->fk_warehouse, 'TLine['.$key.'][entrepot]','',0,0,$prod->id,'',0,1);
+			$output .=$formproduct->selectWarehouses($idWarehouse, 'TLine['.$key.'][entrepot]','',0,0,$prod->id,'',0,1);
 		} else {
 			$output .= $langs->trans("NoWarehouseDefined");
 		}
