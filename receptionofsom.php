@@ -458,9 +458,10 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 		if (!$currentExp->array_options['options_customer_treated_shipment']){
 
 			print '<td>'.  $current_cmdFourn->getNomUrl() .'  ->   <span class="classfortooltip" title="'.$langs->trans("supplierOrderLinkedShipment").'">' .$shipment->ref.' </span></td>';
-			print '<td></td>';
-			$form=new TFormCore;
-			print '<td><a class="butAction ventileBtn button --ventilate-button" type="submit"  data-shipment-entity="'.$current_cmdFourn->entity.'" data-shipment-id="'.$shipment->rowid.'" data-commandFourn-id="'.$idCmdFourn.'"  data-shipment-ref="'.$shipment->ref.'"  >'.$langs->trans("SelectExpe").'</a></td><hr><br/>';
+			print '<td ><span style="margin-left: 55px;">&nbsp;</span></td>';
+			$formproduct=new FormProduct($db);
+			print $langs->trans('Entrepôt :') . $formproduct->selectWarehouses('','TLine[-1][entrepot]','',1,0,0,'',0,1);
+			print '<td><a  class="butAction ventileBtn button --ventilate-button" type="submit"  data-shipment-entity="'.$current_cmdFourn->entity.'" data-shipment-id="'.$shipment->rowid.'" data-commandFourn-id="'.$idCmdFourn.'"  data-shipment-ref="'.$shipment->ref.'" style="margin-left: 55px;"  >'.$langs->trans("SelectExpe").'</a></td><hr><br/>';
 		}
 	}
 }

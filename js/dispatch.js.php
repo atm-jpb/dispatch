@@ -70,6 +70,12 @@ $(document).ready(function() {
 	});
 
 	$(document).on("click", ".ventileBtn", function (e) {
+		console.log($( "select:first" ).val());
+		console.log($('#TLine[-1][entrepot]'));
+		console.log($( "selected" ).val());
+		idWareHouse =  -1 ;
+		idWareHouse = $( "select:first" ).val();
+
 		$('.ventileBtn').removeClass('butActionRefused');
 		$(this).addClass('butActionRefused');
 
@@ -90,6 +96,7 @@ $(document).ready(function() {
 			idexpe: expeid,
 			refexpe: experef,
 			entity : entity,
+			idWarehouse : idWareHouse,
 			action: "loadExpeLines"
 		};
 
