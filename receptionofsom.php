@@ -434,7 +434,6 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 	}
 
 	print '<td></td>';
-	print '<td>'.$langs->trans("Comment").'</td>';
 	if (! empty($conf->global->SUPPLIER_ORDER_USE_DISPATCH_STATUS) && (float) DOL_VERSION > 3.7)
 		print '<td align="center" colspan="2">'.$langs->trans("Status").'</td>';
 
