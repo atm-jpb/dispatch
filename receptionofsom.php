@@ -440,7 +440,7 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 	print "</tr>\n";
 	print "</table>\n";
 
-	foreach ($shipments as $shipment) {
+	foreach ($shipments as $k=>$shipment) {
 		$current_cmdFourn = new CommandeFournisseur($db);
 		$current_cmdFourn->fetch($idCmdFourn);
 		$formproduct = new FormProduct($db);
@@ -458,9 +458,9 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 
 			print '<td>'.  $current_cmdFourn->getNomUrl() .'  ->   <span class="classfortooltip" style="margin-right:25px" title="'.$langs->trans("supplierOrderLinkedShipment").'">' .$shipment->ref.' </span></td>';
 			print '<td></td>';
-			print '<td>'.$langs->trans('Warehouse').$formproduct->selectWarehouses('', 'idwarehouse', '', 1);'</td>';
+			print '<td>'.$langs->trans('Warehouse').$formproduct->selectWarehouses('', "selectwarehouse".$k, '', 1);'</td>';
 			$form=new TFormCore;
-			print '<td><a class="butAction ventileBtn button --ventilate-button" type="submit"  data-shipment-entity="'.$current_cmdFourn->entity.'" data-shipment-id="'.$shipment->rowid.'" data-commandFourn-id="'.$idCmdFourn.'"  data-shipment-ref="'.$shipment->ref.'"  >'.$langs->trans("SelectExpe").'</a></td><hr><br/>';
+			print '<td><a class="butAction ventileBtn button --ventilate-button" type="submit" data-selectwarehouse-for-expe_number="'.$k.'" data-shipment-entity="'.$current_cmdFourn->entity.'" data-shipment-id="'.$shipment->rowid.'" data-commandFourn-id="'.$idCmdFourn.'"  data-shipment-ref="'.$shipment->ref.'"  >'.$langs->trans("SelectExpe").'</a></td><hr><br/>';
 		}
 	}
 }

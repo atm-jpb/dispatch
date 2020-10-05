@@ -33,7 +33,11 @@
 	$action = GETPOST('action');
 	$comment = GETPOST('comment');
 
-	if(is_supplier_linked($conf->entity, $commandefourn->socid)){
+	if(is_supplier_linked($conf->entity, $commandefourn->socid)
+			&& $conf->assetatm->enabled
+			&& $conf->dispatch->enabled
+			&& $conf->orderfromsupplierordermulticompany->enabled
+			&& $conf->multicompany->enabled){
 		header('location:receptionofsom.php?id='.$id);
 		exit();
 	}

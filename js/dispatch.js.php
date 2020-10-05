@@ -78,7 +78,8 @@ $(document).ready(function() {
 		let expeid = $(this).attr('data-shipment-id');
 		let experef = $(this).attr('data-shipment-ref');
 		let entity = $(this).attr('data-shipment-entity');
-		let idWarehouse = $(this).parent().find('#idwarehouse').val();
+		let selectorforexpenumber = $(this).attr('data-selectwarehouse-for-expe_number');
+		let idWarehouse = $(this).parent().find('#selectwarehouse'+selectorforexpenumber).val();
 
 		var className = "shipment-details";
 		if (document.getElementsByClassName(className).length == 0) {
