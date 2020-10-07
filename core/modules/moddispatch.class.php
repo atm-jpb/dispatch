@@ -59,7 +59,7 @@ class moddispatch extends DolibarrModules
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
 		$this->description = "Module104970Desc";
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '2.2.0';
+		$this->version = '3.2.0';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -91,9 +91,8 @@ class moddispatch extends DolibarrModules
 		//                        );
 		//$this->module_parts = array('hooks'=>array('ordersuppliercard','propalcard', 'ordercard', 'invoicecard'),'triggers' => 1);
 		$this->module_parts = array(
-			'triggers' => 1
-			, 'hooks' => array('expeditioncard', 'ordersuppliercard', 'pdfgeneration', 'bonderetourcard','receptionstockcard')
-			,'js' => array('/dispatch/js/dispatch.js.php'),
+			'triggers' => 1,
+			'hooks' => array('expeditioncard', 'ordersuppliercard', 'pdfgeneration', 'bonderetourcard','receptionstockcard')
 		);
 
 		// Data directories to create when module is enabled.

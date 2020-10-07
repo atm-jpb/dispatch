@@ -36,10 +36,10 @@ if (isset($action) && $action == 'loadExpeLines'){
 	$output  = load_fiche_titre($langs->trans("NbItemCountInReception" ). ' '.$currentExp->ref);
 
 	$JsonOutput->html = $output;
-	getEquipmentsFromSupplier($currentExp);
+	_getEquipmentsFromSupplier($currentExp, $JsonOutput);
 	$JsonOutput->html .= '<form action='.dol_buildpath('dispatch/receptionofsom.php?id='.$idCommand, 1).' method="POST" name="products-dispatch">';
-	$JsonOutput->html .= formatDisplayTableProductsHeader();
-	$JsonOutput->html .= formatDisplayTableProducts($currentExp,$entity, $idCommand, $idWarehouse);
+	$JsonOutput->html .= _formatDisplayTableProductsHeader();
+	$JsonOutput->html .= _formatDisplayTableProducts($currentExp,$entity, $idCommand, $idWarehouse);
 	$JsonOutput->html .= '</form>';
 }
 print json_encode($JsonOutput);
@@ -54,7 +54,7 @@ print json_encode($JsonOutput);
  * @param $currentExpe
  *
  */
-function getEquipmentsFromSupplier(&$currentExpe)
+function _getEquipmentsFromSupplier(&$currentExpe, &$JsonOutput)
 {
 	global $langs, $db;
 
@@ -67,8 +67,11 @@ function getEquipmentsFromSupplier(&$currentExpe)
 			$sql .= " WHERE ea.fk_expeditiondet = " . $currentLineExp->id;
 
 			$resultsetEquipments = $db->query($sql);
-			$num = $db->num_rows($resultsetEquipments);
+			if (!$resultsetEquipments) {
+				$JsonOutput->error = $langs->trans('ResultSetEquipmentError');
+			}
 
+			$num = $db->num_rows($resultsetEquipments);
 			$i = 0;
 			$objs = array();
 			while ($i < $num) {
@@ -85,7 +88,7 @@ function getEquipmentsFromSupplier(&$currentExpe)
 /**
  * @return string
  */
-function formatDisplayTableProductsHeader(){
+function _formatDisplayTableProductsHeader(){
 	global $conf, $langs,$db;
 
 	$output = "";
@@ -123,7 +126,7 @@ function formatDisplayTableProductsHeader(){
  * @param $entity
  * @return string
  */
-function formatDisplayTableProducts(&$currentExp,$entity, $idCommand, $idWarehouse){
+function _formatDisplayTableProducts(&$currentExp,$entity, $idCommand, $idWarehouse){
 
 	global $conf, $langs, $db;
 

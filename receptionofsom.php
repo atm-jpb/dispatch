@@ -460,7 +460,7 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 			print '<td></td>';
 			print '<td>'.$langs->trans('Warehouse').$formproduct->selectWarehouses('', "selectwarehouse".$k, '', 1);'</td>';
 			$form=new TFormCore;
-			print '<td><a class="butAction ventileBtn button --ventilate-button" type="submit" data-selectwarehouse-for-expe_number="'.$k.'" data-shipment-entity="'.$current_cmdFourn->entity.'" data-shipment-id="'.$shipment->rowid.'" data-commandFourn-id="'.$idCmdFourn.'"  data-shipment-ref="'.$shipment->ref.'"  >'.$langs->trans("SelectExpe").'</a></td><hr><br/>';
+			print '<td><a class="butAction ofsomVentilExpeBtn button --ventilate-button" type="submit" data-selectwarehouse-for-expe_number="'.$k.'" data-shipment-entity="'.$current_cmdFourn->entity.'" data-shipment-id="'.$shipment->rowid.'" data-commandFourn-id="'.$idCmdFourn.'"  data-shipment-ref="'.$shipment->ref.'"  >'.$langs->trans("SelectExpe").'</a></td><hr><br/>';
 		}
 	}
 }
@@ -693,6 +693,10 @@ function _loadDetail(&$PDOdb,&$commandefourn){
  * @param string $comment
  * @return mixed
  */
+/*
+ * Fonction dupliquée depuis le fichier reception.php
+ *
+ */
 function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null,$comment=''){
 	global $db, $conf, $user;
 	//Charge le produit associé à l'équipement
@@ -882,6 +886,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 			?>
 			<script type="text/javascript">
 				$(document).ready(function() {
+
 					$('#id_entrepot').change(function() {
 						$('td[rel=entrepot] select').val($(this).val());
 					});

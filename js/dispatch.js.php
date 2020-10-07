@@ -67,11 +67,11 @@ $(document).ready(function() {
 	$(document).on("click", ".butActionDelete", function (e) {
 		e.preventDefault();
 		$(".shipment-details").remove();
-		$('.ventileBtn').removeClass('butActionRefused');
+		$('.ofsomVentilExpeBtn').removeClass('butActionRefused');
 	});
 
-	$(document).on("click", ".ventileBtn", function (e) {
-		$('.ventileBtn').removeClass('butActionRefused');
+	$(document).on("click", ".ofsomVentilExpeBtn", function (e) {
+		$('.ofsomVentilExpeBtn').removeClass('butActionRefused');
 		$(this).addClass('butActionRefused');
 
 		let comFourn = $(this).attr('data-commandFourn-id');
@@ -82,10 +82,8 @@ $(document).ready(function() {
 		let idWarehouse = $(this).parent().find('#selectwarehouse'+selectorforexpenumber).val();
 
 		var className = "shipment-details";
-		if (document.getElementsByClassName(className).length == 0) {
-			d = document.createElement("div");
-			d.className = className;
-			$(".tabBar").append(d);
+		if ($(className).length == 0) {
+			$(".tabBar").append('<div class="'+className+'" ></div>');
 		}
 
 		let data = {
@@ -105,8 +103,15 @@ $(document).ready(function() {
 			success: function (data) {
 				if(!data.error) {
 					$(".shipment-details").html(data.html);
+				}else {
+					dispatchSetMessage(data.error, "error");
 				}
 			}
 		})
 	});
+
+	function dispatchSetMessage($out, $type = "success") {
+		$.jnotify($out, $type, 3000);
+	}
+
 });

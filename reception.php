@@ -38,7 +38,7 @@
 			&& $conf->dispatch->enabled
 			&& $conf->orderfromsupplierordermulticompany->enabled
 			&& $conf->multicompany->enabled){
-		header('location:receptionofsom.php?id='.$id);
+		header("Location: ".dirname($_SERVER["PHP_SELF"]).'/receptionofsom.php?id='.$id);
 		exit();
 	}
 
@@ -540,6 +540,10 @@ function _loadDetail(&$PDOdb,&$commandefourn){
     return $TImport;
 }
 
+/*
+ * Fonction qui est dupliquée dans le fichier receptionofsom.php
+ *
+ */
 function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null,$comment=''){
     global $db, $conf, $user;
     //var_dump($_POST['TLine']);exit;
@@ -1567,7 +1571,6 @@ function entetecmd(&$commande)
 
 	print '<div class="clearboth"></div><br>';
 
-	//if ($mesg) print $mesg;
 }
 
 /**
@@ -1584,5 +1587,8 @@ function is_supplier_linked($entityId,$socid){
 	$sql .= " AND te.fk_soc =" . $socid;
 
 	$res = $db->query($sql);
-	return $db->num_rows($res) > 0;
+	if($res){
+		return $db->num_rows($res) > 0;
+	}
+	return 0;
 }

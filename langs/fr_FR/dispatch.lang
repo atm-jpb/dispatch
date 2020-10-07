@@ -124,3 +124,4 @@ Firmware = Firmware
 TreatedExpe = Expédition traitée
 ShipmentsTreatedList = Liste des expéditions traitées
 VentilatedExpeditions = Expédition(s) ventilées
+ResultSetEquipmentError = Une erreur est survenue dans la requête des équipements

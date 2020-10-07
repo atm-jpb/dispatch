@@ -11,44 +11,49 @@ class ActionsDispatch
 	function doAction($parameters, &$object, &$action, $hookmanager)
 	{
 		global $conf, $db;
-		dol_include_once('/commande/class/commande.class.php' );
-		dol_include_once('/expedition/class/expedition.class.php' );
 
-		$sql = "SELECT DISTINCT c.rowid FROM ".MAIN_DB_PREFIX. "commande AS c ";
-		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."element_element AS ee ON c.rowid = ee.fk_target";
-		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."commandedet AS cd ON c.rowid = cd.fk_commande ";
-		$sql .= " AND ee.fk_source = ".$object->id. "";
-		$sql .= " AND ee.targettype = 'commande'";
-		$sql .= " AND ee.sourcetype = 'commandefourn'";
-		$sql .= " ORDER BY cd.rowid ";
+		$context = explode(":",$parameters['currentcontext']);
+		if (in_array('receptionstockcard',$context)) {
 
-		$resultSetSupplierOrder = $db->query($sql);
-		$resql = $db->fetch_object($resultSetSupplierOrder);
+			dol_include_once('/commande/class/commande.class.php');
+			dol_include_once('/expedition/class/expedition.class.php');
 
-		$orderFromSupplierOrder = new Commande($db);
-		$orderFromSupplierOrder->fetch($resql->rowid);
+			$sql = "SELECT DISTINCT c.rowid FROM " . MAIN_DB_PREFIX . "commande AS c ";
+			$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "element_element AS ee ON c.rowid = ee.fk_target";
+			$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "commandedet AS cd ON c.rowid = cd.fk_commande ";
+			$sql .= " AND ee.fk_source = " . $object->id . "";
+			$sql .= " AND ee.targettype = 'commande'";
+			$sql .= " AND ee.sourcetype = 'commandefourn'";
+			$sql .= " ORDER BY cd.rowid ";
 
-		$shipmentsSql = "SELECT * FROM ".MAIN_DB_PREFIX."commande AS c ";
-		$shipmentsSql .= " INNER JOIN ".MAIN_DB_PREFIX."element_element AS ee ON c.rowid = ee.fk_source ";
-		$shipmentsSql .= " INNER JOIN ".MAIN_DB_PREFIX."expedition AS e ON e.rowid = ee.fk_target ";
-		$shipmentsSql .= " AND c.ref = '".$orderFromSupplierOrder->ref."' ";
-		$shipmentsSql .= " AND ee.sourcetype = 'commande' ";
-		$shipmentsSql .= " AND ee.targettype = 'shipping' ";
+			$resultSetSupplierOrder = $db->query($sql);
+			$resql = $db->fetch_object($resultSetSupplierOrder);
 
-		$resultSetShipments = $db->query($shipmentsSql);
+			$orderFromSupplierOrder = new Commande($db);
+			$orderFromSupplierOrder->fetch($resql->rowid);
 
-		$TShipments = array();
-		$num = $db->num_rows($resultSetShipments);
-		$i = 0;
-		While ($i < $num){
-			$TShipments[] = $db->fetch_object($resultSetShipments);
-			$i++;
+			$shipmentsSql = "SELECT * FROM " . MAIN_DB_PREFIX . "commande AS c ";
+			$shipmentsSql .= " INNER JOIN " . MAIN_DB_PREFIX . "element_element AS ee ON c.rowid = ee.fk_source ";
+			$shipmentsSql .= " INNER JOIN " . MAIN_DB_PREFIX . "expedition AS e ON e.rowid = ee.fk_target ";
+			$shipmentsSql .= " AND c.ref = '" . $orderFromSupplierOrder->ref . "' ";
+			$shipmentsSql .= " AND ee.sourcetype = 'commande' ";
+			$shipmentsSql .= " AND ee.targettype = 'shipping' ";
+
+			$resultSetShipments = $db->query($shipmentsSql);
+
+			$TShipments = array();
+			$num = $db->num_rows($resultSetShipments);
+			$i = 0;
+			while ($i < $num) {
+				$TShipments[] = $db->fetch_object($resultSetShipments);
+				$i++;
+			}
+
+			$object->orderFromSupplierOrder = $orderFromSupplierOrder;
+			$object->shipmentsFromSupplier = $TShipments;
+
+			return 0;
 		}
-
-		$object->orderFromSupplierOrder = $orderFromSupplierOrder;
-		$object->shipmentsFromSupplier = $TShipments;
-
-		return 0;
 	}
 
 	/**
