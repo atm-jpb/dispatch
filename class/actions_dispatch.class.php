@@ -40,13 +40,15 @@ class ActionsDispatch
 			$shipmentsSql .= " AND ee.targettype = 'shipping' ";
 
 			$resultSetShipments = $db->query($shipmentsSql);
-
 			$TShipments = array();
-			$num = $db->num_rows($resultSetShipments);
-			$i = 0;
-			while ($i < $num) {
-				$TShipments[] = $db->fetch_object($resultSetShipments);
-				$i++;
+
+			if($resultSetShipments){
+				$num = $db->num_rows($resultSetShipments);
+				$i = 0;
+				while ($i < $num) {
+					$TShipments[] = $db->fetch_object($resultSetShipments);
+					$i++;
+				}
 			}
 
 			$object->orderFromSupplierOrder = $orderFromSupplierOrder;

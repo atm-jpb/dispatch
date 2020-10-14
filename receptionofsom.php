@@ -376,7 +376,66 @@ if(isset($post_create_ventilation_expe) && !empty($post_create_ventilation_expe)
 	}
 }
 fiche($commandefourn, $TImport, $comment);
+?>
+			<script type="text/javascript">
 
+				/* Javascript library of module dispatch */
+				$(document).ready(function() {
+
+
+					$(document).on("click", ".butActionDelete", function (e) {
+						e.preventDefault();
+						$(".shipment-details").remove();
+						$('.ofsomVentilExpeBtn').removeClass('butActionRefused');
+					});
+
+					$(document).on("click", ".ofsomVentilExpeBtn", function (e) {
+						$('.ofsomVentilExpeBtn').removeClass('butActionRefused');
+						$(this).addClass('butActionRefused');
+
+						let comFourn = $(this).attr('data-commandFourn-id');
+						let expeid = $(this).attr('data-shipment-id');
+						let experef = $(this).attr('data-shipment-ref');
+						let entity = $(this).attr('data-shipment-entity');
+						let selectorforexpenumber = $(this).attr('data-selectwarehouse-for-expe_number');
+						let idWarehouse = $(this).parent().find('#selectwarehouse'+selectorforexpenumber).val();
+
+						var className = "shipment-details";
+						if ($(className).length == 0) {
+							$(".tabBar").append('<div class="'+className+'" ></div>');
+						}
+
+						let data = {
+							comFourn : comFourn,
+							idexpe: expeid,
+							refexpe: experef,
+							entity : entity,
+							action: "loadExpeLines",
+							idWarehouse : idWarehouse
+						};
+
+						$.ajax({
+							url: "<?php print dol_buildpath('dispatch/script/interface_expedition_handler.php', 1)?>",
+							method: "POST",
+							dataType: "json",
+							data: data,
+							success: function (data) {
+								if(!data.error) {
+									$(".shipment-details").html(data.html);
+								}else {
+									dispatchSetMessage(data.error, "error");
+								}
+							}
+						})
+					});
+
+					function dispatchSetMessage($out, $type = "success") {
+						$.jnotify($out, $type, 3000);
+					}
+
+				});
+			</script>
+<?php
 
 /**
  * @param Commande $commande
