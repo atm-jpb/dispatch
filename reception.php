@@ -33,6 +33,12 @@
 	$action = GETPOST('action');
 	$comment = GETPOST('comment');
 
+	/*
+	 * Dans le module OFSOM, on a la possibilité de lier un tiers à une entité.
+	 * Ici, le test vérifie si le tiers (celui qui a passé la commande fournisseur) est bien lié à l'entité qui
+	 * reçoit, de son côté, une commande client.
+	 * Si c'est le cas, redirection vers la page receptionofsom.php.
+	 */
 	if(is_supplier_linked($conf->entity, $commandefourn->socid)
 			&& $conf->assetatm->enabled
 			&& $conf->dispatch->enabled

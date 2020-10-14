@@ -67,6 +67,7 @@ if(isset($post_create_ventilation_expe) && !empty($post_create_ventilation_expe)
 	$commandefourn->fetch_thirdparty();
 
 	$Tlength = count($TLine);
+	// Préparation du $TImport pour éviter les effets de bord
 	for ($i = 0; $i < $Tlength; $i++){
 		$TImport[$i]['numserie'] = $TLine[$i]['numserie'];
 		$TImport[$i]['ref'] = $TLine[$i]['ref'];
@@ -405,7 +406,7 @@ fiche($commandefourn, $TImport, $comment);
 							$(".tabBar").append('<div class="'+className+'" ></div>');
 						}
 
-						let data = {
+						let dataToSend = {
 							comFourn : comFourn,
 							idexpe: expeid,
 							refexpe: experef,
@@ -418,7 +419,7 @@ fiche($commandefourn, $TImport, $comment);
 							url: "<?php print dol_buildpath('dispatch/script/interface_expedition_handler.php', 1)?>",
 							method: "POST",
 							dataType: "json",
-							data: data,
+							data: dataToSend,
 							success: function (data) {
 								if(!data.error) {
 									$(".shipment-details").html(data.html);
