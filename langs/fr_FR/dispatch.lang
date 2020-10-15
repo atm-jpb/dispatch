@@ -125,3 +125,5 @@ TreatedExpe = Expédition traitée
 ShipmentsTreatedList = Liste des expéditions traitées
 VentilatedExpeditions = Expédition(s) ventilées
 ResultSetEquipmentError = Une erreur est survenue dans la requête des équipements
+ErrorAtResultSet = Une erreur est survenue dans la requête de %s
+ErrorAtSaveObjectRecepDetail = Une erreur est survenue lors de l'enregistrement en base de données

@@ -37,15 +37,20 @@
 	 * Dans le module OFSOM, on a la possibilité de lier un tiers à une entité.
 	 * Ici, le test vérifie si le tiers (celui qui a passé la commande fournisseur) est bien lié à l'entité qui
 	 * reçoit, de son côté, une commande client.
-	 * Si c'est le cas, redirection vers la page receptionofsom.php.
+	 * Si c'est le cas, redirection vers la page receptionofsom.php pour création automatique des équipements via
+	 * réception de la commande fournisseur sur clôture de la préparation client dans l'autre entité
 	 */
-	if(is_supplier_linked($conf->entity, $commandefourn->socid)
+	$linkedSupplier = is_supplier_linked($conf->entity, $commandefourn->socid);
+	if($linkedSupplier
 			&& $conf->assetatm->enabled
 			&& $conf->dispatch->enabled
 			&& $conf->orderfromsupplierordermulticompany->enabled
 			&& $conf->multicompany->enabled){
 		header("Location: ".dirname($_SERVER["PHP_SELF"]).'/receptionofsom.php?id='.$id);
 		exit();
+	}
+	elseif($linkedSupplier === -1){
+		dol_syslog(__METHOD__.' $linkedSupplier='.var_export($linkedSupplier,true), LOG_DEBUG);
 	}
 
 	$TImport = _loadDetail($PDOdb,$commandefourn);
@@ -1596,5 +1601,5 @@ function is_supplier_linked($entityId,$socid){
 	if($res){
 		return $db->num_rows($res) > 0;
 	}
-	return 0;
+	return -1;
 }

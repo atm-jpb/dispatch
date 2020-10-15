@@ -28,11 +28,10 @@ $hookmanager->initHooks(array('receptionstockcard'));
 $id = GETPOST('id');
 $ref = GETPOST('ref');
 $action = GETPOST('action');
-$comment = GETPOST('comment');
+$comment = dol_htmlentities(GETPOST('comment', 'none'));
 $post_create_ventilation_expe = GETPOST('bt_create');
 $TLine = GETPOST('TLine');
 $date_recep  = GETPOST('date_recep');
-$comment  = GETPOST('comment');
 $btSave = GETPOST('bt_save');
 $toDispatch = GETPOST('ToDispatch');
 $newLineFkProduct = GETPOST('new_line_fk_product');
@@ -116,73 +115,76 @@ if(isset($post_create_ventilation_expe) && !empty($post_create_ventilation_expe)
 
 				$prod = new Product($db);
 				$prod->fetch($line['fk_product']);
+				if($prod) {
 
-				// Affectation du type d'équipement pour avoir accès aux extrafields équipement
-				$asset->fk_asset_type = $asset->get_asset_type($PDOdb, $prod->id);
-				$asset->load_asset_type($PDOdb);
-				$asset->fk_product = $line['fk_product'];
-				$asset->serial_number = ($line['numserie']) ? $line['numserie'] : $asset->getNextValue($PDOdb);
-				$asset->lot_number = $line['lot_number'];
-				$asset->contenance_value = ($line['quantity']) ? $line['quantity'] : 1;
-				$asset->contenancereel_value = ($line['quantity']) ? $line['quantity'] : 1;
-				$asset->contenancereel_units = ($line['quantity_unit']) ? $line['quantity_unit'] : 0;
-				$asset->contenance_units = ($line['quantity_unit']) ? $line['quantity_unit'] : 0;
-				$asset->lot_number = $line['lot_number'];
-				$asset->firmware = $line['firmware'];
-				$asset->imei = $line['imei'];
-				$asset->set_date('dluo', $line['dluo']);
-				$asset->entity = $conf->entity;
-				$nb_year_garantie = 0;
-				// Renseignement des extrafields
-				$asset->set_date('date_reception', $date_recep);
+					// Affectation du type d'équipement pour avoir accès aux extrafields équipement
+					$asset->fk_asset_type = $asset->get_asset_type($PDOdb, $prod->id);
+					$asset->load_asset_type($PDOdb);
+					$asset->fk_product = $line['fk_product'];
+					$asset->serial_number = ($line['numserie']) ? $line['numserie'] : $asset->getNextValue($PDOdb);
+					$asset->lot_number = $line['lot_number'];
+					$asset->contenance_value = ($line['quantity']) ? $line['quantity'] : 1;
+					$asset->contenancereel_value = ($line['quantity']) ? $line['quantity'] : 1;
+					$asset->contenancereel_units = ($line['quantity_unit']) ? $line['quantity_unit'] : 0;
+					$asset->contenance_units = ($line['quantity_unit']) ? $line['quantity_unit'] : 0;
+					$asset->lot_number = $line['lot_number'];
+					$asset->firmware = $line['firmware'];
+					$asset->imei = $line['imei'];
+					$asset->set_date('dluo', $line['dluo']);
+					$asset->entity = $conf->entity;
+					$nb_year_garantie = 0;
+					// Renseignement des extrafields
+					$asset->set_date('date_reception', $date_recep);
 
 
-				// OPTIONS DE GARANTIE
-				foreach ($commandefourn->lines as $l) {
-					if ($l->fk_product == $asset->fk_product) {
-						$asset->valeur = $asset->prix_achat = price2num($l->subprice, 'MU');
+					// OPTIONS DE GARANTIE
+					foreach ($commandefourn->lines as $l) {
+						if ($l->fk_product == $asset->fk_product) {
+							$asset->valeur = $asset->prix_achat = price2num($l->subprice, 'MU');
 
-						$extension_garantie = 0;
-						$PDOdb->Execute('SELECT extension_garantie FROM ' . MAIN_DB_PREFIX . 'commande_fournisseurdet WHERE rowid = ' . $l->id);
-						if ($PDOdb->Get_line()) {
-							$extension_garantie = $PDOdb->Get_field('extension_garantie');
+							$extension_garantie = 0;
+							$PDOdb->Execute('SELECT extension_garantie FROM ' . MAIN_DB_PREFIX . 'commande_fournisseurdet WHERE rowid = ' . $l->id);
+							if ($PDOdb->Get_line()) {
+								$extension_garantie = $PDOdb->Get_field('extension_garantie');
+							}
+
 						}
-
 					}
+					$nb_year_garantie += $prod->array_options['options_duree_garantie_fournisseur'];
+					$asset->date_fin_garantie_fourn = strtotime('+' . $nb_year_garantie . 'year', $time_date_recep);
+					$asset->date_fin_garantie_fourn = strtotime('+' . $extension_garantie . 'year', $asset->date_fin_garantie_fourn);
+					// FIN OPTIONS GARANTIE
+
+					$asset->fk_soc = $commandefourn->socid;
+					$fk_entrepot = (!empty($line['fk_warehouse']) && $line['fk_warehouse'] > 0) ? $line['fk_warehouse'] : GETPOST('id_entrepot', 'int');
+					$asset->fk_entrepot = $fk_entrepot;
+
+					$societe = new Societe($db);
+					$societe->fetch('', $conf->global->MAIN_INFO_SOCIETE_NOM);
+
+					$asset->fk_societe_localisation = $societe->id;
+					$asset->etat = 0; //En stock
+
+					// Le destockage dans Dolibarr est fait par la fonction de ventilation plus loin, donc désactivation du mouvement créé par l'équipement.
+					//				$asset->save($PDOdb, $user,$langs->trans("Asset").' '.$asset->serial_number.' '. $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $line['quantity'], false, $line['fk_product'], false,$fk_entrepot);
+					$TAssetCreated[$asset->fk_product][] = $asset->save($PDOdb, $user, '', 0, false, 0, true, $fk_entrepot);
+
+					$TAssetVentil[$line['fk_product']][$fk_entrepot]['qty'] += $line['quantity'];
+					$TAssetVentil[$line['fk_product']][$fk_entrepot]['price'] += $line['quantity'] * $asset->prix_achat;
+					$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['qty'] = $line['quantity'];
+					$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['price'] = $line['quantity'] * $asset->prix_achat;
+					$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['comment'] = $comment;
+
+
+					if ($asset->serial_number != $line['numserie']) {
+						$receptDetailLine = new TRecepDetail;
+						$receptDetailLine->load($PDOdb, $line['commande_fournisseurdet_asset']);
+						$receptDetailLine->numserie = $receptDetailLine->serial_number = $asset->serial_number;
+						$receptDetailLine->save($PDOdb);
+					}
+				} else {
+					dol_syslog(__METHOD__.' $prod='.var_export($prod,true), LOG_DEBUG);
 				}
-				$nb_year_garantie += $prod->array_options['options_duree_garantie_fournisseur'];
-				$asset->date_fin_garantie_fourn = strtotime('+' . $nb_year_garantie . 'year', $time_date_recep);
-				$asset->date_fin_garantie_fourn = strtotime('+' . $extension_garantie . 'year', $asset->date_fin_garantie_fourn);
-				// FIN OPTIONS GARANTIE
-
-				$asset->fk_soc = $commandefourn->socid;
-				$fk_entrepot = (!empty($line['fk_warehouse']) && $line['fk_warehouse'] > 0) ? $line['fk_warehouse'] : GETPOST('id_entrepot');
-				$asset->fk_entrepot = $fk_entrepot;
-
-				$societe = new Societe($db);
-				$societe->fetch('', $conf->global->MAIN_INFO_SOCIETE_NOM);
-
-				$asset->fk_societe_localisation = $societe->id;
-				$asset->etat = 0; //En stock
-
-				// Le destockage dans Dolibarr est fait par la fonction de ventilation plus loin, donc désactivation du mouvement créé par l'équipement.
-				//				$asset->save($PDOdb, $user,$langs->trans("Asset").' '.$asset->serial_number.' '. $langs->trans("DispatchSupplierOrder",$commandefourn->ref), $line['quantity'], false, $line['fk_product'], false,$fk_entrepot);
-				$TAssetCreated[$asset->fk_product][] = $asset->save($PDOdb, $user, '', 0, false, 0, true, $fk_entrepot);
-
-				$TAssetVentil[$line['fk_product']][$fk_entrepot]['qty'] += $line['quantity'];
-				$TAssetVentil[$line['fk_product']][$fk_entrepot]['price'] += $line['quantity'] * $asset->prix_achat;
-				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['qty'] = $line['quantity'];
-				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['price'] = $line['quantity'] * $asset->prix_achat;
-				$TAssetVentil[$line['fk_product']][$fk_entrepot][$asset->getId()]['comment'] = $comment;
-
-
-				if ($asset->serial_number != $line['numserie']) {
-					$receptDetailLine = new TRecepDetail;
-					$receptDetailLine->load($PDOdb, $line['commande_fournisseurdet_asset']);
-					$receptDetailLine->numserie = $receptDetailLine->serial_number = $asset->serial_number;
-					$receptDetailLine->save($PDOdb);
-				}
-
 			} else {
 				setEventMessage($langs->trans('AssetAlreadyLinked') . ' : ' . $line['numserie'], 'errors');
 			}
@@ -219,12 +221,16 @@ if(isset($post_create_ventilation_expe) && !empty($post_create_ventilation_expe)
 							$res = $db->query($sql);
 							if($res) {
 								$obj = $db->fetch_object($res);
+								if($obj) {
 
-								$lastStockMouvement = $obj->id;
+									$lastStockMouvement = $obj->id;
 
-								TAsset::set_element_element($asset_id, 'TAssetOFLine', $lastStockMouvement, 'DolStockMouv');
-								$stock = new TAssetStock;
-								$stock->mouvement_stock($PDOdb, $user, $asset_id, $TDispatchEntrepot[$asset_id]['qty'], $TDispatchEntrepot[$asset_id]['comment'], $asset->rowid, $lastStockMouvement);
+									TAsset::set_element_element($asset_id, 'TAssetOFLine', $lastStockMouvement, 'DolStockMouv');
+									$stock = new TAssetStock;
+									$stock->mouvement_stock($PDOdb, $user, $asset_id, $TDispatchEntrepot[$asset_id]['qty'], $TDispatchEntrepot[$asset_id]['comment'], $asset->rowid, $lastStockMouvement);
+								} else {
+									dol_syslog(__METHOD__.' $obj='.var_export($obj,true), LOG_DEBUG);
+								}
 							}
 						}
 					}
@@ -502,25 +508,34 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 
 	foreach ($shipments as $k=>$shipment) {
 		$current_cmdFourn = new CommandeFournisseur($db);
-		$current_cmdFourn->fetch($idCmdFourn);
-		$formproduct = new FormProduct($db);
-		$backupConfEntity = $conf->entity;
-		$conf->entity = $shipment->entity;
+		$objCurrentCmdFourn = $current_cmdFourn->fetch($idCmdFourn);
+		if($objCurrentCmdFourn) {
+			$formproduct = new FormProduct($db);
+			$backupConfEntity = $conf->entity;
+			$conf->entity = $shipment->entity;
 
-		$currentExp = new Expedition($db);
-		$extra = new ExtraFields($db);
-		$extra->fetch_name_optionals_label($shipment->table_element);
-		$currentExp->fetch($shipment->rowid);
-		$conf->entity = $backupConfEntity;
+			$currentExp = new Expedition($db);
+			$extra = new ExtraFields($db);
+			$extra->fetch_name_optionals_label($shipment->table_element);
+			$objCurrentExp = $currentExp->fetch($shipment->rowid);
+			if($objCurrentExp) {
+				$conf->entity = $backupConfEntity;
 
-		// On remonte l'extrafield caché de l'état de traitement de l'expédition.
-		if (!$currentExp->array_options['options_customer_treated_shipment']){
+				// On remonte l'extrafield caché de l'état de traitement de l'expédition.
+				if (!$currentExp->array_options['options_customer_treated_shipment']) {
 
-			print '<td>'.  $current_cmdFourn->getNomUrl() .'  ->   <span class="classfortooltip" style="margin-right:25px" title="'.$langs->trans("supplierOrderLinkedShipment").'">' .$shipment->ref.' </span></td>';
-			print '<td></td>';
-			print '<td>'.$langs->trans('Warehouse').$formproduct->selectWarehouses('', "selectwarehouse".$k, '', 1);'</td>';
-			$form=new TFormCore;
-			print '<td><a class="butAction ofsomVentilExpeBtn button --ventilate-button" type="submit" data-selectwarehouse-for-expe_number="'.$k.'" data-shipment-entity="'.$current_cmdFourn->entity.'" data-shipment-id="'.$shipment->rowid.'" data-commandFourn-id="'.$idCmdFourn.'"  data-shipment-ref="'.$shipment->ref.'"  >'.$langs->trans("SelectExpe").'</a></td><hr><br/>';
+					print '<td>' . $current_cmdFourn->getNomUrl() . '  ->   <span class="classfortooltip" style="margin-right:25px" title="' . $langs->trans("supplierOrderLinkedShipment") . '">' . $shipment->ref . ' </span></td>';
+					print '<td></td>';
+					print '<td>' . $langs->trans('Warehouse') . $formproduct->selectWarehouses('', "selectwarehouse" . $k, '', 1);
+					'</td>';
+					$form = new TFormCore;
+					print '<td><a class="butAction ofsomVentilExpeBtn button --ventilate-button" type="submit" data-selectwarehouse-for-expe_number="' . $k . '" data-shipment-entity="' . $current_cmdFourn->entity . '" data-shipment-id="' . $shipment->rowid . '" data-commandFourn-id="' . $idCmdFourn . '"  data-shipment-ref="' . $shipment->ref . '"  >' . $langs->trans("SelectExpe") . '</a></td><hr><br/>';
+				}
+			} else{
+				dol_syslog(__METHOD__.' $objCurrentExp='.var_export($objCurrentExp,true), LOG_DEBUG);
+			}
+		} else{
+			dol_syslog(__METHOD__.' $objCurrentCmdFourn='.var_export($objCurrentCmdFourn,true), LOG_DEBUG);
 		}
 	}
 }
@@ -532,7 +547,8 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 function _list_shipments_treated(&$shipments , $idCmdFourn){
 	global $db, $langs, $conf, $user;
 
-	if (_isTreatedExpAlreadyExists($shipments)) {
+	$TreatedExpAlreadyExists = _isTreatedExpAlreadyExists($shipments);
+	if($TreatedExpAlreadyExists){
 		print load_fiche_titre($langs->trans("ShipmentsTreatedList"));
 		print '<table class="noborder" width="100%">';
 		print '<tr class="liste_titre">';
@@ -554,28 +570,36 @@ function _list_shipments_treated(&$shipments , $idCmdFourn){
 
 		foreach ($shipments as $shipment) {
 			$current_cmdFourn = new CommandeFournisseur($db);
-			$current_cmdFourn->fetch($idCmdFourn);
+			$objCurrentFournCom = $current_cmdFourn->fetch($idCmdFourn);
+			if ($objCurrentFournCom) {
+				$backupConfEntity = $conf->entity;
+				$conf->entity = $shipment->entity;
 
-			$backupConfEntity = $conf->entity;
-			$conf->entity = $shipment->entity;
+				$currentExp = new Expedition($db);
+				$extra = new ExtraFields($db);
+				$extra->fetch_name_optionals_label($shipment->table_element);
+				$ret = $currentExp->fetch($shipment->rowid);
+				if ($ret) {
+					$conf->entity = $backupConfEntity;
 
-			$currentExp = new Expedition($db);
-			$extra = new ExtraFields($db);
-			$extra->fetch_name_optionals_label($shipment->table_element);
-			$ret = $currentExp->fetch($shipment->rowid);
-			if ($ret){
-				$conf->entity = $backupConfEntity;
+					// On remonte l'extrafield caché de l'état de traitement de l'expédition.
+					if ($currentExp->array_options['options_customer_treated_shipment']) {
 
-				// On remonte l'extrafield caché de l'état de traitement de l'expédition.
-				if ($currentExp->array_options['options_customer_treated_shipment']){
-
-					print '<td>'.  $current_cmdFourn->getNomUrl() .'  ->   <span class="classfortooltip" title="'.$langs->trans("supplierOrderLinkedShipment").'">' .$shipment->ref.' </span></td>';
-					print '<td></td>';
-					$form=new TFormCore;
-					print '<td><span class="butActionRefused" data-shipment-entity="'.$current_cmdFourn->entity.'" data-shipment-id="'.$shipment->rowid.'" data-commandFourn-id="'.$idCmdFourn.'"  data-shipment-ref="'.$shipment->ref.'"  >'.$langs->trans("TreatedExpe").'</span></td><hr><br/>';
+						print '<td>' . $current_cmdFourn->getNomUrl() . '  ->   <span class="classfortooltip" title="' . $langs->trans("supplierOrderLinkedShipment") . '">' . $shipment->ref . ' </span></td>';
+						print '<td></td>';
+						$form = new TFormCore;
+						print '<td><span class="butActionRefused" data-shipment-entity="' . $current_cmdFourn->entity . '" data-shipment-id="' . $shipment->rowid . '" data-commandFourn-id="' . $idCmdFourn . '"  data-shipment-ref="' . $shipment->ref . '"  >' . $langs->trans("TreatedExpe") . '</span></td><hr><br/>';
+					}
+				} else{
+					dol_syslog(__METHOD__.' $ret='.var_export($ret,true), LOG_DEBUG);
 				}
+			} else{
+				dol_syslog(__METHOD__.' $objCurrentFournCom='.var_export($objCurrentFournCom,true), LOG_DEBUG);
 			}
 		}
+	}
+	elseif($TreatedExpAlreadyExists === -1){
+		dol_syslog(__METHOD__.' $TreatedExpAlreadyExists='.var_export($TreatedExpAlreadyExists,true), LOG_DEBUG);
 	}
 }
 
@@ -703,6 +727,7 @@ function entetecmd(&$commande)
  */
 function _loadDetail(&$PDOdb,&$commandefourn){
 
+	global $langs;
 	$TImport = array();
 
 	foreach($commandefourn->lines as $line){
@@ -713,22 +738,26 @@ function _loadDetail(&$PDOdb,&$commandefourn){
 			WHERE ca.fk_commandedet = ".$line->id."
 				ORDER BY ca.rang ASC";
 
-		$PDOdb->Execute($sql);
+		$resultSet = $PDOdb->Execute($sql);
+		if($resultSet) {
 
-		while ($PDOdb->Get_line()) {
-			$TImport[] =array(
-				'ref'=>$PDOdb->Get_field('ref')
-				,'numserie'=>$PDOdb->Get_field('serial_number')
-				,'lot_number'=>$PDOdb->Get_field('lot_number')
-				,'quantity'=>$PDOdb->Get_field('weight_reel')
-				,'quantity_unit'=>$PDOdb->Get_field('weight_reel_unit')
-				,'imei'=>$PDOdb->Get_field('imei')
-				,'firmware'=>$PDOdb->Get_field('firmware')
-				,'fk_product'=>$PDOdb->Get_field('rowid')
-				,'fk_warehouse'=>$PDOdb->Get_field('fk_warehouse')
-				,'dluo'=>$PDOdb->Get_field('dluo')
-				,'commande_fournisseurdet_asset'=>$PDOdb->Get_field('idline')
-			);
+			while ($PDOdb->Get_line()) {
+				$TImport[] = array(
+						'ref'                             => $PDOdb->Get_field('ref')
+						, 'numserie'                      => $PDOdb->Get_field('serial_number')
+						, 'lot_number'                    => $PDOdb->Get_field('lot_number')
+						, 'quantity'                      => $PDOdb->Get_field('weight_reel')
+						, 'quantity_unit'                 => $PDOdb->Get_field('weight_reel_unit')
+						, 'imei'                          => $PDOdb->Get_field('imei')
+						, 'firmware'                      => $PDOdb->Get_field('firmware')
+						, 'fk_product'                    => $PDOdb->Get_field('rowid')
+						, 'fk_warehouse'                  => $PDOdb->Get_field('fk_warehouse')
+						, 'dluo'                          => $PDOdb->Get_field('dluo')
+						, 'commande_fournisseurdet_asset' => $PDOdb->Get_field('idline')
+				);
+			}
+		} else{
+			setEventMessage($langs->trans('ErrorAtResultSet'), 'resultSet');
 		}
 	}
 
@@ -758,7 +787,8 @@ function _loadDetail(&$PDOdb,&$commandefourn){
  *
  */
 function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null,$comment=''){
-	global $db, $conf, $user;
+	global $db, $conf, $user, $langs;
+
 	//Charge le produit associé à l'équipement
 	$prodAsset = new Product($db);
 	$prodAsset->fetch('',$refproduit);
@@ -804,25 +834,28 @@ function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$nums
 	$recepdetail->imei = $imei;
 	$recepdetail->firmware = $firmware;
 	$recepdetail->fk_warehouse = $entrepot;
-	$recepdetail->save($PDOdb);
+	$resultSave = $recepdetail->save($PDOdb);
+	if($resultSave) {
 
-	$currentLine = array(
-		'ref'=>$prodAsset->ref
-		,'numserie'=>$numserie
-		,'lot_number'=>$lot_number
-		,'quantity'=>$quantity
-		,'quantity_unit'=>$quantity_unit
-		,'fk_product'=>$prodAsset->id
-		,'fk_warehouse'=>$entrepot
-		,'imei'=>$imei
-		,'firmware'=>$firmware
-		,'dluo'=>$recepdetail->get_date('dluo','Y-m-d H:i:s')
-		,'commande_fournisseurdet_asset'=>$recepdetail->getId()
-	);
+		$currentLine = array(
+				'ref'                             => $prodAsset->ref
+				, 'numserie'                      => $numserie
+				, 'lot_number'                    => $lot_number
+				, 'quantity'                      => $quantity
+				, 'quantity_unit'                 => $quantity_unit
+				, 'fk_product'                    => $prodAsset->id
+				, 'fk_warehouse'                  => $entrepot
+				, 'imei'                          => $imei
+				, 'firmware'                      => $firmware
+				, 'dluo'                          => $recepdetail->get_date('dluo', 'Y-m-d H:i:s')
+				, 'commande_fournisseurdet_asset' => $recepdetail->getId()
+		);
 
-	//Rempli le tableau utilisé pour l'affichage des lignes
-	($lineFound) ? $TImport[$k] = $currentLine : $TImport[] =$currentLine ;
-
+		//Rempli le tableau utilisé pour l'affichage des lignes
+		($lineFound) ? $TImport[$k] = $currentLine : $TImport[] = $currentLine;
+	}else{
+		setEventMessage($langs->trans('ErrorAtSaveObjectRecepDetail'));
+	}
 	return $TImport;
 
 }
@@ -896,6 +929,9 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 			}
 		}
 		$db->free($resql);
+	} else{
+		setEventMessage($langs->trans('ErrorAtResultSet'), 'resql');
+		dol_syslog(__METHOD__.' $resql='.var_export($resql,true), LOG_DEBUG);
 	}
 
 	$sql = "SELECT l.fk_product, SUM(l.qty * l.subprice) / SUM(l.qty) AS subprice, SUM(l.qty * l.remise_percent) / SUM(l.qty) AS remise_percent, SUM(l.qty) as qty,";
@@ -967,7 +1003,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 
 		$nbproduct=0;
 
-		$TOrderLine = GETPOST('TOrderLine');
+		$TOrderLine = GETPOST('TOrderLine', 'array');
 
 		$var=true;
 		while ($i < $num)
@@ -1253,39 +1289,42 @@ function _list_already_dispatched(&$bdr) {
 			while ($i < $num)
 			{
 				$objp = $db->fetch_object($resql);
+				if($objp) {
 
-				print "<tr ".$bc[$var].">";
-				print '<td>';
-				print '<a href="'.DOL_URL_ROOT.'/product/fournisseurs.php?id='.$objp->fk_product.'">'.img_object($langs->trans("ShowProduct"),'product').' '.$objp->ref.'</a>';
-				print ' - '.$objp->label;
-				print "</td>\n";
+					print "<tr " . $bc[$var] . ">";
+					print '<td>';
+					print '<a href="' . DOL_URL_ROOT . '/product/fournisseurs.php?id=' . $objp->fk_product . '">' . img_object($langs->trans("ShowProduct"), 'product') . ' ' . $objp->ref . '</a>';
+					print ' - ' . $objp->label;
+					print "</td>\n";
 
-				if (! empty($conf->productbatch->enabled) && (float) DOL_VERSION > 3.7)
-				{
-					print '<td>'.$objp->batch.'</td>';
-					print '<td>'.dol_print_date($db->jdate($objp->eatby),'day').'</td>';
-					print '<td>'.dol_print_date($db->jdate($objp->sellby),'day').'</td>';
+					if (!empty($conf->productbatch->enabled) && (float)DOL_VERSION > 3.7) {
+						print '<td>' . $objp->batch . '</td>';
+						print '<td>' . dol_print_date($db->jdate($objp->eatby), 'day') . '</td>';
+						print '<td>' . dol_print_date($db->jdate($objp->sellby), 'day') . '</td>';
+					}
+
+					// Qty
+					print '<td align="right">' . $objp->qty . '</td>';
+					print '<td>&nbsp;</td>';
+
+					// Warehouse
+					print '<td>';
+					$warehouse_static = new Entrepot($db);
+					$warehouse_static->id = $objp->warehouse_id;
+					$warehouse_static->libelle = $objp->entrepot;
+					print $warehouse_static->getNomUrl(1);
+					print '</td>';
+
+					// Comment
+					print '<td>' . dol_trunc($objp->comment) . '</td>';
+
+					print "</tr>\n";
+
+					$i++;
+					$var = !$var;
+				} else{
+					dol_syslog(__METHOD__.' $objp='.var_export($objp,true), LOG_DEBUG);
 				}
-
-				// Qty
-				print '<td align="right">'.$objp->qty.'</td>';
-				print '<td>&nbsp;</td>';
-
-				// Warehouse
-				print '<td>';
-				$warehouse_static = new Entrepot($db);
-				$warehouse_static->id=$objp->warehouse_id;
-				$warehouse_static->libelle=$objp->entrepot;
-				print $warehouse_static->getNomUrl(1);
-				print '</td>';
-
-				// Comment
-				print '<td>'.dol_trunc($objp->comment).'</td>';
-
-				print "</tr>\n";
-
-				$i++;
-				$var=!$var;
 			}
 			$db->free($resql);
 
@@ -1312,10 +1351,13 @@ function _set_treated_expedition_extrafield($idexpe, $shipmentEntity) {
 	$currentExp->fetch($idexpe);
 
 	$extra = new ExtraFields($db);
-	$extra->fetch_name_optionals_label($currentExp->table_element);
-
-	$currentExp->array_options['options_customer_treated_shipment'] = 1;
-	$currentExp->updateExtraField('customer_treated_shipment');
+	$resultExtra = $extra->fetch_name_optionals_label($currentExp->table_element);
+	if($resultExtra) {
+		$currentExp->array_options['options_customer_treated_shipment'] = 1;
+		$currentExp->updateExtraField('customer_treated_shipment');
+	}else {
+		dol_syslog(__METHOD__.' $resultExtra='.var_export($resultExtra,true), LOG_DEBUG);
+	}
 
 	$conf->entity = $backEntity;
 }
@@ -1333,5 +1375,9 @@ function _isTreatedExpAlreadyExists($shipments) {
 	$sql = 'SELECT * FROM '.MAIN_DB_PREFIX . 'expedition_extrafields WHERE fk_object in (' . implode(",",$arrShimpemtsId) . ') AND customer_treated_shipment = 1';
 	$resultset= $db->query($sql);
 
-	return $db->num_rows($resultset) > 0;
+	if($resultset){
+		return $db->num_rows($resultset) > 0;
+	}else return -1;
+
+
 }
