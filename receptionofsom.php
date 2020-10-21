@@ -603,6 +603,9 @@ function _list_shipments_treated(&$shipments , $idCmdFourn){
 	}
 }
 
+/**
+ * @param Commande $commande
+ */
 function entetecmd(&$commande)
 {
 	global $langs, $db, $form, $user, $conf;
@@ -721,7 +724,7 @@ function entetecmd(&$commande)
 
 /**
  * Remonte les informations des équipements liées aux lignes de la commande fournisseur
- * @param $PDOdb
+ * @param PDO $PDOdb
  * @param CommandeFournisseur $commandefourn
  * @return array  tableau d'import des équipements
  */
@@ -765,6 +768,7 @@ function _loadDetail(&$PDOdb,&$commandefourn){
 }
 
 /**
+ * Fonction dupliquée depuis le fichier reception.php
  * @param        $PDOdb
  * @param        array $TImport
  * @param        CommandeFournisseur $commandefourn
@@ -775,16 +779,12 @@ function _loadDetail(&$PDOdb,&$commandefourn){
  * @param        string $lot_number
  * @param        int $quantity
  * @param        int $quantity_unit
- * @param null   $dluo
- * @param null   $k
- * @var Entrepot $entrepot
- * @param null   $entrepot
- * @param string $comment
- * @return mixed
- */
-/*
- * Fonction dupliquée depuis le fichier reception.php
- *
+ * @param        null   $dluo
+ * @param        null   $k
+ * @var          Entrepot $entrepot
+ * @param        null   $entrepot
+ * @param        string $comment
+ * @return       mixed
  */
 function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null,$comment=''){
 	global $db, $conf, $user, $langs;
@@ -1143,6 +1143,9 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 	}
 }
 
+/**
+ * Function that print serial number autodeduced
+ */
 function printJSSerialNumberAutoDeduce() {
 
 	global $langs;

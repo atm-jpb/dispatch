@@ -157,6 +157,12 @@ class ActionsDispatch
 		return 0;
 	}
 
+	/**
+	 * @param array $parameters
+	 * @param CommonObject $object
+	 * @param string $action
+	 * @param HookManager $hookmanager
+	 */
 	function beforePDFCreation($parameters, &$object, &$action, $hookmanager)
 	{
 
