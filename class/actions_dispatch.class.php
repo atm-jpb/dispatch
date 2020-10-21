@@ -53,25 +53,25 @@ class ActionsDispatch
 								if($obj){
 									$TShipments[] = $obj;
 								} else {
-									dol_syslog(__METHOD__.' $obj='.var_export($obj,true), LOG_ERROR);
+									dol_syslog(__METHOD__.' $obj='.var_export($obj,true), LOG_ERR);
 								}
 								$i++;
 							}
 						} else {
 							setEventMessage($langs->trans('ErrorAtResultSet'), 'resultSetShipments');
-							dol_syslog(__METHOD__.' $resql='.var_export($resql,true), LOG_ERROR);
+							dol_syslog(__METHOD__.' $resql='.var_export($resql,true), LOG_ERR);
 						}
 						$object->orderFromSupplierOrder = $orderFromSupplierOrder;
 						$object->shipmentsFromSupplier = $TShipments;
 					} else {
-						dol_syslog(__METHOD__.' $orderFromSupplierOrder='.var_export($orderFromSupplierOrder,true), LOG_ERROR);
+						dol_syslog(__METHOD__.' $orderFromSupplierOrder='.var_export($orderFromSupplierOrder,true), LOG_ERR);
 					}
 				} else {
-					dol_syslog(__METHOD__.' $resql='.var_export($resql,true), LOG_ERROR);
+					dol_syslog(__METHOD__.' $resql='.var_export($resql,true), LOG_ERR);
 				}
 			} else {
 				setEventMessage($langs->trans('ErrorAtResultSet'), 'resultSetSupplierOrder');
-				dol_syslog(__METHOD__.' $resultSetSupplierOrder='.var_export($resultSetSupplierOrder,true), LOG_ERROR);
+				dol_syslog(__METHOD__.' $resultSetSupplierOrder='.var_export($resultSetSupplierOrder,true), LOG_ERR);
 			}
 		}
 	}
@@ -168,6 +168,7 @@ class ActionsDispatch
 
 		// pour implementation dans Dolibarr 3.7
 		if (in_array('pdfgeneration', explode(':', $parameters['context']))) {
+
 
 			define('INC_FROM_DOLIBARR', true);
 			dol_include_once('/dispatch/config.php');

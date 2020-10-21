@@ -50,7 +50,7 @@
 		exit();
 	}
 	elseif($linkedSupplier === -1){
-		dol_syslog(__METHOD__.' $linkedSupplier='.var_export($linkedSupplier,true), LOG_ERROR);
+		dol_syslog(__METHOD__.' $linkedSupplier='.var_export($linkedSupplier,true), LOG_ERR);
 	}
 
 	$TImport = _loadDetail($PDOdb,$commandefourn);

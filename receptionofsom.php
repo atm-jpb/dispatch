@@ -183,7 +183,7 @@ if(isset($post_create_ventilation_expe) && !empty($post_create_ventilation_expe)
 						$receptDetailLine->save($PDOdb);
 					}
 				} else {
-					dol_syslog(__METHOD__.' $prod='.var_export($prod,true), LOG_ERROR);
+					dol_syslog(__METHOD__.' $prod='.var_export($prod,true), LOG_ERR);
 				}
 			} else {
 				setEventMessage($langs->trans('AssetAlreadyLinked') . ' : ' . $line['numserie'], 'errors');
@@ -229,7 +229,7 @@ if(isset($post_create_ventilation_expe) && !empty($post_create_ventilation_expe)
 									$stock = new TAssetStock;
 									$stock->mouvement_stock($PDOdb, $user, $asset_id, $TDispatchEntrepot[$asset_id]['qty'], $TDispatchEntrepot[$asset_id]['comment'], $asset->rowid, $lastStockMouvement);
 								} else {
-									dol_syslog(__METHOD__.' $obj='.var_export($obj,true), LOG_ERROR);
+									dol_syslog(__METHOD__.' $obj='.var_export($obj,true), LOG_ERR);
 								}
 							}
 						}
@@ -532,10 +532,10 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 					print '<td><a class="butAction ofsomVentilExpeBtn button --ventilate-button" type="submit" data-selectwarehouse-for-expe_number="' . $k . '" data-shipment-entity="' . $current_cmdFourn->entity . '" data-shipment-id="' . $shipment->rowid . '" data-commandFourn-id="' . $idCmdFourn . '"  data-shipment-ref="' . $shipment->ref . '"  >' . $langs->trans("SelectExpe") . '</a></td><hr><br/>';
 				}
 			} else{
-				dol_syslog(__METHOD__.' $objCurrentExp='.var_export($objCurrentExp,true), LOG_ERROR);
+				dol_syslog(__METHOD__.' $objCurrentExp='.var_export($objCurrentExp,true), LOG_ERR);
 			}
 		} else{
-			dol_syslog(__METHOD__.' $objCurrentCmdFourn='.var_export($objCurrentCmdFourn,true), LOG_ERROR);
+			dol_syslog(__METHOD__.' $objCurrentCmdFourn='.var_export($objCurrentCmdFourn,true), LOG_ERR);
 		}
 	}
 }
@@ -591,15 +591,15 @@ function _list_shipments_treated(&$shipments , $idCmdFourn){
 						print '<td><span class="butActionRefused" data-shipment-entity="' . $current_cmdFourn->entity . '" data-shipment-id="' . $shipment->rowid . '" data-commandFourn-id="' . $idCmdFourn . '"  data-shipment-ref="' . $shipment->ref . '"  >' . $langs->trans("TreatedExpe") . '</span></td><hr><br/>';
 					}
 				} else{
-					dol_syslog(__METHOD__.' $ret='.var_export($ret,true), LOG_ERROR);
+					dol_syslog(__METHOD__.' $ret='.var_export($ret,true), LOG_ERR);
 				}
 			} else{
-				dol_syslog(__METHOD__.' $objCurrentFournCom='.var_export($objCurrentFournCom,true), LOG_ERROR);
+				dol_syslog(__METHOD__.' $objCurrentFournCom='.var_export($objCurrentFournCom,true), LOG_ERR);
 			}
 		}
 	}
 	elseif($TreatedExpAlreadyExists === -1){
-		dol_syslog(__METHOD__.' $TreatedExpAlreadyExists='.var_export($TreatedExpAlreadyExists,true), LOG_ERROR);
+		dol_syslog(__METHOD__.' $TreatedExpAlreadyExists='.var_export($TreatedExpAlreadyExists,true), LOG_ERR);
 	}
 }
 
@@ -931,7 +931,7 @@ function _show_product_ventil(&$TImport, &$commande,&$form) {
 		$db->free($resql);
 	} else{
 		setEventMessage($langs->trans('ErrorAtResultSet'), 'resql');
-		dol_syslog(__METHOD__.' $resql='.var_export($resql,true), LOG_ERROR);
+		dol_syslog(__METHOD__.' $resql='.var_export($resql,true), LOG_ERR);
 	}
 
 	$sql = "SELECT l.fk_product, SUM(l.qty * l.subprice) / SUM(l.qty) AS subprice, SUM(l.qty * l.remise_percent) / SUM(l.qty) AS remise_percent, SUM(l.qty) as qty,";
@@ -1326,7 +1326,7 @@ function _list_already_dispatched(&$bdr) {
 					$i++;
 					$var = !$var;
 				} else{
-					dol_syslog(__METHOD__.' $objp='.var_export($objp,true), LOG_ERROR);
+					dol_syslog(__METHOD__.' $objp='.var_export($objp,true), LOG_ERR);
 				}
 			}
 			$db->free($resql);
@@ -1359,7 +1359,7 @@ function _set_treated_expedition_extrafield($idexpe, $shipmentEntity) {
 		$currentExp->array_options['options_customer_treated_shipment'] = 1;
 		$currentExp->updateExtraField('customer_treated_shipment');
 	}else {
-		dol_syslog(__METHOD__.' $resultExtra='.var_export($resultExtra,true), LOG_ERROR);
+		dol_syslog(__METHOD__.' $resultExtra='.var_export($resultExtra,true), LOG_ERR);
 	}
 
 	$conf->entity = $backEntity;
