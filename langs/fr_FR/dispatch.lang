@@ -101,3 +101,29 @@ DispatchBatchNumber=Numéro de Lot
 DispatchDateReception=Date de réception
 DispatchMsgAssetGen=Equipements créés / produits ventilés
 ProductHasToBeSerialize=Le produit %s doit être sérialisé
+
+#
+# T2476
+#
+ShipmentsList = Liste des expéditions non traitées
+SelectShipment = Expédition(s) à ventiler
+supplierOrderLinkedShipment = Expédition liée à la commande fournisseur
+SelectExpe = Traiter cette expédition
+NbItemCountInReception = Détail de l'expédition
+Warehouse = Entrepôt
+Product = Produit
+DeletedLine = Ligne supprimée
+SelectAProduct = Veuillez sélectioner un produit pour
+ProductNotInOrder = Référence produit %s non présente dans la commande
+RefProductNotFound = Référence produit %s introuvable
+SavedModifications = Modifications enregistrées
+NoSerialNumber = Pas de numéro de série : impossible de créer l'équipement pour %s . Si vous ne voulez pas sérialiser ce produit, supprimez les lignes de numéro de série et faites une réception simple
+DLUO = DLUO
+IMEI = IMEI
+Firmware = Firmware
+TreatedExpe = Expédition traitée
+ShipmentsTreatedList = Liste des expéditions traitées
+VentilatedExpeditions = Expédition(s) ventilées
+ResultSetEquipmentError = Une erreur est survenue dans la requête des équipements
+ErrorAtResultSet = Une erreur est survenue dans la requête de %s
+ErrorAtSaveObjectRecepDetail = Une erreur est survenue lors de l'enregistrement en base de données

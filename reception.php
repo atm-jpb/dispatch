@@ -32,6 +32,27 @@
 
 	$action = GETPOST('action');
 	$comment = GETPOST('comment');
+
+	/*
+	 * Dans le module OFSOM, on a la possibilité de lier un tiers à une entité.
+	 * Ici, le test vérifie si le tiers (celui qui a passé la commande fournisseur) est bien lié à l'entité qui
+	 * reçoit, de son côté, une commande client.
+	 * Si c'est le cas, redirection vers la page receptionofsom.php pour création automatique des équipements via
+	 * réception de la commande fournisseur sur clôture de la préparation client dans l'autre entité
+	 */
+	$linkedSupplier = is_supplier_linked($conf->entity, $commandefourn->socid);
+	if($linkedSupplier
+			&& $conf->assetatm->enabled
+			&& $conf->dispatch->enabled
+			&& $conf->orderfromsupplierordermulticompany->enabled
+			&& $conf->multicompany->enabled){
+		header("Location: ".dirname($_SERVER["PHP_SELF"]).'/receptionofsom.php?id='.$id);
+		exit();
+	}
+	elseif($linkedSupplier === -1){
+		dol_syslog(__METHOD__.' $linkedSupplier='.var_export($linkedSupplier,true), LOG_ERR);
+	}
+
 	$TImport = _loadDetail($PDOdb,$commandefourn);
 	$parameters=array();
 	$hookmanager->executeHooks('doAction',$parameters, $commandefourn, $action);
@@ -530,6 +551,10 @@ function _loadDetail(&$PDOdb,&$commandefourn){
     return $TImport;
 }
 
+/*
+ * Fonction qui est dupliquée dans le fichier receptionofsom.php
+ *
+ */
 function _addCommandedetLine(&$PDOdb,&$TImport,&$commandefourn,$refproduit,$numserie,$imei,$firmware,$lot_number,$quantity,$quantity_unit,$dluo=null,$k=null,$entrepot=null,$comment=''){
     global $db, $conf, $user;
     //var_dump($_POST['TLine']);exit;
@@ -1557,5 +1582,24 @@ function entetecmd(&$commande)
 
 	print '<div class="clearboth"></div><br>';
 
-	//if ($mesg) print $mesg;
+}
+
+/**
+ * @param int $entityId
+ * @param int $socid
+ * @return bool
+ */
+function is_supplier_linked($entityId,$socid){
+	global $db;
+
+	$sql = "SELECT DISTINCT te.rowid FROM " . MAIN_DB_PREFIX . "societe AS s ";
+	$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "thirdparty_entity AS te ON s.rowid = te.fk_soc ";
+	$sql .= " WHERE te.entity=" . $entityId;
+	$sql .= " AND te.fk_soc =" . $socid;
+
+	$res = $db->query($sql);
+	if($res){
+		return $db->num_rows($res) > 0;
+	}
+	return -1;
 }
