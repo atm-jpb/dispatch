@@ -18,9 +18,9 @@
  */
 
 /**
- * 	\defgroup   mymodule     Module MyModule
+ *     \defgroup   mymodule     Module MyModule
  *  \brief      Example of a module descriptor.
- *				Such a file must be copied into htdocs/mymodule/core/modules directory.
+ *          Such a file must be copied into htdocs/mymodule/core/modules directory.
  *  \file       htdocs/mymodule/core/modules/modMyModule.class.php
  *  \ingroup    mymodule
  *  \brief      Description and activation file for module MyModule
@@ -36,13 +36,13 @@ class moddispatch extends DolibarrModules
 	/**
 	 *   Constructor. Define names, constants, directories, boxes, permissions
 	 *
-	 *   @param      DoliDB		$db      Database handler
+	 *   @param      DoliDB       $db      Database handler
 	 */
 	function __construct($db)
 	{
-        global $langs,$conf;
+		global $langs,$conf;
 
-        $this->db = $db;
+		$this->db = $db;
 		$this->editor_name = 'ATM-Consulting';
 		$this->editor_url = 'https://www.atm-consulting.fr';
 		// Id for module (must be unique).
@@ -59,7 +59,7 @@ class moddispatch extends DolibarrModules
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
 		$this->description = "Module104970Desc";
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '3.1.2';
+		$this->version = '3.2.0';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -75,24 +75,24 @@ class moddispatch extends DolibarrModules
 		// for specific css file (eg: /mymodule/css/mymodule.css.php)
 		//$this->module_parts = array('triggers' => 1);
 		//$this->module_parts = array(
-		//                        	'triggers' => 1                                 	// Set this to 1 if module has its own trigger directory (core/triggers)
-		//							'login' => 0,                                    	// Set this to 1 if module has its own login method directory (core/login)
-		//							'substitutions' => 0,                            	// Set this to 1 if module has its own substitution function file (core/substitutions)
-		//							'menus' => 0,                                    	// Set this to 1 if module has its own menus handler directory (core/menus)
-		//							'theme' => 0,                                    	// Set this to 1 if module has its own theme directory (core/theme)
-		//                        	'tpl' => 0,                                      	// Set this to 1 if module overwrite template dir (core/tpl)
-		//							'barcode' => 0,                                  	// Set this to 1 if module has its own barcode directory (core/modules/barcode)
-		//							'models' => 0,                                   	// Set this to 1 if module has its own models directory (core/modules/xxx)
-		//							'css' => array('/mymodule/css/mymodule.css.php'),	// Set this to relative path of css file if module has its own css file
-	 	//							'js' => array('/mymodule/js/mymodule.js'),          // Set this to relative path of js file if module must load a js on all pages
-		//							'hooks' => array('hookcontext1','hookcontext2')  	// Set here all hooks context managed by module
-		//							'dir' => array('output' => 'othermodulename'),      // To force the default directories names
-		//							'workflow' => array('WORKFLOW_MODULE1_YOURACTIONTYPE_MODULE2'=>array('enabled'=>'! empty($conf->module1->enabled) && ! empty($conf->module2->enabled)', 'picto'=>'yourpicto@mymodule')) // Set here all workflow context managed by module
-		//	                       );
+		//                         'triggers' => 1                                    // Set this to 1 if module has its own trigger directory (core/triggers)
+		//                   'login' => 0,                                      // Set this to 1 if module has its own login method directory (core/login)
+		//                   'substitutions' => 0,                              // Set this to 1 if module has its own substitution function file (core/substitutions)
+		//                   'menus' => 0,                                      // Set this to 1 if module has its own menus handler directory (core/menus)
+		//                   'theme' => 0,                                      // Set this to 1 if module has its own theme directory (core/theme)
+		//                         'tpl' => 0,                                        // Set this to 1 if module overwrite template dir (core/tpl)
+		//                   'barcode' => 0,                                    // Set this to 1 if module has its own barcode directory (core/modules/barcode)
+		//                   'models' => 0,                                     // Set this to 1 if module has its own models directory (core/modules/xxx)
+		//                   'css' => array('/mymodule/css/mymodule.css.php'),  // Set this to relative path of css file if module has its own css file
+		//                   'js' => array('/mymodule/js/mymodule.js'),          // Set this to relative path of js file if module must load a js on all pages
+		//                   'hooks' => array('hookcontext1','hookcontext2')    // Set here all hooks context managed by module
+		//                   'dir' => array('output' => 'othermodulename'),      // To force the default directories names
+		//                   'workflow' => array('WORKFLOW_MODULE1_YOURACTIONTYPE_MODULE2'=>array('enabled'=>'! empty($conf->module1->enabled) && ! empty($conf->module2->enabled)', 'picto'=>'yourpicto@mymodule')) // Set here all workflow context managed by module
+		//                        );
 		//$this->module_parts = array('hooks'=>array('ordersuppliercard','propalcard', 'ordercard', 'invoicecard'),'triggers' => 1);
 		$this->module_parts = array(
-			'triggers' => 1
-			, 'hooks' => array('expeditioncard', 'ordersuppliercard', 'pdfgeneration', 'bonderetourcard')
+			'triggers' => 1,
+			'hooks' => array('expeditioncard', 'ordersuppliercard', 'pdfgeneration', 'bonderetourcard','receptionstockcard')
 		);
 
 		// Data directories to create when module is enabled.
@@ -103,12 +103,12 @@ class moddispatch extends DolibarrModules
 		$this->config_page_url = array();
 
 		// Dependencies
-		$this->depends = array();		// List of modules id that must be enabled if this module is enabled
-		$this->requiredby = array();	// List of modules id to disable if this one is disabled
-		$this->phpmin = array(5,0);					// Minimum version of PHP required by module
-		$this->need_dolibarr_version = array(3,0);	// Minimum version of Dolibarr required by module
+		$this->depends = array();     // List of modules id that must be enabled if this module is enabled
+		$this->requiredby = array();   // List of modules id to disable if this one is disabled
+		$this->phpmin = array(5,0);                // Minimum version of PHP required by module
+		$this->need_dolibarr_version = array(3,0); // Minimum version of Dolibarr required by module
 		$this->langfiles = array("dispatch@dispatch");
-		
+
 		$this->config_page_url = array("admin.php@dispatch");
 		// Constants
 		// List of particular constants to add when module is enabled (key, 'chaine', value, desc, visible, 'current' or 'allentities', deleteonunactive)
@@ -118,9 +118,9 @@ class moddispatch extends DolibarrModules
 		$this->const = array();
 
 		// Array to add new pages in new tabs
-		// Example: $this->tabs = array('objecttype:+tabname1:Title1:mylangfile@mymodule:$user->rights->mymodule->read:/mymodule/mynewtab1.php?id=__ID__',  	// To add a new tab identified by code tabname1
-        //                              'objecttype:+tabname2:Title2:mylangfile@mymodule:$user->rights->othermodule->read:/mymodule/mynewtab2.php?id=__ID__',  	// To add another new tab identified by code tabname2
-        //                              'objecttype:-tabname':NU:conditiontoremove);                                                     						// To remove an existing tab identified by code tabname
+		// Example: $this->tabs = array('objecttype:+tabname1:Title1:mylangfile@mymodule:$user->rights->mymodule->read:/mymodule/mynewtab1.php?id=__ID__',     // To add a new tab identified by code tabname1
+		//                              'objecttype:+tabname2:Title2:mylangfile@mymodule:$user->rights->othermodule->read:/mymodule/mynewtab2.php?id=__ID__',      // To add another new tab identified by code tabname2
+		//                              'objecttype:-tabname':NU:conditiontoremove);                                                                      // To remove an existing tab identified by code tabname
 
 		if(! defined('ATM_ASSET_NAME'))
 		{
@@ -128,17 +128,17 @@ class moddispatch extends DolibarrModules
 			dol_include_once('/dispatch/config.php');
 		}
 
-        $this->tabs = array(
-        	'delivery:+dispatch:ShippingDetailsTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/detail.php?id=__ID__'
-        	,'bonderetour:+recepasset:ManualReceptionTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/receptionbdr.php?id=__ID__'
-        	,'contract:+dispatchAsset:EquipmentDetailsTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=contrat'
-        	,'intervention:+dispatchAsset:EquipmentDetailsTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=intervention'
-        	,'ticketsup:+dispatchAsset:EquipmentDetailsTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=ticketsup'
-        	,'supplier_order:+recepasset:ReceptionTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/reception.php?id=__ID__'
-        	,'supplier_order:-dispatch'
-        	,'order:+dispatchAsset:EquipmentDetailsTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=commande'
+		$this->tabs = array(
+			'delivery:+dispatch:ShippingDetailsTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/detail.php?id=__ID__'
+			,'bonderetour:+recepasset:ManualReceptionTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/receptionbdr.php?id=__ID__'
+			,'contract:+dispatchAsset:EquipmentDetailsTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=contrat'
+			,'intervention:+dispatchAsset:EquipmentDetailsTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=intervention'
+			,'ticketsup:+dispatchAsset:EquipmentDetailsTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=ticketsup'
+			,'supplier_order:+recepasset:ReceptionTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/reception.php?id=__ID__'
+			,'supplier_order:-dispatch'
+			,'order:+dispatchAsset:EquipmentDetailsTab:dispatch@dispatch:$conf->' . ATM_ASSET_NAME . '->enabled:/dispatch/asset.php?id=__ID__&type_object=commande'
 		);
-        
+
 		// where objecttype can be
 		// 'thirdparty'       to add a tab in third party view
 		// 'intervention'     to add a tab in intervention view
@@ -154,32 +154,32 @@ class moddispatch extends DolibarrModules
 		// 'user'             to add a tab in user view
 		// 'group'            to add a tab in group view
 		// 'contact'          to add a tab in contact view
-		// 'categories_x'	  to add a tab in category view (replace 'x' by type of category (0=product, 1=supplier, 2=customer, 3=member)
+		// 'categories_x'    to add a tab in category view (replace 'x' by type of category (0=product, 1=supplier, 2=customer, 3=member)
 
-        // Dictionnaries
-        if (! isset($conf->dispatch->enabled)){
-        	@$conf->dispatch->enabled=0;
+		// Dictionnaries
+		if (! isset($conf->dispatch->enabled)){
+			@$conf->dispatch->enabled=0;
 		}
 		$this->dictionnaries=array();
-        /* Example:
-        if (! isset($conf->mymodule->enabled)) $conf->mymodule->enabled=0;	// This is to avoid warnings
-        $this->dictionnaries=array(
-            'langs'=>'mylangfile@mymodule',
-            'tabname'=>array(MAIN_DB_PREFIX."table1",MAIN_DB_PREFIX."table2",MAIN_DB_PREFIX."table3"),		// List of tables we want to see into dictonnary editor
-            'tablib'=>array("Table1","Table2","Table3"),													// Label of tables
-            'tabsql'=>array('SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table1 as f','SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table2 as f','SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table3 as f'),	// Request to select fields
-            'tabsqlsort'=>array("label ASC","label ASC","label ASC"),																					// Sort order
-            'tabfield'=>array("code,label","code,label","code,label"),																					// List of fields (result of select to show dictionnary)
-            'tabfieldvalue'=>array("code,label","code,label","code,label"),																				// List of fields (list of fields to edit a record)
-            'tabfieldinsert'=>array("code,label","code,label","code,label"),																			// List of fields (list of fields for insert)
-            'tabrowid'=>array("rowid","rowid","rowid"),																									// Name of columns with primary key (try to always name it 'rowid')
-            'tabcond'=>array($conf->mymodule->enabled,$conf->mymodule->enabled,$conf->mymodule->enabled)												// Condition to show each dictionnary
-        );
-        */
+		/* Example:
+		if (! isset($conf->mymodule->enabled)) $conf->mymodule->enabled=0; // This is to avoid warnings
+		$this->dictionnaries=array(
+			'langs'=>'mylangfile@mymodule',
+			'tabname'=>array(MAIN_DB_PREFIX."table1",MAIN_DB_PREFIX."table2",MAIN_DB_PREFIX."table3"),    // List of tables we want to see into dictonnary editor
+			'tablib'=>array("Table1","Table2","Table3"),                                       // Label of tables
+			'tabsql'=>array('SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table1 as f','SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table2 as f','SELECT f.rowid as rowid, f.code, f.label, f.active FROM '.MAIN_DB_PREFIX.'table3 as f'),  // Request to select fields
+			'tabsqlsort'=>array("label ASC","label ASC","label ASC"),                                                              // Sort order
+			'tabfield'=>array("code,label","code,label","code,label"),                                                             // List of fields (result of select to show dictionnary)
+			'tabfieldvalue'=>array("code,label","code,label","code,label"),                                                             // List of fields (list of fields to edit a record)
+			'tabfieldinsert'=>array("code,label","code,label","code,label"),                                                         // List of fields (list of fields for insert)
+			'tabrowid'=>array("rowid","rowid","rowid"),                                                                            // Name of columns with primary key (try to always name it 'rowid')
+			'tabcond'=>array($conf->mymodule->enabled,$conf->mymodule->enabled,$conf->mymodule->enabled)                                    // Condition to show each dictionnary
+		);
+		*/
 
-        // Boxes
+		// Boxes
 		// Add here list of php file(s) stored in core/boxes that contains class to show a box.
-        $this->boxes = array();			// List of boxes
+		$this->boxes = array();          // List of boxes
 		$r=0;
 		// Example:
 		/*
@@ -190,66 +190,66 @@ class moddispatch extends DolibarrModules
 		*/
 
 		// Permissions
-		$this->rights = array();		// Permission array used by this module
+		$this->rights = array();      // Permission array used by this module
 		$r=0;
 
 		// Add here list of permission defined by an id, a label, a boolean and two constant strings.
 		// Example:
-		// $this->rights[$r][0] = 2000; 				// Permission id (must not be already used)
-		// $this->rights[$r][1] = 'Permision label';	// Permission label
-		// $this->rights[$r][3] = 1; 					// Permission by default for new user (0/1)
-		// $this->rights[$r][4] = 'level1';				// In php code, permission will be checked by test if ($user->rights->permkey->level1->level2)
-		// $this->rights[$r][5] = 'level2';				// In php code, permission will be checked by test if ($user->rights->permkey->level1->level2)
+		// $this->rights[$r][0] = 2000;             // Permission id (must not be already used)
+		// $this->rights[$r][1] = 'Permision label';   // Permission label
+		// $this->rights[$r][3] = 1;               // Permission by default for new user (0/1)
+		// $this->rights[$r][4] = 'level1';             // In php code, permission will be checked by test if ($user->rights->permkey->level1->level2)
+		// $this->rights[$r][5] = 'level2';             // In php code, permission will be checked by test if ($user->rights->permkey->level1->level2)
 		// $r++;
 
 
 		// Main menu entries
-		$this->menus = array();			// List of menus to add
+		$this->menus = array();          // List of menus to add
 		$r=0;
 
 		// Add here entries to declare new menus
 		//
 		// Example to declare a new Top Menu entry and its Left menu entry:
-		// $this->menu[$r]=array(	'fk_menu'=>0,			                // Put 0 if this is a top menu
-		//							'type'=>'top',			                // This is a Top menu entry
-		//							'titre'=>'MyModule top menu',
-		//							'mainmenu'=>'mymodule',
-		//							'leftmenu'=>'mymodule',
-		//							'url'=>'/mymodule/pagetop.php',
-		//							'langs'=>'mylangfile@mymodule',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
-		//							'position'=>100,
-		//							'enabled'=>'$conf->mymodule->enabled',	// Define condition to show or hide menu entry. Use '$conf->mymodule->enabled' if entry must be visible if module is enabled.
-		//							'perms'=>'1',			                // Use 'perms'=>'$user->rights->mymodule->level1->level2' if you want your menu with a permission rules
-		//							'target'=>'',
-		//							'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
+		// $this->menu[$r]=array(  'fk_menu'=>0,                        // Put 0 if this is a top menu
+		//                   'type'=>'top',                       // This is a Top menu entry
+		//                   'titre'=>'MyModule top menu',
+		//                   'mainmenu'=>'mymodule',
+		//                   'leftmenu'=>'mymodule',
+		//                   'url'=>'/mymodule/pagetop.php',
+		//                   'langs'=>'mylangfile@mymodule',            // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
+		//                   'position'=>100,
+		//                   'enabled'=>'$conf->mymodule->enabled', // Define condition to show or hide menu entry. Use '$conf->mymodule->enabled' if entry must be visible if module is enabled.
+		//                   'perms'=>'1',                        // Use 'perms'=>'$user->rights->mymodule->level1->level2' if you want your menu with a permission rules
+		//                   'target'=>'',
+		//                   'user'=>2);                             // 0=Menu for internal users, 1=external users, 2=both
 		// $r++;
 		//
 		// Example to declare a Left Menu entry into an existing Top menu entry:
-		// $this->menu[$r]=array(	'fk_menu'=>'fk_mainmenu=xxx',		    // Use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
-		//							'type'=>'left',			                // This is a Left menu entry
-		//							'titre'=>'MyModule left menu',
-		//							'mainmenu'=>'xxx',
-		//							'leftmenu'=>'mymodule',
-		//							'url'=>'/mymodule/pagelevel2.php',
-		//							'langs'=>'mylangfile@mymodule',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
-		//							'position'=>100,
-		//							'enabled'=>'$conf->mymodule->enabled',  // Define condition to show or hide menu entry. Use '$conf->mymodule->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
-		//							'perms'=>'1',			                // Use 'perms'=>'$user->rights->mymodule->level1->level2' if you want your menu with a permission rules
-		//							'target'=>'',
-		//							'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
+		// $this->menu[$r]=array(  'fk_menu'=>'fk_mainmenu=xxx',         // Use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
+		//                   'type'=>'left',                          // This is a Left menu entry
+		//                   'titre'=>'MyModule left menu',
+		//                   'mainmenu'=>'xxx',
+		//                   'leftmenu'=>'mymodule',
+		//                   'url'=>'/mymodule/pagelevel2.php',
+		//                   'langs'=>'mylangfile@mymodule',            // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
+		//                   'position'=>100,
+		//                   'enabled'=>'$conf->mymodule->enabled',  // Define condition to show or hide menu entry. Use '$conf->mymodule->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
+		//                   'perms'=>'1',                        // Use 'perms'=>'$user->rights->mymodule->level1->level2' if you want your menu with a permission rules
+		//                   'target'=>'',
+		//                   'user'=>2);                             // 0=Menu for internal users, 1=external users, 2=both
 		// $r++;
-		$this->menu[$r]=array(	'fk_menu'=>'fk_mainmenu=products,fk_leftmenu=sendings',		    // Use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
-									'type'=>'left',			                // This is a Left menu entry
-									'titre'=> $langs->transnoentities( 'DispatchMenuTitle' ),
-									'mainmenu'=>'products',
-									'leftmenu'=>'sendings',
-									'url'=>'/dispatch/liste_expedition_todo.php?leftmenu=sendings',
-									'langs'=>'dispatch@dispatch',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
-									'position'=>100,
-									'enabled'=>'$conf->expedition->enabled',  // Define condition to show or hide menu entry. Use '$conf->mymodule->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
-									'perms'=>'$user->rights->expedition->lire',			                // Use 'perms'=>'$user->rights->mymodule->level1->level2' if you want your menu with a permission rules
-									'target'=>'',
-									'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
+		$this->menu[$r]=array( 'fk_menu'=>'fk_mainmenu=products,fk_leftmenu=sendings',           // Use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
+		                       'type'=>'left',                          // This is a Left menu entry
+		                       'titre'=> $langs->transnoentities( 'DispatchMenuTitle' ),
+		                       'mainmenu'=>'products',
+		                       'leftmenu'=>'sendings',
+		                       'url'=>'/dispatch/liste_expedition_todo.php?leftmenu=sendings',
+		                       'langs'=>'dispatch@dispatch',          // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
+		                       'position'=>100,
+		                       'enabled'=>'$conf->expedition->enabled',  // Define condition to show or hide menu entry. Use '$conf->mymodule->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
+		                       'perms'=>'$user->rights->expedition->lire',                          // Use 'perms'=>'$user->rights->mymodule->level1->level2' if you want your menu with a permission rules
+		                       'target'=>'',
+		                       'user'=>2);                             // 0=Menu for internal users, 1=external users, 2=both
 		$r++;
 
 
@@ -258,8 +258,8 @@ class moddispatch extends DolibarrModules
 
 		// Example:
 		// $this->export_code[$r]=$this->rights_class.'_'.$r;
-		// $this->export_label[$r]='CustomersInvoicesAndInvoiceLines';	// Translation key (used only if key ExportDataset_xxx_z not found)
-        // $this->export_enabled[$r]='1';                               // Condition to show export in list (ie: '$user->id==3'). Set to 1 to always show when module is enabled.
+		// $this->export_label[$r]='CustomersInvoicesAndInvoiceLines'; // Translation key (used only if key ExportDataset_xxx_z not found)
+		// $this->export_enabled[$r]='1';                               // Condition to show export in list (ie: '$user->id==3'). Set to 1 to always show when module is enabled.
 		// $this->export_permission[$r]=array(array("facture","facture","export"));
 		// $this->export_fields_array[$r]=array('s.rowid'=>"IdCompany",'s.nom'=>'CompanyName','s.address'=>'Address','s.cp'=>'Zip','s.ville'=>'Town','s.fk_pays'=>'Country','s.tel'=>'Phone','s.siren'=>'ProfId1','s.siret'=>'ProfId2','s.ape'=>'ProfId3','s.idprof4'=>'ProfId4','s.code_compta'=>'CustomerAccountancyCode','s.code_compta_fournisseur'=>'SupplierAccountancyCode','f.rowid'=>"InvoiceId",'f.facnumber'=>"InvoiceRef",'f.datec'=>"InvoiceDateCreation",'f.datef'=>"DateInvoice",'f.total'=>"TotalHT",'f.total_ttc'=>"TotalTTC",'f.tva'=>"TotalVAT",'f.paye'=>"InvoicePaid",'f.fk_statut'=>'InvoiceStatus','f.note'=>"InvoiceNote",'fd.rowid'=>'LineId','fd.description'=>"LineDescription",'fd.price'=>"LineUnitPrice",'fd.tva_tx'=>"LineVATRate",'fd.qty'=>"LineQty",'fd.total_ht'=>"LineTotalHT",'fd.total_tva'=>"LineTotalTVA",'fd.total_ttc'=>"LineTotalTTC",'fd.date_start'=>"DateStart",'fd.date_end'=>"DateEnd",'fd.fk_product'=>'ProductId','p.ref'=>'ProductRef');
 		// $this->export_entities_array[$r]=array('s.rowid'=>"company",'s.nom'=>'company','s.address'=>'company','s.cp'=>'company','s.ville'=>'company','s.fk_pays'=>'company','s.tel'=>'company','s.siren'=>'company','s.siret'=>'company','s.ape'=>'company','s.idprof4'=>'company','s.code_compta'=>'company','s.code_compta_fournisseur'=>'company','f.rowid'=>"invoice",'f.facnumber'=>"invoice",'f.datec'=>"invoice",'f.datef'=>"invoice",'f.total'=>"invoice",'f.total_ttc'=>"invoice",'f.tva'=>"invoice",'f.paye'=>"invoice",'f.fk_statut'=>'invoice','f.note'=>"invoice",'fd.rowid'=>'invoice_line','fd.description'=>"invoice_line",'fd.price'=>"invoice_line",'fd.total_ht'=>"invoice_line",'fd.total_tva'=>"invoice_line",'fd.total_ttc'=>"invoice_line",'fd.tva_tx'=>"invoice_line",'fd.qty'=>"invoice_line",'fd.date_start'=>"invoice_line",'fd.date_end'=>"invoice_line",'fd.fk_product'=>'product','p.ref'=>'product');
