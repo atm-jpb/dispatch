@@ -1,6 +1,6 @@
 <?php
 
-define('INC_FROM_CRON_SCRIPT', true);
+
 set_time_limit(0);
 
 require('../config.php');
