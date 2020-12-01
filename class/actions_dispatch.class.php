@@ -19,6 +19,10 @@ class ActionsDispatch
 			require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
 			require_once DOL_DOCUMENT_ROOT . '/expedition/class/expedition.class.php';
 
+			//$com = new Commande($db);
+            //$com->fetch($object->id);
+			//$com->fetchObjectLinked();
+            //var_dump($com);
 			$sql = "SELECT DISTINCT c.rowid FROM " . MAIN_DB_PREFIX . "commande AS c ";
 			$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "element_element AS ee ON c.rowid = ee.fk_target";
 			$sql .= " INNER JOIN " . MAIN_DB_PREFIX . "commandedet AS cd ON c.rowid = cd.fk_commande ";
@@ -28,17 +32,21 @@ class ActionsDispatch
 			$sql .= " ORDER BY cd.rowid ";
 
 			$resultSetSupplierOrder = $db->query($sql);
+            //var_dump($resultSetSupplierOrder);
 			if ($resultSetSupplierOrder) {
 				$resql = $db->fetch_object($resultSetSupplierOrder);
 				if ($resql) {
 					$orderFromSupplierOrder = new Commande($db);
 					$orderFromSupplierOrder->fetch($resql->rowid);
+
 					if($orderFromSupplierOrder) {
 
-						$shipmentsSql = "SELECT * FROM " . MAIN_DB_PREFIX . "commande AS c ";
+						$shipmentsSql = "SELECT ex.customer_treated_shipment, e.fk_statut , e.entity , e.rowid";
+                        $shipmentsSql .= " FROM " . MAIN_DB_PREFIX . "commande AS c ";
 						$shipmentsSql .= " INNER JOIN " . MAIN_DB_PREFIX . "element_element AS ee ON c.rowid = ee.fk_source ";
 						$shipmentsSql .= " INNER JOIN " . MAIN_DB_PREFIX . "expedition AS e ON e.rowid = ee.fk_target ";
-						$shipmentsSql .= " AND c.ref = '" . $orderFromSupplierOrder->ref . "' ";
+                        $shipmentsSql .= " INNER JOIN " . MAIN_DB_PREFIX . "expedition_extrafields  AS ex ON e.rowid = ex.fk_object";
+						$shipmentsSql .= " AND c.rowid = '" . $orderFromSupplierOrder->id . "' ";
 						$shipmentsSql .= " AND ee.sourcetype = 'commande' ";
 						$shipmentsSql .= " AND ee.targettype = 'shipping' ";
 
@@ -50,13 +58,20 @@ class ActionsDispatch
 							$i = 0;
 							while ($i < $num) {
 								$obj = $db->fetch_object($resultSetShipments);
-								if($obj){
+
+                                /**
+                                 *on ne remonte que les expedition au statut cloturée
+                                 * ou bien les expeditions traitées
+                                 * @TODO Expedition::STATUS_CLOSED a changer
+                                 */
+								if($obj->fk_statut == '2' || $obj->customer_treated_shipment == "1" ){
 									$TShipments[] = $obj;
 								} else {
 									dol_syslog(__METHOD__.' $obj='.var_export($obj,true), LOG_ERR);
 								}
 								$i++;
 							}
+
 						} else {
 							setEventMessage($langs->trans('ErrorAtResultSet'), 'resultSetShipments');
 							dol_syslog(__METHOD__.' $resql='.var_export($resql,true), LOG_ERR);

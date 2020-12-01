@@ -473,6 +473,7 @@ function fiche(&$commande, &$TImport, $comment) {
 	}
 
 	_list_shipments_untreated($commande->shipmentsFromSupplier,$commande->id);
+
 	_list_shipments_treated($commande->shipmentsFromSupplier,$commande->id);
 
 	dol_fiche_end($notab);
@@ -485,6 +486,7 @@ function fiche(&$commande, &$TImport, $comment) {
  * @param int $idCmdFourn
  */
 function _list_shipments_untreated(&$shipments , $idCmdFourn){
+
 	global $db, $langs, $conf, $user;
 	print load_fiche_titre($langs->trans("ShipmentsList"));
 
@@ -507,22 +509,26 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 	print "</table>\n";
 
 	foreach ($shipments as $k=>$shipment) {
+        /**  bug sur conf entity  je n'ai pas résolu
+         *   le fait qit que $conf->entity ne pointe pas vers 9 (ama shangai)
+         *   ce petit hack passe au travers
+         */
+        $backupConfEntity = $conf->entity;
+        $conf->entity = $_SESSION["dol_entity"];
+
 		$current_cmdFourn = new CommandeFournisseur($db);
 		$objCurrentCmdFourn = $current_cmdFourn->fetch($idCmdFourn);
+
+        $conf->entity = $backupConfEntity;
+
 		if($objCurrentCmdFourn) {
 			$formproduct = new FormProduct($db);
 			$backupConfEntity = $conf->entity;
 			$conf->entity = $shipment->entity;
 
-			$currentExp = new Expedition($db);
-			$extra = new ExtraFields($db);
-			$extra->fetch_name_optionals_label($shipment->table_element);
-			$objCurrentExp = $currentExp->fetch($shipment->rowid);
-			if($objCurrentExp) {
-				$conf->entity = $backupConfEntity;
 
-				// On remonte l'extrafield caché de l'état de traitement de l'expédition.
-				if (!$currentExp->array_options['options_customer_treated_shipment']) {
+            if ($shipment->customer_treated_shipment == '0'){
+				$conf->entity = $backupConfEntity;
 
 					print '<td>' . $current_cmdFourn->getNomUrl() . '  ->   <span class="classfortooltip" style="margin-right:25px" title="' . $langs->trans("supplierOrderLinkedShipment") . '">' . $shipment->ref . ' </span></td>';
 					print '<td></td>';
@@ -530,9 +536,8 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 					'</td>';
 					$form = new TFormCore;
 					print '<td><a class="butAction ofsomVentilExpeBtn button --ventilate-button" type="submit" data-selectwarehouse-for-expe_number="' . $k . '" data-shipment-entity="' . $current_cmdFourn->entity . '" data-shipment-id="' . $shipment->rowid . '" data-commandFourn-id="' . $idCmdFourn . '"  data-shipment-ref="' . $shipment->ref . '"  >' . $langs->trans("SelectExpe") . '</a></td><hr><br/>';
-				}
-			} else{
-				dol_syslog(__METHOD__.' $objCurrentExp='.var_export($objCurrentExp,true), LOG_ERR);
+            } else{
+				dol_syslog(__METHOD__.' $objCurrentExp='.var_export($shipment,true), LOG_ERR);
 			}
 		} else{
 			dol_syslog(__METHOD__.' $objCurrentCmdFourn='.var_export($objCurrentCmdFourn,true), LOG_ERR);
@@ -548,6 +553,7 @@ function _list_shipments_treated(&$shipments , $idCmdFourn){
 	global $db, $langs, $conf, $user;
 
 	$TreatedExpAlreadyExists = _isTreatedExpAlreadyExists($shipments);
+
 	if($TreatedExpAlreadyExists){
 		print load_fiche_titre($langs->trans("ShipmentsTreatedList"));
 		print '<table class="noborder" width="100%">';
@@ -569,29 +575,36 @@ function _list_shipments_treated(&$shipments , $idCmdFourn){
 		print "</table>\n";
 
 		foreach ($shipments as $shipment) {
-			$current_cmdFourn = new CommandeFournisseur($db);
-			$objCurrentFournCom = $current_cmdFourn->fetch($idCmdFourn);
-			if ($objCurrentFournCom) {
-				$backupConfEntity = $conf->entity;
-				$conf->entity = $shipment->entity;
 
-				$currentExp = new Expedition($db);
-				$extra = new ExtraFields($db);
-				$extra->fetch_name_optionals_label($shipment->table_element);
-				$ret = $currentExp->fetch($shipment->rowid);
-				if ($ret) {
+            /**  bug sur conf entity  je n'ai pas résolu
+             *   le fait qit que $conf->entity ne pointe pas vers 9 (ama shangai)
+             *   ce petit hack passe au travers
+             */
+            $backupConfEntity = $conf->entity;
+            $conf->entity = $_SESSION["dol_entity"];
+
+            $current_cmdFourn = new CommandeFournisseur($db);
+			$objCurrentFournCom = $current_cmdFourn->fetch($idCmdFourn);
+            $conf->entity = $backupConfEntity;
+
+			if ($objCurrentFournCom) {
+
+                $backupConfEntity = $conf->entity;
+                $conf->entity = $shipment->entity;
+
+				if ($shipment->customer_treated_shipment == "1") {
 					$conf->entity = $backupConfEntity;
 
 					// On remonte l'extrafield caché de l'état de traitement de l'expédition.
-					if ($currentExp->array_options['options_customer_treated_shipment']) {
+					//if ($currentExp->array_options['options_customer_treated_shipment']) {
 
 						print '<td>' . $current_cmdFourn->getNomUrl() . '  ->   <span class="classfortooltip" title="' . $langs->trans("supplierOrderLinkedShipment") . '">' . $shipment->ref . ' </span></td>';
 						print '<td></td>';
 						$form = new TFormCore;
 						print '<td><span class="butActionRefused" data-shipment-entity="' . $current_cmdFourn->entity . '" data-shipment-id="' . $shipment->rowid . '" data-commandFourn-id="' . $idCmdFourn . '"  data-shipment-ref="' . $shipment->ref . '"  >' . $langs->trans("TreatedExpe") . '</span></td><hr><br/>';
-					}
+					//}
 				} else{
-					dol_syslog(__METHOD__.' $ret='.var_export($ret,true), LOG_ERR);
+					dol_syslog(__METHOD__.' $ret='.var_export($shipment,true), LOG_ERR);
 				}
 			} else{
 				dol_syslog(__METHOD__.' $objCurrentFournCom='.var_export($objCurrentFournCom,true), LOG_ERR);
@@ -1341,6 +1354,7 @@ function _list_already_dispatched(&$bdr) {
 }
 
 /**
+ * passe l'extrafield de l'expedition
  * @param int $idexpe
  * @param int $shipmentEntity
  */
