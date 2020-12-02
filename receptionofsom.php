@@ -43,6 +43,7 @@ $commandefourn = new CommandeFournisseur($db);
 $commandefourn->fetch($id, $ref);
 $TImport = _loadDetail($PDOdb,$commandefourn);
 
+
 $parameters=array();
 $hookmanager->executeHooks('doAction',$parameters, $commandefourn, $action);
 
@@ -69,12 +70,19 @@ if(isset($post_create_ventilation_expe) && !empty($post_create_ventilation_expe)
 	// Préparation du $TImport pour éviter les effets de bord
 	for ($i = 0; $i < $Tlength; $i++){
 		$TImport[$i]['numserie'] = $TLine[$i]['numserie'];
+        $TImport[$i]['notes'] = $TLine[$i]['notes'];
+        $TImport[$i]['vpn'] = $TLine[$i]['vpn'];
+        $TImport[$i]['codebarre'] = $TLine[$i]['codebarre'];
+        $TImport[$i]['numlog'] = $TLine[$i]['numlog'];
+
+
 		$TImport[$i]['ref'] = $TLine[$i]['ref'];
 		$TImport[$i]['fk_product'] = $TLine[$i]['fk_product'];
 		$TImport[$i]['fk_entrepot'] = $TLine[$i]['entrepot'];
 		$TImport[$i]['fk_warehouse'] = $TLine[$i]['entrepot'];
 		$TImport[$i]['quantity'] = $TLine[$i]['quantity'];
 		$TImport[$i]['fk_asset'] = $TLine[$i]['fk_asset'];
+
 	}
 
 	foreach($TImport as $k=>&$line) {
@@ -114,7 +122,10 @@ if(isset($post_create_ventilation_expe) && !empty($post_create_ventilation_expe)
 				//				}
 
 				$prod = new Product($db);
+
 				$prod->fetch($line['fk_product']);
+
+
 				if($prod) {
 
 					// Affectation du type d'équipement pour avoir accès aux extrafields équipement
@@ -135,7 +146,10 @@ if(isset($post_create_ventilation_expe) && !empty($post_create_ventilation_expe)
 					$nb_year_garantie = 0;
 					// Renseignement des extrafields
 					$asset->set_date('date_reception', $date_recep);
-
+                    $asset->vpn = $line['vpn'];
+                    $asset->codebarre =$line['codebarre'];
+                    $asset->numlog =$line['numlog'];
+                    $asset->notes =$line['notes'];
 
 					// OPTIONS DE GARANTIE
 					foreach ($commandefourn->lines as $l) {
@@ -381,6 +395,17 @@ if(isset($post_create_ventilation_expe) && !empty($post_create_ventilation_expe)
 	if (isset($dataShipmentTreatedId) && !empty($dataShipmentTreatedId)) {
 		_set_treated_expedition_extrafield($dataShipmentTreatedId, $dataShipmentEntity);
 	}
+
+    /**
+     *
+     *  le doAction prepare les expeditions pour l'affichage
+     *  et reflete l'etat avant la mise à jour
+     *  on redirige ici pour afficher l'etat aprés modification.
+     *
+     */
+    $redirection = DOL_URL_ROOT.'/custom/dispatch/receptionofsom.php?id='.$id;
+    header('Location: '.$redirection);
+    exit();
 }
 fiche($commandefourn, $TImport, $comment);
 ?>

@@ -64,7 +64,7 @@ class ActionsDispatch
                                  * ou bien les expeditions traitées
                                  * @TODO Expedition::STATUS_CLOSED a changer
                                  */
-								if($obj->fk_statut == '2' || $obj->customer_treated_shipment == "1" ){
+								if($obj->fk_statut == '1' || $obj->customer_treated_shipment == "1" ){
 									$TShipments[] = $obj;
 								} else {
 									dol_syslog(__METHOD__.' $obj='.var_export($obj,true), LOG_ERR);

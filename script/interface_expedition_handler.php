@@ -179,6 +179,10 @@ function _formatDisplayTableProducts(&$currentExp,$entity, $idCommand, $idWareho
 
 		if (is_array($line)) {
 			$output .= $form->texte('', 'TLine[' . $key . '][numserie]', $line['obj']->serial_number, 30);
+            $output .= $form->texte('', 'TLine[' . $key . '][numlog]', $line['obj']->numlog, 30);
+            $output .= $form->texte('', 'TLine[' . $key . '][codebarre]', $line['obj']->codebarre, 30);
+            $output .= $form->texte('', 'TLine[' . $key . '][vpn]', $line['obj']->vpn, 30);
+            $output .= $form->texte('', 'TLine[' . $key . '][notes]', $line['obj']->notes, 30);
 		}
 		$output .= '</td>';
 
