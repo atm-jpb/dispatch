@@ -19,8 +19,8 @@ class ActionsDispatch
 			require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
 			require_once DOL_DOCUMENT_ROOT . '/expedition/class/expedition.class.php';
 
+			/**  fetchObjectLinked à voir avec john  */
 			//$com = new Commande($db);
-            //$com->fetch($object->id);
 			//$com->fetchObjectLinked();
             //var_dump($com);
 			$sql = "SELECT DISTINCT c.rowid FROM " . MAIN_DB_PREFIX . "commande AS c ";
@@ -32,7 +32,7 @@ class ActionsDispatch
 			$sql .= " ORDER BY cd.rowid ";
 
 			$resultSetSupplierOrder = $db->query($sql);
-            //var_dump($resultSetSupplierOrder);
+
 			if ($resultSetSupplierOrder) {
 				$resql = $db->fetch_object($resultSetSupplierOrder);
 				if ($resql) {
@@ -41,7 +41,7 @@ class ActionsDispatch
 
 					if($orderFromSupplierOrder) {
 
-						$shipmentsSql = "SELECT ex.customer_treated_shipment, e.fk_statut , e.entity , e.rowid";
+						$shipmentsSql = "SELECT ex.customer_treated_shipment, ex.rowid, e.fk_statut , e.entity , e.rowid";
                         $shipmentsSql .= " FROM " . MAIN_DB_PREFIX . "commande AS c ";
 						$shipmentsSql .= " INNER JOIN " . MAIN_DB_PREFIX . "element_element AS ee ON c.rowid = ee.fk_source ";
 						$shipmentsSql .= " INNER JOIN " . MAIN_DB_PREFIX . "expedition AS e ON e.rowid = ee.fk_target ";
@@ -63,6 +63,7 @@ class ActionsDispatch
                                  *on ne remonte que les expedition au statut cloturée
                                  * ou bien les expeditions traitées
                                  */
+
 								if($obj->fk_statut == Expedition::STATUS_CLOSED){
 									$TShipments[] = $obj;
 								} else {

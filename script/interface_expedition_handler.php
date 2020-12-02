@@ -175,14 +175,16 @@ function _formatDisplayTableProducts(&$currentExp,$entity, $idCommand, $idWareho
 			$output .= $form->hidden('TLine['.$key.'][supplier_price]', $line->supplier_price);
 			$output .= $form->hidden('TLine['.$key.'][supplier_qty]', $line->supplier_qty);
 			$output .= $form->hidden('TLine['.$key.'][generate_supplier_tarif]', $line->generate_supplier_tarif);
+
 		}
 
 		if (is_array($line)) {
 			$output .= $form->texte('', 'TLine[' . $key . '][numserie]', $line['obj']->serial_number, 30);
-            $output .= $form->texte('', 'TLine[' . $key . '][numlog]', $line['obj']->numlog, 30);
-            $output .= $form->texte('', 'TLine[' . $key . '][codebarre]', $line['obj']->codebarre, 30);
-            $output .= $form->texte('', 'TLine[' . $key . '][vpn]', $line['obj']->vpn, 30);
-            $output .= $form->texte('', 'TLine[' . $key . '][notes]', $line['obj']->notes, 30);
+
+            $output .= $form->hidden('TLine['.$key.'][numlog]', $line['obj']->numlog);
+            $output .= $form->hidden('TLine['.$key.'][codebarre]', $line['obj']->codebarre);
+            $output .= $form->hidden('TLine['.$key.'][vpn]', $line['obj']->vpn);
+            $output .= $form->hidden('TLine['.$key.'][notes]', $line['obj']->notes);
 		}
 		$output .= '</td>';
 
@@ -269,6 +271,7 @@ function _formatDisplayTableProducts(&$currentExp,$entity, $idCommand, $idWareho
 
 	// On remonte l'entité liée à la société
 	$soc = new Societe($db);
+	//var_dump($currentExp->id);
 	$res = $soc->fetch($currentExp->socid);
 	if ($res){
 		$output .=  $form->hidden('data-shipment-entity', $soc->entity);

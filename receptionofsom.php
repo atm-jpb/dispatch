@@ -85,6 +85,7 @@ if(isset($post_create_ventilation_expe) && !empty($post_create_ventilation_expe)
 
 	}
 
+
 	foreach($TImport as $k=>&$line) {
 
 		$asset = new TAsset();
@@ -123,10 +124,10 @@ if(isset($post_create_ventilation_expe) && !empty($post_create_ventilation_expe)
 
 				$prod = new Product($db);
 
-				$prod->fetch($line['fk_product']);
+				$res = $prod->fetch($line['fk_product']);
 
 
-				if($prod) {
+				if($res) {
 
 					// Affectation du type d'équipement pour avoir accès aux extrafields équipement
 					$asset->fk_asset_type = $asset->get_asset_type($PDOdb, $prod->id);
@@ -200,6 +201,7 @@ if(isset($post_create_ventilation_expe) && !empty($post_create_ventilation_expe)
 					dol_syslog(__METHOD__.' $prod='.var_export($prod,true), LOG_ERR);
 				}
 			} else {
+
 				setEventMessage($langs->trans('AssetAlreadyLinked') . ' : ' . $line['numserie'], 'errors');
 			}
 		}
@@ -534,26 +536,17 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 	print "</table>\n";
 
 	foreach ($shipments as $k=>$shipment) {
-        /**  bug sur conf entity  je n'ai pas résolu
-         *   le fait qit que $conf->entity ne pointe pas vers 9 (ama shangai)
-         *   ce petit hack passe au travers
-         */
-        $backupConfEntity = $conf->entity;
-        $conf->entity = $_SESSION["dol_entity"];
 
 		$current_cmdFourn = new CommandeFournisseur($db);
 		$objCurrentCmdFourn = $current_cmdFourn->fetch($idCmdFourn);
 
-        $conf->entity = $backupConfEntity;
-
+        //$backupConfEntity = $conf->entity;
 		if($objCurrentCmdFourn) {
 			$formproduct = new FormProduct($db);
-			$backupConfEntity = $conf->entity;
-			$conf->entity = $shipment->entity;
 
-
-            if ($shipment->customer_treated_shipment == '0'){
-				$conf->entity = $backupConfEntity;
+			//$conf->entity = $shipment->entity;
+            if ($shipment->customer_treated_shipment == '0' || $shipment->customer_treated_shipment == null){
+				//$conf->entity = $backupConfEntity;
 
 					print '<td>' . $current_cmdFourn->getNomUrl() . '  ->   <span class="classfortooltip" style="margin-right:25px" title="' . $langs->trans("supplierOrderLinkedShipment") . '">' . $shipment->ref . ' </span></td>';
 					print '<td></td>';
@@ -562,12 +555,15 @@ function _list_shipments_untreated(&$shipments , $idCmdFourn){
 					$form = new TFormCore;
 					print '<td><a class="butAction ofsomVentilExpeBtn button --ventilate-button" type="submit" data-selectwarehouse-for-expe_number="' . $k . '" data-shipment-entity="' . $current_cmdFourn->entity . '" data-shipment-id="' . $shipment->rowid . '" data-commandFourn-id="' . $idCmdFourn . '"  data-shipment-ref="' . $shipment->ref . '"  >' . $langs->trans("SelectExpe") . '</a></td><hr><br/>';
             } else{
+               // $conf->entity = $backupConfEntity;
 				dol_syslog(__METHOD__.' $objCurrentExp='.var_export($shipment,true), LOG_ERR);
 			}
 		} else{
+           // $conf->entity = $backupConfEntity;
 			dol_syslog(__METHOD__.' $objCurrentCmdFourn='.var_export($objCurrentCmdFourn,true), LOG_ERR);
 		}
 	}
+
 }
 
 /**
@@ -1386,14 +1382,28 @@ function _list_already_dispatched(&$bdr) {
 function _set_treated_expedition_extrafield($idexpe, $shipmentEntity) {
 	global $db, $user, $conf;
 
+	$sql  = "select entity from ".MAIN_DB_PREFIX."expedition where rowid =".$idexpe;
+	$re = $db->query($sql);
+    $obj = $db->fetch_object($re);
+
+   // var_dump($obj->entity);
+
+  //  var_dump($conf->entity,$shipmentEntity);
 	$backEntity = $conf->entity;
-	$conf->entity = $shipmentEntity;
+
+	$conf->entity = $obj->entity;
+
 
 	$currentExp = new Expedition($db);
-	$currentExp->fetch($idexpe);
+	$res = $currentExp->fetch(intval($idexpe));
+
+
+
+   // var_dump($conf->entity, $res, $idexpe);exit();
 
 	$extra = new ExtraFields($db);
 	$resultExtra = $extra->fetch_name_optionals_label($currentExp->table_element);
+	//var_dump($resultExtra);exit();
 	if($resultExtra) {
 		$currentExp->array_options['options_customer_treated_shipment'] = 1;
 		$currentExp->updateExtraField('customer_treated_shipment');
@@ -1402,6 +1412,7 @@ function _set_treated_expedition_extrafield($idexpe, $shipmentEntity) {
 	}
 
 	$conf->entity = $backEntity;
+    //var_dump($conf->entity);exit();
 }
 
 /**
