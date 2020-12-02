@@ -62,7 +62,6 @@ class ActionsDispatch
                                 /**
                                  *on ne remonte que les expedition au statut cloturée
                                  * ou bien les expeditions traitées
-                                 * @TODO Expedition::STATUS_CLOSED a changer
                                  */
 								if($obj->fk_statut == Expedition::STATUS_CLOSED){
 									$TShipments[] = $obj;
