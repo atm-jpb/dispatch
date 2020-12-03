@@ -635,6 +635,8 @@ function _list_shipments_treated(&$shipments , $idCmdFourn){
 	elseif($TreatedExpAlreadyExists === -1){
 		dol_syslog(__METHOD__.' $TreatedExpAlreadyExists='.var_export($TreatedExpAlreadyExists,true), LOG_ERR);
 	}
+
+    _list_already_dispatched($idCmdFourn);
 }
 
 /**
@@ -1271,107 +1273,149 @@ function is_supplier_linked($entityId,$socid){
 	return $db->num_rows($res) > 0;
 }
 
+/** copyed from reception.php */
+function _list_already_dispatched(&$commande) {
+    global $db, $langs, $conf, $user;
 
-/**
- * copyed from receptionBdr.
- * @param Bonderetour $bdr
- */
-function _list_already_dispatched(&$bdr) {
-	global $db, $langs, $bc, $conf;
+    // List of lines already dispatched
+    $sql = "SELECT p.ref, p.label,";
+    if ((float) DOL_VERSION <= 6.0) $sql.= " e.rowid as warehouse_id, e.label as entrepot,";
+    else $sql.= " e.rowid as warehouse_id, e.ref as entrepot,";
+    $sql.= " cfd.rowid as dispatchlineid, cfd.fk_product, cfd.qty";
+    if ((float) DOL_VERSION > 3.7) $sql .= ", cfd.eatby, cfd.sellby, cfd.batch, cfd.comment, cfd.status";
+    $sql.= " FROM ".MAIN_DB_PREFIX."product as p,";
+    $sql.= " ".MAIN_DB_PREFIX."commande_fournisseur_dispatch as cfd";
+    $sql.= " LEFT JOIN ".MAIN_DB_PREFIX."entrepot as e ON cfd.fk_entrepot = e.rowid";
+    $sql.= " WHERE cfd.fk_commande = ".$commande;
+    $sql.= " AND cfd.fk_product = p.rowid";
+    $sql.= " ORDER BY cfd.rowid ASC";
 
-	// List of lines already dispatched
-	$sql = "SELECT p.ref, p.label,";
-	if ((float) DOL_VERSION <= 6.0) $sql.= " e.rowid as warehouse_id, e.label as entrepot,";
-	else $sql.= " e.rowid as warehouse_id, e.ref as entrepot,";
-	$sql.= " brd.rowid as dispatchlineid, brd.fk_product, brd.qty";
-	if ((float) DOL_VERSION > 3.7) $sql .= ", brd.eatby, brd.sellby, brd.batch, brd.comment";
-	$sql.= " FROM ".MAIN_DB_PREFIX."product as p,";
-	$sql.= " ".MAIN_DB_PREFIX."bonderetour_dispatch as brd";
-	$sql.= " LEFT JOIN ".MAIN_DB_PREFIX."entrepot as e ON brd.fk_entrepot = e.rowid";
-	$sql.= " WHERE brd.fk_bonderetour = ".$bdr->id;
-	$sql.= " AND brd.fk_product = p.rowid";
-	$sql.= " ORDER BY brd.rowid ASC";
+    $resql = $db->query($sql);
+    if ($resql)
+    {
+        $num = $db->num_rows($resql);
+        $i = 0;
 
-	$resql = $db->query($sql);
-	if ($resql)
-	{
-		$num = $db->num_rows($resql);
-		$i = 0;
+        if ($num > 0)
+        {
+            print "<br/>\n";
 
-		if ($num > 0)
-		{
-			print "<br/>\n";
+            print load_fiche_titre($langs->trans("ReceivingForSameOrder"));
 
-			print load_fiche_titre($langs->trans("ReceivingForSameBDR"));
+            print '<table class="noborder" width="100%">';
 
-			print '<table class="noborder" width="100%">';
+            print '<tr class="liste_titre">';
+            print '<td>'.$langs->trans("Description").'</td>';
+            if (! empty($conf->productbatch->enabled) && (float) DOL_VERSION > 3.7)
+            {
+                print '<td>'.$langs->trans("batch_number").'</td>';
+                print '<td>'.$langs->trans("l_eatby").'</td>';
+                print '<td>'.$langs->trans("l_sellby").'</td>';
+            }
+            print '<td align="right">'.$langs->trans("QtyDispatched").'</td>';
+            print '<td></td>';
+            print '<td>'.$langs->trans("Warehouse").'</td>';
+            print '<td>'.$langs->trans("Comment").'</td>';
+            if (! empty($conf->global->SUPPLIER_ORDER_USE_DISPATCH_STATUS) && (float) DOL_VERSION > 3.7) print '<td align="center" colspan="2">'.$langs->trans("Status").'</td>';
+            print "</tr>\n";
 
-			print '<tr class="liste_titre">';
-			print '<td>'.$langs->trans("Description").'</td>';
-			if (! empty($conf->productbatch->enabled) && (float) DOL_VERSION > 3.7)
-			{
-				print '<td>'.$langs->trans("batch_number").'</td>';
-				print '<td>'.$langs->trans("l_eatby").'</td>';
-				print '<td>'.$langs->trans("l_sellby").'</td>';
-			}
-			print '<td align="right">'.$langs->trans("QtyDispatched").'</td>';
-			print '<td></td>';
-			print '<td>'.$langs->trans("Warehouse").'</td>';
-			print '<td>'.$langs->trans("Comment").'</td>';
+            $var=false;
 
-			print "</tr>\n";
+            while ($i < $num)
+            {
+                $objp = $db->fetch_object($resql);
 
-			$var=false;
+                print "<tr ".$bc[$var].">";
+                print '<td>';
+                print '<a href="'.DOL_URL_ROOT.'/product/fournisseurs.php?id='.$objp->fk_product.'">'.img_object($langs->trans("ShowProduct"),'product').' '.$objp->ref.'</a>';
+                print ' - '.$objp->label;
+                print "</td>\n";
 
-			while ($i < $num)
-			{
-				$objp = $db->fetch_object($resql);
-				if($objp) {
+                if (! empty($conf->productbatch->enabled) && (float) DOL_VERSION > 3.7)
+                {
+                    print '<td>'.$objp->batch.'</td>';
+                    print '<td>'.dol_print_date($db->jdate($objp->eatby),'day').'</td>';
+                    print '<td>'.dol_print_date($db->jdate($objp->sellby),'day').'</td>';
+                }
 
-					print "<tr " . $bc[$var] . ">";
-					print '<td>';
-					print '<a href="' . DOL_URL_ROOT . '/product/fournisseurs.php?id=' . $objp->fk_product . '">' . img_object($langs->trans("ShowProduct"), 'product') . ' ' . $objp->ref . '</a>';
-					print ' - ' . $objp->label;
-					print "</td>\n";
+                // Qty
+                print '<td align="right">'.$objp->qty.'</td>';
+                print '<td>&nbsp;</td>';
 
-					if (!empty($conf->productbatch->enabled) && (float)DOL_VERSION > 3.7) {
-						print '<td>' . $objp->batch . '</td>';
-						print '<td>' . dol_print_date($db->jdate($objp->eatby), 'day') . '</td>';
-						print '<td>' . dol_print_date($db->jdate($objp->sellby), 'day') . '</td>';
-					}
+                // Warehouse
+                print '<td>';
+                $warehouse_static = new Entrepot($db);
+                $warehouse_static->id=$objp->warehouse_id;
+                $warehouse_static->libelle=$objp->entrepot;
+                print $warehouse_static->getNomUrl(1);
+                print '</td>';
 
-					// Qty
-					print '<td align="right">' . $objp->qty . '</td>';
-					print '<td>&nbsp;</td>';
+                // Comment
+                print '<td>'.dol_trunc($objp->comment).'</td>';
 
-					// Warehouse
-					print '<td>';
-					$warehouse_static = new Entrepot($db);
-					$warehouse_static->id = $objp->warehouse_id;
-					$warehouse_static->libelle = $objp->entrepot;
-					print $warehouse_static->getNomUrl(1);
-					print '</td>';
+                // Status
+                if (! empty($conf->global->SUPPLIER_ORDER_USE_DISPATCH_STATUS) && (float) DOL_VERSION > 3.7)
+                {
+                    print '<td align="right">';
+                    $supplierorderdispatch->status = (empty($objp->status)?0:$objp->status);
+                    //print $supplierorderdispatch->status;
+                    print $supplierorderdispatch->getLibStatut(5);
+                    print '</td>';
 
-					// Comment
-					print '<td>' . dol_trunc($objp->comment) . '</td>';
+                    // Add button to check/uncheck disaptching
+                    print '<td align="center">';
+                    if ((empty($conf->global->MAIN_USE_ADVANCED_PERMS) && empty($user->rights->fournisseur->commande->receptionner))
+                        || (! empty($conf->global->MAIN_USE_ADVANCED_PERMS) && empty($user->rights->fournisseur->commande_advance->check))
+                    )
+                    {
+                        if (empty($objp->status))
+                        {
+                            print '<a class="button buttonRefused" href="#">'.$langs->trans("Approve").'</a>';
+                            print '<a class="button buttonRefused" href="#">'.$langs->trans("Deny").'</a>';
+                        }
+                        else
+                        {
+                            print '<a class="button buttonRefused" href="#">'.$langs->trans("Disapprove").'</a>';
+                            print '<a class="button buttonRefused" href="#">'.$langs->trans("Deny").'</a>';
+                        }
+                    }
+                    else
+                    {
+                        $disabled='';
+                        if ($commande->statut == 5) $disabled=1;
+                        if (empty($objp->status))
+                        {
+                            print '<a class="button'.($disabled?' buttonRefused':'').'" href="'.$_SERVER["PHP_SELF"]."?id=".$id."&action=checkdispatchline&lineid=".$objp->dispatchlineid.'">'.$langs->trans("Approve").'</a>';
+                            print '<a class="button'.($disabled?' buttonRefused':'').'" href="'.$_SERVER["PHP_SELF"]."?id=".$id."&action=denydispatchline&lineid=".$objp->dispatchlineid.'">'.$langs->trans("Deny").'</a>';
+                        }
+                        if ($objp->status == 1)
+                        {
+                            print '<a class="button'.($disabled?' buttonRefused':'').'" href="'.$_SERVER["PHP_SELF"]."?id=".$id."&action=uncheckdispatchline&lineid=".$objp->dispatchlineid.'">'.$langs->trans("Reinit").'</a>';
+                            print '<a class="button'.($disabled?' buttonRefused':'').'" href="'.$_SERVER["PHP_SELF"]."?id=".$id."&action=denydispatchline&lineid=".$objp->dispatchlineid.'">'.$langs->trans("Deny").'</a>';
+                        }
+                        if ($objp->status == 2)
+                        {
+                            print '<a class="button'.($disabled?' buttonRefused':'').'" href="'.$_SERVER["PHP_SELF"]."?id=".$id."&action=uncheckdispatchline&lineid=".$objp->dispatchlineid.'">'.$langs->trans("Reinit").'</a>';
+                            print '<a class="button'.($disabled?' buttonRefused':'').'" href="'.$_SERVER["PHP_SELF"]."?id=".$id."&action=checkdispatchline&lineid=".$objp->dispatchlineid.'">'.$langs->trans("Approve").'</a>';
+                        }
+                    }
+                    print '</td>';
+                }
 
-					print "</tr>\n";
+                print "</tr>\n";
 
-					$i++;
-					$var = !$var;
-				} else{
-					dol_syslog(__METHOD__.' $objp='.var_export($objp,true), LOG_ERR);
-				}
-			}
-			$db->free($resql);
+                $i++;
+                $var=!$var;
+            }
+            $db->free($resql);
 
-			print "</table>\n";
-		}
-	}
-	else
-	{
-		dol_print_error($db);
-	}
+            print "</table>\n";
+        }
+    }
+    else
+    {
+        dol_print_error($db);
+    }
 }
 
 /**
@@ -1434,3 +1478,5 @@ function _isTreatedExpAlreadyExists($shipments) {
 
 
 }
+
+
