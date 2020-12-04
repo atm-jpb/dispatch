@@ -1325,7 +1325,7 @@ function _list_already_dispatched(&$commande) {
             {
                 $objp = $db->fetch_object($resql);
 
-                print "<tr ".$bc[$var].">";
+                print "<tr>";
                 print '<td>';
                 print '<a href="'.DOL_URL_ROOT.'/product/fournisseurs.php?id='.$objp->fk_product.'">'.img_object($langs->trans("ShowProduct"),'product').' '.$objp->ref.'</a>';
                 print ' - '.$objp->label;
